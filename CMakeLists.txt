@@ -32,6 +32,10 @@ IF(LOCAL_INSTALL)
 ENDIF()
 
 
+IF (UNIX)
+	execute_process(COMMAND "chmod 777 configure_ffmpeg")
+ENDIF()
+
 IF (NOT MSVC)
 # Create a dummy target to build ffmpeg as a prebuild step
 add_custom_target(ffmpeg BYPRODUCTS "${PROJECT_SOURCE_DIR}/build_ffmpeg.h"
@@ -39,10 +43,6 @@ add_custom_target(ffmpeg BYPRODUCTS "${PROJECT_SOURCE_DIR}/build_ffmpeg.h"
 add_executable(dummy ${PROJECT_SOURCE_DIR}/dummy.c "${PROJECT_SOURCE_DIR}/build_ffmpeg.h")
 target_include_directories(dummy PRIVATE "${PROJECT_SOURCE_DIR}")
 
-ENDIF()
-
-IF (UNIX)
-	execute_process(COMMAND "chmod 777 configure_ffmpeg")
 ENDIF()
 
 
