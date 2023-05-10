@@ -24,7 +24,7 @@ jobs:
       uses: actions/cache@v1.2.1
       with:
         path: 3rd_64
-        key: ${{ github.ref }}-dependencies
+        key: ${{ github.base_ref }}-dependencies
         
     - name: Configure & Build
       run: ./build.sh
