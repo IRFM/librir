@@ -11,7 +11,7 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  build:
+  build-on-linux:
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
@@ -19,15 +19,23 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-
-    - name: Cache Dependencies
-      uses: actions/cache@v1.2.1
-      with:
-        path: 3rd_64
-        key: ${{ github.base_ref }}-dependencies
         
     - name: Configure & Build
       run: ./build.sh
+      
+      
+    
+  build-on-windows:
+    # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
+    # You can convert this to a matrix build if you need cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+        
+    - name: Configure & Build
+      run: ./build.bat
       
       
     # - name: Configure CMake
