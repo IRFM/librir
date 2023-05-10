@@ -33,7 +33,7 @@ ENDIF()
 
 
 IF (UNIX)
-	execute_process(COMMAND "chmod 777 configure_ffmpeg")
+	execute_process(COMMAND "chmod 100755 configure_ffmpeg")
 ENDIF()
 
 IF (NOT MSVC)
@@ -129,6 +129,11 @@ MESSAGE(STATUS "found python")
 # Perform this action once more (already done in src/CMakeLists.txt) to copy plugins binaries
 install(DIRECTORY ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/
 		DESTINATION ${CMAKE_INSTALL_PREFIX}/librir/libs
+)
+
+# Perform this action to copy shared objects into python source folder (for devlopment purposes)
+install(DIRECTORY ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/
+		DESTINATION ${CMAKE_SOURCE_DIR}/librir/libs
 )
 
 # Generate requirements.txt
