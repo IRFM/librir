@@ -4,7 +4,7 @@
 #include <cmath>
 #include <vector>
 #include <algorithm>
-#include <climits>
+#include <limits>
 
 #include "Misc.h"
 
