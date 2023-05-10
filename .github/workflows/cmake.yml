@@ -43,6 +43,13 @@ jobs:
         
     - name: Configure & Build
       run: ./build.sh
+      
+    - name: Cache Dependencies
+      id: cache-dependencies
+      uses: actions/cache@v3
+      with:
+        path: 3rd_64
+        key: ${{ runner.os }}-3rd_64
     
     - name: Test with pytest
       run: |
