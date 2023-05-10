@@ -1,4 +1,4 @@
-[![compilation](https://github.com/IRFM/librir/actions/workflows/cmake.yml/badge.svg)](https://github.com/IRFM/librir/actions/workflows/cmake.yml)
+[![build](https://github.com/IRFM/librir/actions/workflows/cmake.yml/badge.svg)](https://github.com/IRFM/librir/actions/workflows/cmake.yml)
 
 # Librir
 

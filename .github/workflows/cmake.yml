@@ -1,10 +1,11 @@
-name: compilation
+name: build
 
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -34,22 +35,28 @@ jobs:
         pip install ruff pytest
         
         
-#    - name: Lint with ruff
-#      run: |
-#        # stop the build if there are Python syntax errors or undefined names
-#        ruff --format=github --select=E9,F63,F7,F82 --target-version=py37 .
-#        # default set of ruff rules with GitHub Annotations
-#        ruff --format=github --target-version=py37 .
-        
-    - name: Configure & Build
-      run: ./build.sh
-      
     - name: Cache Dependencies
       id: cache-dependencies
       uses: actions/cache@v3
       with:
         path: 3rd_64
         key: ${{ github.ref }}-3rd_64
+        
+#    - name: Lint with ruff
+#      run: |
+#        # stop the build if there are Python syntax errors or undefined names
+#        ruff --format=github --select=E9,F63,F7,F82 --target-version=py37 .
+#        # default set of ruff rules with GitHub Annotations
+#        ruff --format=github --target-version=py37 .
+
+    - name: Build FFMPEG
+      if: steps.cache-dependencies.outputs.cache-hit != 'true'
+      run: configure_ffmpeg
+        
+    - name: Configure & Build
+      run: ./build.sh
+      
+
     
     - name: Test with pytest
       continue-on-error: true
