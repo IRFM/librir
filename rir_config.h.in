@@ -1,0 +1,192 @@
+#ifndef RIR_CONFIG_H
+#define RIR_CONFIG_H
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+#include <stdint.h>
+#include <stdlib.h>
+
+/**
+@file
+@brief Exported functions.
+*/
+
+
+
+/* Version parsed out into numeric values 
+*/
+#define PROJECT_NAME "@PROJECT_NAME@"
+#define RIR_VERSION  "@PROJECT_VERSION@"
+#define RIR_VERSION_MAJOR "@PROJECT_VERSION_MAJOR@"
+#define RIR_VERSION_MINOR "@PROJECT_VERSION_MINOR@"
+#define RIR_VERSION_PATCH "@PROJECT_VERSION_PATCH@"
+
+/**
+Defines export symbols
+*/
+
+#if defined(_MSC_VER)
+#  define DECL_EXPORT __declspec(dllexport)
+#  define DECL_IMPORT __declspec(dllimport)
+
+#elif defined(__GNUC__)
+#  define DECL_EXPORT     __attribute__((visibility("default")))
+#  define DECL_IMPORT     __attribute__((visibility("default")))
+#endif
+
+
+
+#ifdef BUILD_GEOMETRY_LIB
+	#define GEOMETRY_EXPORT DECL_EXPORT
+#else
+	#define GEOMETRY_EXPORT DECL_IMPORT
+#endif
+
+#ifdef BUILD_TOOLS_LIB
+	#define TOOLS_EXPORT DECL_EXPORT
+#else
+	#define TOOLS_EXPORT DECL_IMPORT
+#endif
+
+#ifdef BUILD_IO_LIB
+	#define IO_EXPORT DECL_EXPORT
+#else
+	#define IO_EXPORT DECL_IMPORT
+#endif
+
+#ifdef BUILD_SIGNAL_PROCESSING_LIB
+	#define SIGNAL_PROCESSING_EXPORT DECL_EXPORT
+#else
+	#define SIGNAL_PROCESSING_EXPORT DECL_IMPORT
+#endif
+
+
+
+#ifdef _MSC_VER
+#pragma warning( disable : 4251 4275 )
+#endif
+
+
+
+
+// __MINGW32__ doesn't seem to be properly defined, so define it.
+#ifndef __MINGW32__
+#if	(defined(_WIN32) || defined(__WIN32__) || defined(WIN32)) && defined(__GNUC__) && !defined(__CYGWIN__)
+#define __MINGW32__
+#endif
+#endif
+
+//pragma directive might be different between compilers, so define a generic RIR_PRAGMA macro.
+//Use RIR_PRAGMA with no quotes around argument (ex: RIR_PRAGMA(omp parallel) and not RIR_PRAGMA("omp parallel") ).
+#ifdef _MSC_VER
+#define _RIR_PRAGMA(text) __pragma(text)
+#else
+#define _RIR_PRAGMA(text) _Pragma(#text)
+#endif
+
+#define RIR_PRAGMA(text) _RIR_PRAGMA(text)
+
+
+// Forces data to be n-byte aligned (this might be used to satisfy SIMD requirements).
+#if (defined __GNUC__) || (defined __PGI) || (defined __IBMCPP__) || (defined __ARMCC_VERSION)
+#define RIR_ALIGN_TO_BOUNDARY(n) __attribute__((aligned(n)))
+#elif (defined _MSC_VER)
+#define RIR_ALIGN_TO_BOUNDARY(n) __declspec(align(n))
+#elif (defined __SUNPRO_CC)
+// FIXME not sure about this one:
+#define RIR_ALIGN_TO_BOUNDARY(n) __attribute__((aligned(n)))
+#else
+#define RIR_ALIGN_TO_BOUNDARY(n) RIR_USER_ALIGN_TO_BOUNDARY(n)
+#endif
+
+
+// Simple function inlining
+#define RIR_INLINE inline
+
+// Strongest available function inlining
+#if (defined(__GNUC__) && (__GNUC__>=4)) || defined(__MINGW32__)
+#define RIR_ALWAYS_INLINE __attribute__((always_inline)) inline
+#elif defined(__GNUC__)
+#define RIR_ALWAYS_INLINE  inline
+#elif (defined _MSC_VER) || (defined __INTEL_COMPILER)
+#define RIR_ALWAYS_INLINE __forceinline
+#else
+#define RIR_ALWAYS_INLINE inline
+#endif
+
+
+// assume data are aligned
+#if defined(__GNUC__) && (__GNUC__>=4 && __GNUC_MINOR__>=7)
+#define RIR_RESTRICT __restrict
+#define RIR_ASSUME_ALIGNED(type,ptr,out,alignment) type * RIR_RESTRICT out = (type *)__builtin_assume_aligned((ptr),alignment);
+#elif defined(__GNUC__)
+#define RIR_RESTRICT __restrict
+#define RIR_ASSUME_ALIGNED(type,ptr,out,alignment) type * RIR_RESTRICT out = (ptr);
+//on intel compiler, another way is to use #pragma vector aligned before the loop.
+#elif defined(__INTEL_COMPILER) || defined(__ICL) || defined(__ICC) || defined(__ECC)
+#define RIR_RESTRICT restrict
+#define RIR_ASSUME_ALIGNED(type,ptr,out,alignment) type * RIR_RESTRICT out = ptr;__assume_aligned(out,alignment);
+#elif defined(__IBMCPP__)
+#define RIR_RESTRICT restrict
+#define RIR_ASSUME_ALIGNED(type,ptr,out,alignment) type __attribute__((aligned(alignment))) * RIR_RESTRICT out = (type __attribute__((aligned(alignment))) *)(ptr);
+#elif defined(_MSC_VER)
+#define RIR_RESTRICT __restrict
+#define RIR_ASSUME_ALIGNED(type,ptr,out,alignment) type * RIR_RESTRICT out = ptr;
+#endif
+
+
+
+	//define this macro to disable multithreading
+	//#define RIR_DISABLE_MULTI_THREADING
+
+	/**
+	* If OpenMP is enabled and RIR_DISABLE_MULTI_THREADING is not defined, define RIR_ENABLE_MULTI_THREADING
+	*/
+#if defined(_OPENMP) && !defined(RIR_DISABLE_MULTI_THREADING)
+#define RIR_ENABLE_MULTI_THREADING
+#include <omp.h>
+
+
+	//omp_get_num_threads broken on gcc, use a custom function
+	inline int _omp_thread_count()
+	{
+		static int n = 0;
+		if (!n)
+		{
+#pragma omp parallel reduction(+:n)
+			n += 1;
+		}
+		return n;
+	}
+
+
+	inline int ompThreadCount()
+	{
+		return _omp_thread_count();
+	}
+
+	inline int ompThreadId()
+	{
+		return omp_get_thread_num();
+	}
+#else
+	inline int ompThreadCount()
+	{
+		return 1;
+	}
+	inline int ompThreadId()
+	{
+		return 0;
+	}
+#endif
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

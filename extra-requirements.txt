@@ -1,0 +1,10 @@
+pandas:         lab, west, test, DIR
+opencv-python:  registration, lab, west, test
+pytest:         test
+chardet:        test, lab, thermavip
+matplotlib:     lab
+tqdm:           lab, west, test
+scipy:          lab, west, DIR
+pyqt5:          thermavip
+qtpy:           thermavip
+seaborn:        west

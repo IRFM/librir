@@ -1,0 +1,624 @@
+import datetime
+import functools
+import logging
+import math
+import os
+import tempfile
+from pathlib import Path
+import pandas as pd
+import numpy as np
+from librir.tools.utils import init_thermavip, unbind_thermavip_shared_mem
+from librir.tools.FileAttributes import FileAttributes
+
+from ..low_level.rir_video_io import (
+    calibrate_image,
+    calibration_files,
+    close_camera,
+    enable_bad_pixels,
+    flip_camera_calibration,
+    get_attributes,
+    get_camera_identifier,
+    get_emissivity,
+    get_filename,
+    get_global_attributes,
+    get_global_emissivity,
+    get_image_count,
+    get_image_size,
+    get_image_time,
+    get_optical_temperature,
+    load_image,
+    open_camera_file,
+    set_emissivity,
+    set_global_emissivity,
+    set_optical_temperature,
+    support_emissivity,
+    supported_calibrations,
+)
+from .IRSaver import IRSaver
+
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+
+class IncoherentMetadata(Exception):
+    pass
+
+
+def create_pcr_header(rows, columns, frequency=50, bits=16):
+    pcr_header = np.zeros((256,), dtype=np.uint32)
+    pcr_header[2] = columns
+    pcr_header[3] = rows
+    pcr_header[5] = bits  # bits
+    pcr_header[7] = frequency
+    pcr_header[9] = rows * columns * 2
+    pcr_header[10] = columns
+    pcr_header[11] = rows
+    return pcr_header
+
+
+class IRMovie(object):
+    _header_offset = 1024
+    __tempfile__ = None
+    handle = -1
+
+    _roi_result_line = {"CEDIP": 240, "WEST": 512, "NIT": 256}
+
+    _SHAPES = {
+        (512, 640): "WEST",
+        (515, 640): "WEST",
+        (240, 320): "CEDIP",
+        (242, 320): "CEDIP",
+        (243, 320): "CEDIP",
+        (256, 320): "NIT",
+        (259, 320): "NIT",
+    }
+
+    _th = None
+
+    @classmethod
+    def from_handle(cls, handle):
+        return cls(handle=handle)
+
+    @classmethod
+    def from_filename(cls, filename):
+        """Create an IRMovie object from a local filename"""
+        handle = open_camera_file(str(filename))
+        return cls(handle)
+
+    @classmethod
+    def from_bytes(cls, data):
+        with tempfile.NamedTemporaryFile("wb", delete=False) as f:
+            filename = f.name
+            f.write(data)
+
+        instance = cls.from_filename(filename)
+        instance.__tempfile__ = filename
+        return instance
+
+    @classmethod
+    def from_numpy_array(cls, arr, attrs=None):
+        """
+        Create a IRMovie object via numpy arrays. It creates non-pulse indexed IRMovie object.
+        Hence, calibration data are not available.
+        :param arr: data
+        :return:
+        """
+        if len(arr.shape) == 2:
+            rows, columns = arr.shape
+            header = create_pcr_header(rows, columns)
+        elif len(arr.shape) == 3:
+            images, rows, columns = arr.shape
+            header = create_pcr_header(rows, columns)
+        else:
+            raise ValueError("mismatch array shape. Must be 2D or 3D")
+        data = header.astype(np.uint32).tobytes() + arr.astype(np.uint16).tobytes()
+        instance = cls.from_bytes(data)
+        if attrs is not None:
+            instance.attributes = attrs
+        return instance
+
+    def __init__(self, handle):
+        """
+        Create a IRMovie object from an unique identifier as returned by open_camera()
+        """
+        # check valid handle identifier
+        if get_image_count(handle) < 0:
+            raise RuntimeError("Invalid ir_movie descriptor")
+
+        # consider pulse as a handle identifier
+        self.handle = handle
+        self.times = None
+        self._identifier = None
+        self._enable_bad_pixels = False
+        self._last_lines = None
+        self._payload = None
+        self._survir_data = None
+        self.__tempfile__ = ""
+        self._calibration_index = 0
+        self._timestamps = None
+        self._camstatus = None
+        self._frame_attributes_d = {}
+        self._file_attributes = FileAttributes(self.filename)
+        self._file_attributes.attributes = get_global_attributes(self.handle)
+
+        try:
+            self.calibration = "T"
+        except (IndexError, ValueError):
+            logger.debug(
+                f"There is no temperature calibration. Switching back to Digital Level"
+            )
+
+        # if not ('Type' in self.attributes):
+        #     d = self.attributes
+        #     # inv_shapes = {v: k for k, v in self._SHAPES.items()}
+        #     d['Type'] = self._SHAPES[self.image_size].encode('utf8')
+        #     self.attributes = d
+        #     # self._file_attributes.flush()
+
+    def __enter__(self):
+        """
+        Allows to use 'with' statement
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+        When you exit the with statement
+        """
+        return self.close()
+
+    def __del__(self):
+        self.close()
+
+    def close(self):
+        if self.handle > 0:
+            # self._file_attributes.close()
+            close_camera(self.handle)
+            self.handle = -1
+
+        # destroying files if instantiated in memory.
+        if self.__tempfile__:
+            try:
+                os.unlink(self.__tempfile__)
+                logger.debug("deleting %s".format(self.__tempfile__))
+            except FileNotFoundError as exc:
+                logger.warning(exc)
+            except PermissionError as p_exc:
+                logger.warning(p_exc)
+
+            self.__tempfile__ = None
+
+    def flip_calibration(self, flip_rl, flip_ud):
+        flip_camera_calibration(self.handle, flip_rl, flip_ud)
+
+    @property
+    def images(self):
+        return get_image_count(self.handle)  # number of images
+
+    @property
+    def image_size(self):
+        return get_image_size(self.handle)
+
+    @property
+    def payload_size(self):
+        shape = get_image_size(self.handle)
+        limit = self._roi_result_line[self._SHAPES[shape]]
+        shape = (limit, shape[1])
+        return shape
+
+    @property
+    def calibrations(self):
+        return supported_calibrations(
+            self.handle
+        )  # possible calibrations (usually 'Digital Level' and 'Temperature(C)')
+
+    @property
+    def identifier(self):
+        """
+        Stores and gives handle identifier via librir by default. If not available, gives the user defined one.
+        :return: identifier (str)
+        """
+        try:
+            self._identifier = get_camera_identifier(self.handle)
+        except RuntimeError as exc:
+            if self.handle > 0:
+                logger.warning(
+                    "'{}' is user defined identifier".format(self._identifier)
+                )
+        finally:
+            return self._identifier
+
+    @identifier.setter
+    def identifier(self, value):
+        self._identifier = value
+
+    # def frame_attributes(self, frame_index):
+    #     return self._file_attributes.frame_attributes(frame_index)
+
+    def load_pos(self, pos, calibration=None):
+        """Returns the image at given position using given calibration index (integer)"""
+        if calibration is None:
+            calibration = 0
+        res = load_image(self.handle, pos, calibration)
+        self._frame_attributes_d[pos] = get_attributes(self.handle)
+        # self.frame_attributes = get_attributes(self.handle)
+        return res
+
+    def load_secs(self, time, calibration=None):
+        """Returns the image at given time in seconds using given calibration index (integer)"""
+        if calibration is None:
+            calibration = 0
+        if self.times is None:
+            self.times = np.array(list(self.timestamps), dtype=np.float64)
+        c = calibration or self.calibration
+        index = np.argmin(np.abs(self.times - time))
+        res = load_image(self.handle, int(index), int(c))
+        self._frame_attributes_d[int(index)] = get_attributes(self.handle)
+        # self.frame_attributes =get_attributes(self.handle)
+        return res
+
+    @property
+    def enable_bad_pixels(self):
+        return self._enable_bad_pixels
+
+    @enable_bad_pixels.setter
+    def enable_bad_pixels(self, value):
+        self._enable_bad_pixels = bool(value)
+        enable_bad_pixels(self.handle, self._enable_bad_pixels)
+
+    @property
+    def filename(self):
+        return Path(get_filename(self.handle))  # local filename
+
+    @property
+    def calibration_files(self):
+        try:
+            return calibration_files(self.handle)
+        except:
+            # TODO : find exception raised
+            return list()
+
+    @property
+    def frame_attributes(self):
+        return get_attributes(self.handle)
+
+    @property
+    def attributes(self):
+        # return self._file_attributes.attributes
+        # self._file_attributes.attributes = get_global_attributes(self.handle)
+        # d.update(self.additional_attributes)
+        return self._file_attributes.attributes
+
+    #
+    @attributes.setter
+    def attributes(self, value):
+        self._file_attributes.attributes = value
+
+    @property
+    def is_file_uncompressed(self):
+        statinfo = os.stat(self.filename)
+        filesize = statinfo.st_size
+        theoritical_uncompressed = (
+            self.images * self.image_size[1] * (self.image_size[0]) * 2 + 1024
+        )
+        return filesize == theoritical_uncompressed
+
+    @property
+    def width(self):
+        return self.image_size[1]
+
+    @property
+    def height(self):
+        return self.image_size[0]
+
+    @property
+    def data(self) -> np.array:
+        """
+        Accessor to data contained in movie file.
+        There are two strategies for getting the data.
+
+            - Movie filename is uncompressed (.pcr format):
+                data is not read through librir C functions.
+                Instead, the whole data is read directly from the file to speed up computation.
+                It can only work with calibration_index == 0
+
+            - Movie filename is compressed (.bin, .h264 formats):
+                Every image must be read individually and stacked up
+
+        @return: 3D np.array representing IR data movie
+        """
+        if self.is_file_uncompressed and (self._calibration_index == 0):
+            with open(self.filename, "rb") as f:
+                f.seek(self._header_offset)
+                data = np.fromfile(f, np.uint16, -1)
+            return np.reshape(data, (self.images,) + self.image_size)
+        else:
+            return self[:]
+
+    @property
+    def optical_temperature(self):
+        return get_optical_temperature(self.handle)
+
+    @optical_temperature.setter
+    def optical_temperature(self, temperature):
+        """
+        Set the optical temperature for given handle in degree Celsius.
+        This should be the temperature of the B30.
+        Not all cameras support this feature. Use support_optical_temperature() function to test it.
+        """
+        set_optical_temperature(self.handle, temperature)
+
+    @property
+    def support_emissivity(self):
+        return support_emissivity(self.handle)
+
+    @property
+    def global_emissivity(self):
+        if not self.support_emissivity:
+            return 1.0
+        return get_global_emissivity(self.handle)
+
+    @global_emissivity.setter
+    def global_emissivity(self, value):
+        if not self.support_emissivity:
+            raise RuntimeError("Cannot set custom emissivity value for this handle")
+        set_global_emissivity(self.handle, value)
+
+    @property
+    def emissivity(self):
+        if not self.support_emissivity:
+            return np.ones(self.image_size, dtype=np.float32)
+        return get_emissivity(self.handle)
+
+    @emissivity.setter
+    def emissivity(self, emissivity_array):
+        if not self.support_emissivity:
+            raise RuntimeError("Cannot set custom emissivity value for this handle")
+        set_emissivity(self.handle, emissivity_array)
+
+    @property
+    @functools.lru_cache()
+    def tis(self):
+        """
+        Gives matrix of used integrations times for all images.
+        :return:
+        """
+        if self.calibration == "Digital Level":
+            tis = (self.payload & (2 ** 16 - 2 ** 13)) >> 13
+        else:
+            old_calib = self.calibration
+            self.calibration = "DL"
+            tis = (self.payload & (2 ** 16 - 2 ** 13)) >> 13
+            self.calibration = old_calib
+        return tis
+
+    def __getitem__(self, item):
+        if isinstance(item, slice):
+            item = slice(item.start or 0, item.stop or self.images, item.step or 1)
+            if item.stop < 0:
+                item = slice(item.start, self.images + item.stop, item.step)
+
+            if item.start < 0:
+                item = slice(self.images + item.start, item.stop, item.step)
+
+            shape = (math.ceil((item.stop - item.start) / item.step),) + self.image_size
+            arr = np.empty(shape, dtype=np.uint16)
+            for idx, i in enumerate(range(item.start, item.stop, item.step)):
+                arr[idx] = self.load_pos(i, self._calibration_index)
+
+            return arr
+
+        elif isinstance(item, tuple) and len(item) >= 2 and isinstance(item[0], int):
+            return self.__getitem__(item[0])[item[1:]]
+
+        elif isinstance(item, int):
+            if item < 0:
+                item = self.images + item
+            return self.load_pos(item, self._calibration_index)
+
+        elif isinstance(item, float):
+            return self.load_secs(item, self._calibration_index)
+
+        elif isinstance(item, (list)):
+            return np.array([self.__getitem__(e) for e in item])
+
+        elif isinstance(item, np.ndarray) and (item.ndim == 1):
+            return np.array([self.__getitem__(e) for e in item])
+
+    def __iter__(self):
+        for i in range(self.images):
+            yield self.load_pos(i, self._calibration_index)
+
+    def __len__(self):
+        return self.images
+
+    @property
+    def timestamps(self):
+        if self._timestamps is None:
+            self._timestamps = np.array(
+                [get_image_time(self.handle, i) * 1e-9 for i in range(self.images)],
+                dtype=np.float64,
+            )
+        return self._timestamps
+
+    @property
+    def frame_period(self) -> float:
+        return np.diff(self.timestamps).mean().round(3)
+
+    @property
+    def duration(self):
+        last_time = get_image_time(self.handle, self.images - 1)
+        first_time = get_image_time(self.handle, 0)
+        return (last_time - first_time) * 1e-9  # movie duration in seconds
+
+    def calibrate(self, image, calib):
+        """
+        Apply given calibration to a DL image and returns the result.
+        """
+        return calibrate_image(self.handle, image, calib)
+
+    def pcr2h264(self, outfile=None, overwrite=False, **kwargs):
+        """
+        If movie is stored into a PCR file, it converts it into h264
+        @param outfile: destination filename
+        @param overwrite: if you want to overwrite destination file
+        @param kwargs: keyword arguments passed to `to_h264` method
+        @return: destination filename
+        """
+        outfile = outfile or self._build_outfile()
+        if not os.path.exists(outfile) or overwrite:
+            self.to_h264(outfile, **kwargs)
+        return outfile
+
+    def _build_outfile(self, outfile=None) -> str:
+        f = self.__tempfile__ or self.filename
+
+        # pathlib is not used because this class must be compatible with python 2
+        _, suffix = os.path.splitext(f)
+        parent, basename = os.path.split(f)
+        stem = basename.replace(suffix, "")
+        if suffix == ".pcr" or self.__tempfile__:
+            default_dest_filename = os.path.abspath(
+                (os.path.join(parent, (stem + ".h264")))
+            )
+            outfile = outfile or default_dest_filename
+            return outfile
+        elif suffix == ".h264":
+            return self.filename
+        # else:
+        #     logger.info("'{}' is not a PCR file".format(self.filename))
+
+    def __repr__(self):
+        return "IRMovie({})".format(self.filename)
+
+    @property
+    def last_line_index(self):
+        return self._roi_result_line.get(self.camera_type, -1)
+
+    @property
+    def payload(self):
+        if self._payload is None:
+            self._payload = self.data[:, : self.last_line_index, :]
+        return self._payload
+
+    # @cached_property
+    @property
+    @functools.lru_cache()
+    def internal_camera_number(self):
+        res = self.frames_attributes["Camera #"].astype(np.uint8)
+        cam_numbers = np.unique(res)
+        if not len(np.unique(res)) == 1:
+            raise IncoherentMetadata(
+                f"Many cameras used for this movie: {cam_numbers}\n Something is wrong..."
+            )
+        return cam_numbers[0]
+
+    @classmethod
+    def _read_last_line_fpga_embedded_32_bits_word(cls, arr, address):
+        return (arr[:, 0, address + 1].astype(np.int32) << 16) | arr[:, 0, address]
+
+    @property
+    # @functools.lru_cache()
+    def camera_temperatures(self):
+        return self._frame_attribute_getter("Camera T (C)")
+
+    @property
+    # @functools.lru_cache()
+    def sensor_temperatures(self):
+        return self._frame_attribute_getter("Sensor T (K)")
+
+    @property
+    @functools.lru_cache()
+    def frames_attributes(self) -> pd.DataFrame:
+        l = []
+        for i in range(self.images):
+            self.load_pos(i)
+            # val = self.frame_attributes[key]
+            l.append(self._frame_attributes_d[i])
+        df = pd.DataFrame(self._frame_attributes_d).T
+        return df
+
+    def _frame_attribute_getter(self, key) -> np.ndarray:
+        l = []
+        try:
+            l = self.frames_attributes[key]
+        except KeyError:
+            logger.warning(f"attribute '{key}' not found in movie !")
+        finally:
+            return np.array(l, dtype=float)
+
+    # @cached_property
+    @property
+    @functools.lru_cache()
+    def ir_filter_temperatures(self):
+        return self._frame_attribute_getter("IR Filter T (C)")
+
+    # @cached_property
+    @property
+    @functools.lru_cache()
+    def peltier_powers(self):
+        return self._frame_attribute_getter("Peltier Power (%)")
+
+    # @cached_property
+    @property
+    @functools.lru_cache()
+    def absolute_timestamps_ms(self):
+        return self._frame_attribute_getter("Time (absolute in ms)")
+
+    # @cached_property
+    @property
+    @functools.lru_cache()
+    def absolute_timestamps_str(self):
+        return self._frame_attribute_getter("Time (formatted)")
+
+    @property
+    def absolute_timestamps(self):
+        return [
+            datetime.datetime.fromtimestamp(t / 1e3)
+            for t in self.absolute_timestamps_ms
+        ]
+
+    @property
+    def metadata(self):
+        if self._last_lines is None:
+            self._last_lines = self.data[:, self.last_line_index :, :]
+        return self._last_lines
+
+    @property
+    def camera_type(self):
+        return self._SHAPES.get(self.image_size, "TEST")
+
+    @property
+    def has_metadata(self):
+        return self._last_lines is not None
+
+    @property
+    def roi_line(self):
+        return self.metadata[:, 0]
+
+    @property
+    def survir_data(self):
+        if self._survir_data is None:
+            df = self._extract_survir_data()
+            df = df.swaplevel(0, 1, axis=1).sort_index(axis=1)
+            self._survir_data = df
+        return self._survir_data
+
+    def to_thermavip(self, th_instance="Thermavip-1", player_id=0):
+        th = init_thermavip(th_instance)
+        if th:
+            filename = self.filename
+            # TODO: remove when thermavip will ignore file extensions when opening files
+            # if not self.filename.suffix:
+            #     dest = str(self.filename.absolute()) + '.h264'
+            #     shutil.copy(self.filename, dest)
+            #     filename = dest
+
+            player_id = th.open(
+                f"WEST_BIN_PCR_Device:{str(filename)}", player=player_id
+            )
+            unbind_thermavip_shared_mem(th)
+            return player_id
+        else:
+            logger.warning(f"Thermavip not found")
