@@ -31,7 +31,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install ruff pytest
-        pip install -e .
+        
         
 #    - name: Lint with ruff
 #      run: |
@@ -45,6 +45,7 @@ jobs:
     
     - name: Test with pytest
       run: |
+        pip install -e .
         pytest tests/python
           
           
@@ -72,7 +73,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install ruff pytest
-        pip install -e .
+        
         
 #    - name: Lint with ruff
 #      run: |
@@ -86,6 +87,7 @@ jobs:
     
     - name: Test with pytest
       run: |
+        pip install -e .
         pytest tests/python
       
       
