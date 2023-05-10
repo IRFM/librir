@@ -179,6 +179,13 @@ else
    ./configure --enable-static=yes --enable-shared=no --prefix=$PWD/install CFLAGS="-fPIC" #--extra-ldflags="-Wl,-rpath='$ORIGIN'"
    make -j4
    make install
+   
+   # Add -lm -lpthread to kvazaar libs
+   line=$(grep "lkvazaar" ./install/lib/pkgconfig/kvazaar.pc)
+   # line_num=$(grep -n "lkvazaar" ./install/lib/pkgconfig/kvazaar.pc | cut -f1 -d:)
+   line="$line -lm -lpthread"
+   sed -i "/lkvazaar/c $line" ./install/lib/pkgconfig/kvazaar.pc
+   # sed -i '${line_num}i\-lm -lpthread\' ./install/lib/pkgconfig/kvazaar.pc
    cd ..
 fi
 export PKG_CONFIG_PATH=$PWD/kvazaar/install/lib/pkgconfig:$PKG_CONFIG_PATH
