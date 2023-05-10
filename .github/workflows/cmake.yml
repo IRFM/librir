@@ -49,7 +49,7 @@ jobs:
       uses: actions/cache@v3
       with:
         path: 3rd_64
-        key: ${{ runner.os }}-3rd_64
+        key: ${{ github.ref }}-3rd_64
     
     - name: Test with pytest
       run: |
