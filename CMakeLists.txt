@@ -2,11 +2,8 @@
 
 cmake_minimum_required(VERSION 3.16)
 
-#set( LIBRIR_VERSION 3.1.2 
-#CACHE STRING "Librir version" )
-
 project(librir
-    VERSION 3.1.2
+    VERSION 4.0.0
     DESCRIPTION "librir"
     HOMEPAGE_URL "https://github.com/IRFM/librir"
     LANGUAGES CXX C
