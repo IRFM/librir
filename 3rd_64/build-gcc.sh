@@ -231,6 +231,8 @@ else
    echo 'Configuring ffmpeg...'
    ./configure --arch=native --enable-asm --disable-libvpx --disable-libaom --disable-static --enable-shared --enable-libx264 --enable-libkvazaar --extra-cflags=-DKVZ_STATIC_LIB --prefix=$PWD/install --enable-gpl --enable-rpath --extra-ldflags="-L/usr/local/lib -ldl $ffmeg_extra_ldflags -fPIC -m64 -Wl,-rpath='$ORIGIN'" --enable-pic --disable-debug
    #~ if [[ $1 == "gpl" ]]; then
+   OUTPUT=$(cat ffbuild/config.log)
+   echo "${OUTPUT}"
    echo $PKG_CONFIG_PATH
    # ./configure --arch=$ARCH --enable-asm --enable-libvpx --enable-libaom --disable-static --enable-shared --enable-libx264 --enable-libkvazaar --prefix=$PWD/install --enable-gpl --enable-rpath --extra-ldflags="-L/usr/local/lib -ldl -fPIC -m64 -Wl,-rpath='$ORIGIN'" --enable-pic
    #~ else
