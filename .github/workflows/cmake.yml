@@ -53,7 +53,7 @@ jobs:
 
     - name: Build FFMPEG
       if: (steps.cache-dependencies.outputs.cache-hit != 'true') && (${{ matrix.os }} == 'ubuntu-latest')
-      run: configure_ffmpeg
+      run: ./configure_ffmpeg
         
     - name: Configure & Build
       if: (${{ matrix.os }} == 'ubuntu-latest')
