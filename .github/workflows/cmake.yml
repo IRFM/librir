@@ -55,8 +55,7 @@ jobs:
       if: ${{ (steps.cache-dependencies.outputs.cache-hit != 'true') && ( matrix.os  == 'ubuntu-latest') }}
       run: ./configure_ffmpeg
         
-    - name: Configure & Build
-      if: ${{ matrix.os  == 'ubuntu-latest'}}
+    - if: ${{ matrix.os  == 'ubuntu-latest'}}
       run: ./build.sh
     - if: ${{ matrix.os  == 'windows-latest'}}
-      run: ./build.bat
+      run: build.bat
