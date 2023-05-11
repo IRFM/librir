@@ -57,7 +57,7 @@ jobs:
       run: configure_ffmpeg
         
     - name: Configure & Build
-    - if: (${{ matrix.os }} == 'ubuntu-latest')
+      if: (${{ matrix.os }} == 'ubuntu-latest')
       run: build.sh
     - if: (${{ matrix.os }} == 'windows-latest')
       run: build.bat
