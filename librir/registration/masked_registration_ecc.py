@@ -24,12 +24,12 @@ class MaskedRegistratorECC:
     To maximize the chances to get a good translation estimation, the input images can be cropped based
     on the window_factor value (that takes a centered sub window of input image) and sigma (to apply
     a gaussian filter on input image).
-    
+
     Furtheremore, the computation can be performed on static mask only (boolean image) or on a dynamic mask that only contains the X% lowest pixels.
-    
+
     The first image must be processed with MaskedRegistratorECC.start() function, the remaining ones with MaskedRegistratorECC.compute().
     The results are stored in MaskedRegistratorECC.x and MaskedRegistratorECC.y (lists of translations). The confidence on the computed translations is accessible in MaskedRegistratorECC.confidences.
-    
+
     Note that the returned translation values correspond to the translation from the very first image passed to MaskedRegistratorECC.start().
     """
 

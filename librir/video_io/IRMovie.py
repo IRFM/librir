@@ -273,7 +273,7 @@ class IRMovie(object):
         return Path(get_filename(self.handle))  # local filename
 
     @property
-    def calibration_files(self):
+    def calibration_files(self) -> List[str]:
         try:
             return calibration_files(self.handle)
         except:
@@ -386,11 +386,11 @@ class IRMovie(object):
         :return:
         """
         if self.calibration == "Digital Level":
-            tis = (self.payload & (2 ** 16 - 2 ** 13)) >> 13
+            tis = (self.payload & (2**16 - 2**13)) >> 13
         else:
             old_calib = self.calibration
             self.calibration = "DL"
-            tis = (self.payload & (2 ** 16 - 2 ** 13)) >> 13
+            tis = (self.payload & (2**16 - 2**13)) >> 13
             self.calibration = old_calib
         return tis
 
@@ -500,7 +500,7 @@ class IRMovie(object):
         times=None,
         frame_attributes=None,
         cthreads=8,
-        cfiles: List[str]=None,
+        cfiles: List[str] = None,
     ):
         """
         Exports movie into h264 file.

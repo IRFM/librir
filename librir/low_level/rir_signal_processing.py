@@ -259,7 +259,7 @@ def extract_times(time_series, strategy="union"):
     Create a unique time vector from several ones.
     time_series is a list of input time series
     strategy is either 'union' (take the union of all time series) or 'inter'
-    Returns a growing time vector containing all different time values given in 
+    Returns a growing time vector containing all different time values given in
     time_series, without redundant times.
     """
     _signal_processing.extract_times.argtypes = [

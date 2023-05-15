@@ -31,7 +31,7 @@ def generate_mock_movie_data_uniform(*shape):
 
     dl = np.zeros(shape, dtype=np.uint16)
     tis = np.zeros(shape, dtype=np.uint16)
-    step = 2 ** 13
+    step = 2**13
     if n_images > 1:
         step /= n_images - 1
 
@@ -53,10 +53,10 @@ def generate_constant_mask_array(*shape):
 
 def generate_random_movie_data(n_rows, n_columns, n_images):
     dl = np.random.randint(
-        0, (2 ** 13), size=(n_images, n_rows, n_columns), dtype=np.uint16
+        0, (2**13), size=(n_images, n_rows, n_columns), dtype=np.uint16
     )  # >> 16  & (2**13)-1
     tis = np.random.randint(
-        0, (2 ** 3) - 1, size=(n_images, n_rows, n_columns), dtype=np.uint16
+        0, (2**3) - 1, size=(n_images, n_rows, n_columns), dtype=np.uint16
     )  # >> 29 & (2**3)-1
 
     data = dl | (tis << 13)
@@ -85,6 +85,8 @@ INVALID_SHAPES = [
 ]
 
 
+
+
 VALID_UNIFORM_2D_NUMPY_ARRAYS = [
     generate_mock_movie_data_uniform(*shape) for shape in VALID_2D_SHAPES
 ]
@@ -104,43 +106,41 @@ INVALID_UNIFORM_NUMPY_ARRAYS = [
 VALID_MASKS = [generate_constant_mask_array(*shape) for shape in VALID_3D_SHAPES]
 
 
+
 # @pytest.fixture(scope="module")
 # def uniform_movies():
 #     return [IRMovie.from_numpy_array(arr) for arr in VALID_UNIFORM_NUMPY_ARRAYS]
+
 
 
 @pytest.fixture(scope="session", params=VALID_SHAPES)
 def array(request):
     shape = request.param
     yield generate_mock_movie_data_uniform(*shape)
-
-
+    
 @pytest.fixture(scope="session", params=VALID_3D_SHAPES)
 def valid_3d_array(request):
     shape = request.param
     yield generate_mock_movie_data_uniform(*shape)
-
-
+    
+    
 @pytest.fixture(scope="session", params=INVALID_SHAPES)
 def bad_array(request):
     shape = request.param
     yield generate_mock_movie_data_uniform(*shape)
-
+    
 
 @pytest.fixture(scope="session", params=VALID_2D_SHAPES)
 def valid_2D_array(request):
     shape = request.param
     yield generate_mock_movie_data_uniform(*shape)
 
-
 @pytest.fixture(scope="session")
 def movie(array):
     return IRMovie.from_numpy_array(array)
 
-
 @pytest.fixture(scope="session")
 def filename(movie):
     return movie.filename
-
 
 # filenames = pytest.mark.parametrize("filenames", [mov.filename for mov in uniform_movies])
