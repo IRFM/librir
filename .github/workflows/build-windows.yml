@@ -35,5 +35,5 @@ jobs:
         - name: Upload artifact
           uses: actions/upload-artifact@v3
           with:
-            name: install-librir
+            name: install-librir-windows-latest
             path: build/install
