@@ -2,10 +2,10 @@ name: librir test workflow
 
 on:
   workflow_call:
-    inputs:
-      librir-package:
-        required: true
-        type: string
+    # inputs:
+    #   librir-package:
+    #     required: true
+    #     type: string
     # secrets:
     #   token:
     #     required: true
