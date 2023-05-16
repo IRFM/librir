@@ -10,8 +10,11 @@ on:
 
 
 jobs:
-  
+    build-ffmpeg:
+      uses: IRFM/librir/.github/workflows/build-ffmpeg.yml@dubusster-patch-2
+      
     build-linux:
+        needs: build-ffmpeg
         strategy:
           matrix:
             # python-version: ["py37", "py38", "py39", "py310", "py311"]
