@@ -116,7 +116,7 @@ jobs:
     strategy:
       matrix:
         # python-version: ["py37", "py38", "py39", "py310", "py311"]
-        python-version: ["py39"]
+        python-version: ["3.9"]
         os: [ubuntu-latest, windows-latest]
 
     
