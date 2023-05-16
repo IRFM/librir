@@ -40,6 +40,9 @@ jobs:
             python-version: ["3.9"]
         needs: build-linux
         uses: IRFM/librir/.github/workflows/test.yml@dubusster-patch-2
+        with:
+          python-version: ${{ matrix.python-version }} 
+          os: ubuntu-latest
 
     tests-windows:
       strategy:
@@ -49,6 +52,9 @@ jobs:
           python-version: ["3.9"]
       needs: build-windows
       uses: IRFM/librir/.github/workflows/test.yml@dubusster-patch-2
+      with:
+        python-version: ${{ matrix.python-version }} 
+        os: ubuntu-latest
 
 # name: build
 
