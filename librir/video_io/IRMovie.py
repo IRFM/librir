@@ -11,6 +11,12 @@ from librir.tools.utils import init_thermavip, unbind_thermavip_shared_mem
 from librir.tools.FileAttributes import FileAttributes
 from typing import List, Dict
 
+from librir.low_level.rir_video_io import (
+    enable_motion_correction,
+    load_motion_correction_file,
+    motion_correction_enabled,
+)
+
 from ..low_level.rir_video_io import (
     calibrate_image,
     calibration_files,
@@ -189,6 +195,42 @@ class IRMovie(object):
                 logger.warning(p_exc)
 
             self.__tempfile__ = None
+            
+            
+    @property
+    def registration_file(self) -> Path:
+        """
+        Returns the registration file name for this camera, and tries to download it 
+        from ARCADE if not already done.
+        """
+
+        return self._registration_file
+
+    @registration_file.setter
+    def registration_file(self, value) -> None:
+        value = Path(value)
+        if not value.exists():
+            raise FileNotFoundError(f"{value} doesn't exist")
+        self._registration_file = value
+        load_motion_correction_file(self.handle, self._registration_file)
+
+    @property
+    def registration(self) -> bool:
+        """
+        Returns True is video registration is activated, false otherwise
+        """
+        if self._registration_file.exists():
+            return motion_correction_enabled(self.handle)
+        return False
+
+    @registration.setter
+    def registration(self, value: bool) -> None:
+        """
+        Enable/disable video registration.
+        Throws if the registration file cannot be found for this video.
+        """
+
+        enable_motion_correction(self.handle, bool(value))
 
     def flip_calibration(self, flip_rl, flip_ud):
         flip_camera_calibration(self.handle, flip_rl, flip_ud)
