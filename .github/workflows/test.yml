@@ -23,6 +23,11 @@ jobs:
         
         steps:
           - uses: actions/checkout@v3
+          - uses: actions/download-artifact@v3
+            with:
+              name: install-librir
+              path: build/install
+              
           - name: Install python dependencies
             run: |
               python -m pip install --upgrade pip
