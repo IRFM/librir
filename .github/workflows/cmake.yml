@@ -64,7 +64,7 @@ jobs:
         
 
         
-    - if: ${{ matrix.os  == 'ubuntu-latest'}}
+    - name: Build Linux
       run: ./build.sh
 
 
@@ -81,6 +81,14 @@ jobs:
             # python-version: ["3.9"]
         steps:
         - uses: actions/checkout@v3
+
+        - name: Cache Build
+          id: cache-build
+          uses: actions/cache@v3
+          with:
+            path: build
+            key: ${{ github.ref }}-build
+        
         - name: Set up Python ${{ matrix.python-version }}
           
           uses: actions/setup-python@v4
