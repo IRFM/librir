@@ -54,7 +54,7 @@ jobs:
       uses: IRFM/librir/.github/workflows/test.yml@dubusster-patch-2
       with:
         python-version: ${{ matrix.python-version }} 
-        os: ubuntu-latest
+        os: windows-latest
 
 # name: build
 
