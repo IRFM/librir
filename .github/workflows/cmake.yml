@@ -15,8 +15,8 @@ jobs:
         strategy:
           matrix:
             # python-version: ["py37", "py38", "py39", "py310", "py311"]
-            # python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
-            python-version: ["3.9"]
+            python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+            # python-version: ["3.9"]
         uses: IRFM/librir/.github/workflows/build-linux.yml@dubusster-patch-2
         with:
           python-version: ${{ matrix.python-version }}
@@ -26,8 +26,8 @@ jobs:
         strategy:
           matrix:
           # python-version: ["py37", "py38", "py39", "py310", "py311"]
-          # python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
-            python-version: ["3.9"]
+            python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+          # python-version: ["3.9"]
         uses: IRFM/librir/.github/workflows/build-windows.yml@dubusster-patch-2
         with:
           python-version: ${{ matrix.python-version }} 
@@ -48,8 +48,8 @@ jobs:
       strategy:
         matrix:
         # python-version: ["py37", "py38", "py39", "py310", "py311"]
-        # python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
-          python-version: ["3.9"]
+          python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+        # python-version: ["3.9"]
       needs: build-windows
       uses: IRFM/librir/.github/workflows/test.yml@dubusster-patch-2
       with:
