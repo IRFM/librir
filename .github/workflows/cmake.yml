@@ -30,11 +30,15 @@ jobs:
             python-version: ["3.9"]
         uses: IRFM/librir/.github/workflows/build-windows.yml@dubusster-patch-2
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.python-version }} 
       
-    tests:
-        needs: [build-linux, build-windows]
+    tests-linux:
+        needs: build-linux
         uses: IRFM/librir/.github/workflows/test.yml@dubusster-patch-2
+
+    tests-windows:
+      needs: build-windows
+      uses: IRFM/librir/.github/workflows/test.yml@dubusster-patch-2
 
 # name: build
 
