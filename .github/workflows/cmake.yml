@@ -62,14 +62,40 @@ jobs:
         path: 3rd_64
         key: ${{ github.ref }}-3rd_64
         
-#    - name: Lint with ruff
-#      run: |
-#        # stop the build if there are Python syntax errors or undefined names
-#        ruff --format=github --select=E9,F63,F7,F82 --target-version=py37 .
-#        # default set of ruff rules with GitHub Annotations
-#        ruff --format=github --target-version=py37 .
+
         
     - if: ${{ matrix.os  == 'ubuntu-latest'}}
       run: ./build.sh
     - if: ${{ matrix.os  == 'windows-latest'}}
       run: ./build.bat
+
+
+  test:
+    runs-on: ${{ matrix.os }}
+    needs: build
+
+    strategy:
+      matrix:
+        python-version: ["py37", "py38", "py39", "py310", "py311"]
+        os: [ubuntu-latest, windows-latest]
+
+    
+    steps:
+      - name: Test with pytest
+        continue-on-error: true
+        run: |
+          pip install -e .
+          pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=librir tests/python -m "not thermavip"  | tee pytest-coverage.txt
+
+      - name: Pytest coverage comment
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          pytest-coverage-path: ./pytest-coverage.txt
+          junitxml-path: ./pytest.xml
+
+      - name: Lint with ruff
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          ruff --format=github --select=E9,F63,F7,F82 --target-version=${{ matrix.python-version }} .
+          # default set of ruff rules with GitHub Annotations
+          ruff --format=github --target-version=${{ matrix.python-version }} .
