@@ -40,5 +40,5 @@ jobs:
             python -m pip install --upgrade pip              
       
               
-        - name: Build Linux
+        - name: Build on Linux
           run: ./build.sh
