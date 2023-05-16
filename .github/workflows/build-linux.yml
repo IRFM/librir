@@ -7,6 +7,10 @@ on:
  #   branches: [ "main" ]
   workflow_dispatch:
   workflow_call:
+    inputs:
+      python-version:
+        required: true
+        type: string
 
 
 jobs:
@@ -15,11 +19,6 @@ jobs:
 
     build-linux:
       needs: build-ffmpeg
-      strategy:
-        matrix:
-          # python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
-          # os: [ubuntu-latest, windows-latest]
-          python-version: ["3.9"]
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v3
@@ -37,11 +36,11 @@ jobs:
         #   with:
         #     name: 3rd_64
 
-        - name: Set up Python ${{ matrix.python-version }}
+        - name: Set up Python ${{ inputs.python-version }}
           
           uses: actions/setup-python@v4
           with:
-            python-version: ${{ matrix.python-version }}
+            python-version: ${{ inputs.python-version }}
 
         - name: Install python dependencies
           run: |
