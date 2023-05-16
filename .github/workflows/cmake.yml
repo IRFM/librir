@@ -12,17 +12,35 @@ env:
   BUILD_TYPE: Release
 
 jobs:
+
+  build-ffmpeg:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Cache Dependencies
+        id: cache-dependencies
+        uses: actions/cache@v3
+        with:
+          path: 3rd_64
+          key: ${{ github.ref }}-3rd_64
+
+      - if: ${{ (steps.cache-dependencies.outputs.cache-hit != 'true') }}
+        run: ./configure_ffmpeg
+
   build:
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
     runs-on: ${{ matrix.os }}
+    needs: build-ffmpeg
+
     strategy:
       matrix:
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
         os: [ubuntu-latest, windows-latest]
         # python-version: ["3.9"]
-
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
@@ -50,10 +68,6 @@ jobs:
 #        ruff --format=github --select=E9,F63,F7,F82 --target-version=py37 .
 #        # default set of ruff rules with GitHub Annotations
 #        ruff --format=github --target-version=py37 .
-
-    - name: Build FFMPEG
-      if: ${{ (steps.cache-dependencies.outputs.cache-hit != 'true') && ( matrix.os  == 'ubuntu-latest') }}
-      run: ./configure_ffmpeg
         
     - if: ${{ matrix.os  == 'ubuntu-latest'}}
       run: ./build.sh
