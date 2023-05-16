@@ -82,12 +82,12 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Cache Build
-      id: cache-build
-      uses: actions/cache@v3
-      with:
-        path: build
-        key: ${{ github.ref }}-build
+    # - name: Cache Build
+    #   id: cache-build
+    #   uses: actions/cache@v3
+    #   with:
+    #     path: build
+    #     key: ${{ github.ref }}-build
     
     - name: Set up Python ${{ matrix.python-version }}
       
@@ -135,6 +135,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install ruff pytest pytest-cov
+          ls -l
           pip install -e build/install
 
       - name: Test with pytest
