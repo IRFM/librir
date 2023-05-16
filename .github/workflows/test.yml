@@ -43,7 +43,7 @@ jobs:
               rm -r librir 
     
           - name: Test with pytest
-            continue-on-error: true
+            continue-on-error: false
             run: |
               pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=librir tests/python -m "not thermavip"  | tee pytest-coverage.txt
     
