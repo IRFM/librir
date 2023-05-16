@@ -29,8 +29,8 @@ jobs:
         run: ./configure_ffmpeg
 
 
-      - name: Archive ffmpeg compilation artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          path: 3rd_64
-          name: 3rd_64
+      # - name: Archive ffmpeg compilation artifacts
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     path: 3rd_64
+      #     name: 3rd_64

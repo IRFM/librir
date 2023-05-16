@@ -24,10 +24,18 @@ jobs:
       steps:
         - uses: actions/checkout@v3
 
-        - name: Download ffmpeg artifact
-          uses: actions/download-artifact@v3
+
+        - name: Cache Dependencies
+          id: cache-dependencies
+          uses: actions/cache@v3
           with:
-            name: 3rd_64
+            path: 3rd_64
+            key: ${{ github.ref }}-3rd_64
+
+        # - name: Download ffmpeg artifact
+        #   uses: actions/download-artifact@v3
+        #   with:
+        #     name: 3rd_64
 
         - name: Set up Python ${{ matrix.python-version }}
           
