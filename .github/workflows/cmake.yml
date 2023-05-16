@@ -121,9 +121,11 @@ jobs:
 
     
     steps:
+      - uses: actions/checkout@v3
       - uses: actions/download-artifact@v3
         with:
           name: install-librir
+          path: build/install
 
       - name: Set up Python ${{ matrix.python-version }}
     
@@ -136,6 +138,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install ruff pytest pytest-cov
           ls -l
+          ls -l build/install
           pip install -e build/install
 
       - name: Test with pytest
