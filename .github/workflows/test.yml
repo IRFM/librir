@@ -2,10 +2,14 @@ name: librir test workflow
 
 on:
   workflow_call:
-    # inputs:
-    #   librir-package:
-    #     required: true
-    #     type: string
+    inputs:
+      python-version:
+        required: true
+        type: string
+      os:
+        required: true
+        type: string
+      
     # secrets:
     #   token:
     #     required: true
@@ -13,15 +17,8 @@ on:
 
 jobs:
     test:
-        runs-on: ${{ matrix.os }}
+        runs-on: ${{ inputs.os }}
         # needs: [build-linux, build-windows]
-    
-        strategy:
-          matrix:
-            # python-version: ["py37", "py38", "py39", "py310", "py311"]
-            # python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
-            python-version: ["3.9"]
-            os: [ubuntu-latest, windows-latest]
     
         
         steps:
@@ -43,9 +40,9 @@ jobs:
               pytest-coverage-path: ./pytest-coverage.txt
               junitxml-path: ./pytest.xml
     
-          - name: Lint with ruff
-            run: |
-              # stop the build if there are Python syntax errors or undefined names
-              ruff --format=github --select=E9,F63,F7,F82 --target-version=${{ matrix.python-version }} .
-              # default set of ruff rules with GitHub Annotations
-              ruff --format=github --target-version=${{ matrix.python-version }} .
+        #   - name: Lint with ruff
+        #     run: |
+        #       # stop the build if there are Python syntax errors or undefined names
+        #       ruff --format=github --select=E9,F63,F7,F82 --target-version=${{ inputs.python-version }} .
+        #       # default set of ruff rules with GitHub Annotations
+        #       ruff --format=github --target-version=${{ inputs.python-version }} .
