@@ -14,11 +14,8 @@ on:
 
 
 jobs:
-    build-ffmpeg:
-      uses: IRFM/librir/.github/workflows/build-ffmpeg.yml@dubusster-patch-2
 
     build-linux:
-      needs: build-ffmpeg
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v3
