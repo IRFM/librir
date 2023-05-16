@@ -294,9 +294,9 @@ class IRMovie(object):
             calibration = 0
         if self.times is None:
             self.times = np.array(list(self.timestamps), dtype=np.float64)
-        c = calibration or self.calibration
+        self.calibration = calibration or self.calibration
         index = np.argmin(np.abs(self.times - time))
-        res = load_image(self.handle, int(index), int(c))
+        res = load_image(self.handle, int(index), self._calibration_index)
         self._frame_attributes_d[int(index)] = get_attributes(self.handle)
         # self.frame_attributes =get_attributes(self.handle)
         return res
