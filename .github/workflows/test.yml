@@ -33,7 +33,7 @@ jobs:
               python -m pip install --upgrade pip
               pip install ruff pytest pytest-cov
               pip install -e build/install
-              mv -R librir librir_
+              mv -r librir librir_
     
           - name: Test with pytest
             continue-on-error: true
