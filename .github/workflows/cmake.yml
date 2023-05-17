@@ -11,7 +11,7 @@ on:
 
 jobs:
     build-ffmpeg:
-      uses: IRFM/librir/.github/workflows/build-ffmpeg.yml@dubusster-patch-2
+      uses: ./.github/workflows/build-ffmpeg.yml
       
     build-linux:
         needs: build-ffmpeg
@@ -20,7 +20,7 @@ jobs:
             # python-version: ["py37", "py38", "py39", "py310", "py311"]
             python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
             # python-version: ["3.9"]
-        uses: IRFM/librir/.github/workflows/build-linux.yml@dubusster-patch-2
+        uses: ./.github/workflows/build-linux.yml
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -31,7 +31,7 @@ jobs:
           # python-version: ["py37", "py38", "py39", "py310", "py311"]
             python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
           # python-version: ["3.9"]
-        uses: IRFM/librir/.github/workflows/build-windows.yml@dubusster-patch-2
+        uses: ./.github/workflows/build-windows.yml
         with:
           python-version: ${{ matrix.python-version }} 
       
@@ -42,7 +42,7 @@ jobs:
             python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
           # python-version: ["3.9"]
         needs: build-linux
-        uses: IRFM/librir/.github/workflows/test.yml@dubusster-patch-2
+        uses: ./.github/workflows/test.yml
         with:
           python-version: ${{ matrix.python-version }} 
           os: ubuntu-latest
@@ -54,7 +54,7 @@ jobs:
           python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
         # python-version: ["3.9"]
       needs: build-windows
-      uses: IRFM/librir/.github/workflows/test.yml@dubusster-patch-2
+      uses: ./.github/workflows/test.yml
       with:
         python-version: ${{ matrix.python-version }} 
         os: windows-latest
