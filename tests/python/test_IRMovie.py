@@ -6,6 +6,7 @@ import pytest
 from librir import IRMovie
 from librir.video_io.IRMovie import CalibrationNotFound
 
+
 @pytest.mark.instanstiation
 def test_IRMovie_with_filename_as_input(filename):
     mov = IRMovie.from_filename(filename)
@@ -62,7 +63,9 @@ def test_show_movie_on_thermavip(filename):
 @pytest.mark.h264
 def test_save_movie_to_h264_from_slice(movie: IRMovie):
     # mov = IRMovie.from_filename(filename)
-    start_image = random.choice(range(movie.images - 1 if movie.images > 1 else movie.images))
+    start_image = random.choice(
+        range(movie.images - 1 if movie.images > 1 else movie.images)
+    )
     dest_filename = f"{movie.filename}_scratch"
 
     movie.to_h264(dest_filename, start_img=start_image)
@@ -71,20 +74,21 @@ def test_save_movie_to_h264_from_slice(movie: IRMovie):
 
 
 def test_set_calibration(movie: IRMovie):
-    movie.calibration = 'DL'
+    movie.calibration = "DL"
     assert movie._calibration_index == 0
     with pytest.raises(CalibrationNotFound):
-        movie.calibration = 'T'
-        
-    assert movie.calibration == 'DL'
+        movie.calibration = "T"
+
+    assert movie.calibration == "DL"
     assert movie._calibration_index == 0
-    
+
     with pytest.raises(CalibrationNotFound):
         movie.calibration = 1
 
+
 @pytest.mark.accessors
 def test_load_pos_with_DL(movie: IRMovie):
-    
+
     for i in range(movie.images):
         movie.load_pos(i)
         movie.load_pos(i, 0)

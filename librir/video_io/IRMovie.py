@@ -58,6 +58,7 @@ logger.setLevel(logging.INFO)
 class IncoherentMetadata(Exception):
     pass
 
+
 class CalibrationNotFound(Exception):
     pass
 
@@ -170,26 +171,31 @@ class IRMovie(object):
     @property
     def calibration(self):
         return list(self._calibration_nickname_mapper.keys())[self._calibration_index]
-        
+
     @calibration.setter
     def calibration(self, value: Union[str, int]):
-        searching_keys = self.calibrations+list(self._calibration_nickname_mapper.keys())
+        searching_keys = self.calibrations + list(
+            self._calibration_nickname_mapper.keys()
+        )
         _calibrations = self.calibrations
         if isinstance(value, int):
             if value >= len(_calibrations):
-                raise CalibrationNotFound(f"Available calibrations : {self.calibrations}." 
-                                          "Calibration index out of range")
-                
+                raise CalibrationNotFound(
+                    f"Available calibrations : {self.calibrations}."
+                    "Calibration index out of range"
+                )
+
             self._calibration_index = value
             return
-        
+
         if value not in searching_keys:
             raise CalibrationNotFound(f"Available calibrations : {self.calibrations}")
         try:
-            self._calibration_index = list(self._calibration_nickname_mapper).index(value)
+            self._calibration_index = list(self._calibration_nickname_mapper).index(
+                value
+            )
         except ValueError as e:
             raise CalibrationNotFound(f"calibration {value} is not registered")
-        
 
     def __enter__(self):
         """
@@ -223,12 +229,11 @@ class IRMovie(object):
                 logger.warning(p_exc)
 
             self.__tempfile__ = None
-            
-            
+
     @property
     def registration_file(self) -> Path:
         """
-        Returns the registration file name for this camera, and tries to download it 
+        Returns the registration file name for this camera, and tries to download it
         from ARCADE if not already done.
         """
 
@@ -311,7 +316,7 @@ class IRMovie(object):
         """Returns the image at given position using given calibration index (integer)"""
         if calibration is None:
             calibration = 0
-            
+
         self.calibration = calibration
         res = load_image(self.handle, pos, self._calibration_index)
         self._frame_attributes_d[pos] = get_attributes(self.handle)

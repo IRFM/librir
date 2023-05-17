@@ -31,7 +31,7 @@ def generate_mock_movie_data_uniform(*shape):
 
     dl = np.zeros(shape, dtype=np.uint16)
     tis = np.zeros(shape, dtype=np.uint16)
-    step = 2 ** 13
+    step = 2**13
     if n_images > 1:
         step /= n_images - 1
 
@@ -66,10 +66,10 @@ def generate_constant_mask_array(*shape):
 
 def generate_random_movie_data(n_rows, n_columns, n_images):
     dl = np.random.randint(
-        0, (2 ** 13), size=(n_images, n_rows, n_columns), dtype=np.uint16
+        0, (2**13), size=(n_images, n_rows, n_columns), dtype=np.uint16
     )  # >> 16  & (2**13)-1
     tis = np.random.randint(
-        0, (2 ** 3) - 1, size=(n_images, n_rows, n_columns), dtype=np.uint16
+        0, (2**3) - 1, size=(n_images, n_rows, n_columns), dtype=np.uint16
     )  # >> 29 & (2**3)-1
 
     data = dl | (tis << 13)
