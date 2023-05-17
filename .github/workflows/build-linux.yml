@@ -1,0 +1,54 @@
+name: Build on Linux
+on: 
+
+ # push:
+ #   branches: [ "main" ]
+ # pull_request:
+ #   branches: [ "main" ]
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      python-version:
+        required: true
+        type: string
+
+
+jobs:
+
+    build-linux:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v3
+
+
+        - name: Cache Dependencies
+          id: cache-dependencies
+          uses: actions/cache@v3
+          with:
+            path: 3rd_64
+            key: ${{ github.ref }}-3rd_64
+
+        # - name: Download ffmpeg artifact
+        #   uses: actions/download-artifact@v3
+        #   with:
+        #     name: 3rd_64
+
+        - name: Set up Python ${{ inputs.python-version }}
+          
+          uses: actions/setup-python@v4
+          with:
+            python-version: ${{ inputs.python-version }}
+
+        - name: Install python dependencies
+          run: |
+            python -m pip install --upgrade pip              
+      
+              
+        - name: Build on Linux
+          run: ./build.sh
+
+        - name: Upload artifact
+          uses: actions/upload-artifact@v3
+          with:
+            name: install-librir-ubuntu-latest
+            path: build/install
