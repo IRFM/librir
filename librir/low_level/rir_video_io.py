@@ -334,13 +334,7 @@ def flip_camera_calibration(camera, flip_rl, flip_ud):
 
 def calibration_files(camera):
     """
-    Returns the calibration file names for give camera.
-    This function only works for WEST IR cameras and returns:
-     - The lut file name,
-     - The optical temperature file name,
-     - The fut transmission file name,
-     - The hublot transmission file name,
-     - The mir transmission file name.
+    Returns the calibration file names for given camera.
     """
     dst = np.zeros((100), dtype="c")
     dstSize = np.zeros((1), dtype="i")
@@ -359,7 +353,8 @@ def calibration_files(camera):
         )
     if ret == -1:
         raise RuntimeError("An error occured while calling 'calibration_files'")
-    return toString(dst).split("\n")
+    cfiles = toString(dst).split("\n")
+    return cfiles
 
 
 def get_attributes(camera):

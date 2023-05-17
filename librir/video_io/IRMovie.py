@@ -9,6 +9,13 @@ import pandas as pd
 import numpy as np
 from librir.tools.utils import init_thermavip, unbind_thermavip_shared_mem
 from librir.tools.FileAttributes import FileAttributes
+from typing import List, Dict
+
+from librir.low_level.rir_video_io import (
+    enable_motion_correction,
+    load_motion_correction_file,
+    motion_correction_enabled,
+)
 
 from ..low_level.rir_video_io import (
     calibrate_image,
@@ -188,6 +195,42 @@ class IRMovie(object):
                 logger.warning(p_exc)
 
             self.__tempfile__ = None
+            
+            
+    @property
+    def registration_file(self) -> Path:
+        """
+        Returns the registration file name for this camera, and tries to download it 
+        from ARCADE if not already done.
+        """
+
+        return self._registration_file
+
+    @registration_file.setter
+    def registration_file(self, value) -> None:
+        value = Path(value)
+        if not value.exists():
+            raise FileNotFoundError(f"{value} doesn't exist")
+        self._registration_file = value
+        load_motion_correction_file(self.handle, self._registration_file)
+
+    @property
+    def registration(self) -> bool:
+        """
+        Returns True is video registration is activated, false otherwise
+        """
+        if self._registration_file.exists():
+            return motion_correction_enabled(self.handle)
+        return False
+
+    @registration.setter
+    def registration(self, value: bool) -> None:
+        """
+        Enable/disable video registration.
+        Throws if the registration file cannot be found for this video.
+        """
+
+        enable_motion_correction(self.handle, bool(value))
 
     def flip_calibration(self, flip_rl, flip_ud):
         flip_camera_calibration(self.handle, flip_rl, flip_ud)
@@ -251,9 +294,9 @@ class IRMovie(object):
             calibration = 0
         if self.times is None:
             self.times = np.array(list(self.timestamps), dtype=np.float64)
-        c = calibration or self.calibration
+        self.calibration = calibration or self.calibration
         index = np.argmin(np.abs(self.times - time))
-        res = load_image(self.handle, int(index), int(c))
+        res = load_image(self.handle, int(index), self._calibration_index)
         self._frame_attributes_d[int(index)] = get_attributes(self.handle)
         # self.frame_attributes =get_attributes(self.handle)
         return res
@@ -272,7 +315,7 @@ class IRMovie(object):
         return Path(get_filename(self.handle))  # local filename
 
     @property
-    def calibration_files(self):
+    def calibration_files(self) -> List[str]:
         try:
             return calibration_files(self.handle)
         except:
@@ -385,11 +428,11 @@ class IRMovie(object):
         :return:
         """
         if self.calibration == "Digital Level":
-            tis = (self.payload & (2 ** 16 - 2 ** 13)) >> 13
+            tis = (self.payload & (2**16 - 2**13)) >> 13
         else:
             old_calib = self.calibration
             self.calibration = "DL"
-            tis = (self.payload & (2 ** 16 - 2 ** 13)) >> 13
+            tis = (self.payload & (2**16 - 2**13)) >> 13
             self.calibration = old_calib
         return tis
 
@@ -488,6 +531,84 @@ class IRMovie(object):
             return self.filename
         # else:
         #     logger.info("'{}' is not a PCR file".format(self.filename))
+
+    def to_h264(
+        self,
+        dst_filename,
+        start_img=0,
+        count=-1,
+        clevel=8,
+        attrs=None,
+        times=None,
+        frame_attributes=None,
+        cthreads=8,
+        cfiles: List[str] = None,
+    ):
+        """
+        Exports movie into h264 file.
+        @param dst_filename: destination file
+        @param start_img: image index to start export
+        @param count: number of frame to export
+        @param clevel: compression level
+        @return:
+        """
+        # set image count
+        if count < 0:
+            count = self.images
+        if start_img + count > self.images:
+            count = self.images - start_img
+
+        logger.info(
+            "Start saving in {} from {} to {}".format(
+                dst_filename, start_img, start_img + count
+            )
+        )
+
+        # retrieve attributes
+        if attrs is None:
+            attrs = self.attributes
+
+        # adding custom attribute --> must be a dict[str]=str
+        # attrs.update(self.additional_attributes)
+
+        logger.info("Found keys {}".format(list(attrs.keys())))
+
+        # # set calibration files (if needed)
+        # if cfiles is None:
+        #     cfiles = []
+
+        # check if file is saved in temperature
+        try:
+            attrs.pop("MIN_T")
+            attrs.pop("MIN_T_HEIGHT")
+            attrs.pop("STORE_IT")
+            logger.info("Images saved in temperature, switch to DL")
+        except KeyError:
+            logger.info("Images saved in DL")
+            pass
+
+        h, w = self.image_size
+        if times is None:
+            times = list(self.timestamps)
+        with IRSaver(dst_filename, w, h, h, clevel) as s:
+            s.set_global_attributes(attrs)
+            s.set_parameter("threads", cthreads)
+            saved = 0
+            for i in range(start_img, start_img + count):
+                img = self.load_pos(i, 0)
+
+                _frame_attributes = (
+                    self.frame_attributes
+                    if frame_attributes is None
+                    else frame_attributes[i]
+                )
+
+                s.add_image(img, times[i] * 1e9, attributes=_frame_attributes)
+
+                saved += 1
+                if saved % 100 == 0:
+                    logger.info("Saved {} images...".format(saved))
+            logger.info("{} image(s) saved".format(count))
 
     def __repr__(self):
         return "IRMovie({})".format(self.filename)

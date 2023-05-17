@@ -24,7 +24,7 @@ class IRSaver(object):
     """
     Small class to save IR videos in compressed h264 or hevc format and using MP4 container.
     It generates MP4 video files containing IR images on 16 bits per pixel, and any kind of global/frame attributes (see FileAttributes class for more details).
-    
+
     The output video is compressed with either H264 or HEVC video codec (based onf ffmpeg library) using its lossless compression mode. The potential losses are
     added by the IRSaver itself in order to maximize the video compressibility. The optional temperature losses are bounded and cannot be exceeded.
 
@@ -34,7 +34,7 @@ class IRSaver(object):
     to 8 (highest compression) with a default value of 0.
 
     The file format supports global attributes as well as frame attributes on the form of a dict.
-    
+
     This class should not be used to mix lossy and lossless frames within the same video file.
     """
 
