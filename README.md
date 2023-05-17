@@ -1,4 +1,5 @@
-[![build](https://github.com/IRFM/librir/actions/workflows/cmake.yml/badge.svg)](https://github.com/IRFM/librir/actions/workflows/cmake.yml)
+[![Build on Linux](https://github.com/IRFM/librir/actions/workflows/build-linux.yml/badge.svg)](https://github.com/IRFM/librir/actions/workflows/build-linux.yml)
+[![Build on Windows](https://github.com/IRFM/librir/actions/workflows/build-windows.yml/badge.svg?branch=main)](https://github.com/IRFM/librir/actions/workflows/build-windows.yml)
 
 # Librir
 
