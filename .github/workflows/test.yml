@@ -52,6 +52,9 @@ jobs:
             with:
               pytest-coverage-path: ./pytest-coverage.txt
               junitxml-path: ./pytest.xml
+
+          - name: Coverage Badge
+            uses: tj-actions/coverage-badge-py@v2
     
         #   - name: Lint with ruff
         #     run: |
