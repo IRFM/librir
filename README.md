@@ -2,11 +2,11 @@
 
 **Librir** is divided into 4 small libraries:
 
- - [tools](docs/tools.md): provides miscellaneous functions for file/folder management, datetime/string manipulation, etc...
- - [geometry](docs/geometry.md): provides various functions to manipulate 2D polygons.
- - [signal_processing](docs/signal_processing.md): provides various signal/image processing algorithms. 
- - [video_io](docs/video_io.md): record and read back compressed IR video files (lossy or lossless).
- - [registration](docs/registration.md) (Python only): motion correction within infrared videos.
+ - [tools](https://github.com/IRFM/librir/blob/main/docs/tools.md): provides miscellaneous functions for file/folder management, datetime/string manipulation, etc...
+ - [geometry](https://github.com/IRFM/librir/blob/main/docs/geometry.md): provides various functions to manipulate 2D polygons.
+ - [signal_processing](https://github.com/IRFM/librir/blob/main/docs/signal_processing.md): provides various signal/image processing algorithms. 
+ - [video_io](https://github.com/IRFM/librir/blob/main/docs/video_io.md): record and read back compressed IR video files (lossy or lossless).
+ - [registration](https://github.com/IRFM/librir/blob/main/docs/registration.md) (Python only): motion correction within infrared videos.
 
 **Librir** can be used from C, C++ or Python, and is known to work on Windows (compiled with MingW or Visual Studio) and Linux (compiled with `gcc`).
 
