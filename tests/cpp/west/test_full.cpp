@@ -1,13 +1,12 @@
 #include "h264.h"
-#include "IRLoader.h"
-#include "west.h"
+
 #include "video_io.h"
 #include "geometry.h"
 #include "Primitives.h"
 #include "ReadFileChunk.h"
-#include "TopC5.h"
+#include "IRFileLoader.h"
 #include "tools.h"
-#include "TemporaryDir.h"
+
 #include "HCCLoader.h"
 
 #include <iostream>
@@ -18,6 +17,13 @@ using namespace rir;
 
 int test_full(int argc, char** const argv)
 {
+	{
+		rir::IRFileLoader l;
+		bool ok = l.open("C:/Users/VM213788/Desktop/tmpf602soaj");
+		std::vector<unsigned short> img(640 * 515);
+		ok = l.readImage(0, 0, img.data());
+		bool stop = true;
+	}
 	std::vector<unsigned short> img(640 * 512);
 	std::ifstream fin("C:/src/test_build/librir/video.bin", std::ios::binary);
 	if (!fin)

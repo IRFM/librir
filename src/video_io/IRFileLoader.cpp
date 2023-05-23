@@ -15,6 +15,8 @@
 #include "IRFileLoader.h"
 #include "BaseCalibration.h"
 #include "h264.h"
+#include <mutex>
+
 #include "HCCLoader.h"
 #include "ZFile.h"
 #include "Log.h"
@@ -31,8 +33,19 @@ namespace rir
 
 	std::string serializeTimePoint(const time_point& time, const std::string& format)
 	{
-		std::time_t tt = std::chrono::system_clock::to_time_t(time);
-		std::tm tm = *std::gmtime(&tt); //GMT (UTC)
+		static std::mutex mu;
+		std::tm* tmp = NULL;
+		std::tm tm;
+
+		{
+			std::unique_lock<std::mutex> lock(mu);
+			std::time_t tt = std::chrono::system_clock::to_time_t(time);
+			tmp = std::gmtime(&tt);
+			// Add check on  std::gmtime result for invalid time point
+			if (!tmp)
+				return std::string();
+			tm = *tmp; //GMT (UTC)
+		}
 		//std::tm tm = *std::localtime(&tt); //Locale time-zone, usually UTC by default.
 		std::stringstream ss;
 		ss << std::put_time(&tm, format.c_str());
@@ -1140,8 +1153,10 @@ bool IRFileLoader::readImage(int pos, int calibration, unsigned short * pixels)
 		return true;
 	}
 	
+
 	if (bin_read_image(m_data->file, pos, pixels, &time) != 0)
 		return false;
+
 
 	if (m_data->initOpticalTemperature == -1 && m_data->calib)
 		m_data->initOpticalTemperature = m_data->calib->opticalTemperature();
