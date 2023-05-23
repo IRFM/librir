@@ -11,6 +11,7 @@ on:
       python-version:
         required: true
         type: string
+        default: "3.11"
 
 
 jobs:
