@@ -1,20 +1,25 @@
 name: Build on Linux
 on: 
 
- # push:
- #   branches: [ "main" ]
+  push:
+    branches: [ "main" ]
  # pull_request:
  #   branches: [ "main" ]
   workflow_dispatch:
+      inputs:
+        python-version:
+          required: false
+          type: string
+          default: '3.11'
+          
   workflow_call:
     inputs:
       python-version:
         required: true
         type: string
 
-
 jobs:
-
+    
     build-linux:
       runs-on: ubuntu-latest
       steps:
