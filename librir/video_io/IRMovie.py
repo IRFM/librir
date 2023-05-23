@@ -9,6 +9,13 @@ import pandas as pd
 import numpy as np
 from librir.tools.utils import init_thermavip, unbind_thermavip_shared_mem
 from librir.tools.FileAttributes import FileAttributes
+from typing import List, Dict, Union
+
+from librir.low_level.rir_video_io import (
+    enable_motion_correction,
+    load_motion_correction_file,
+    motion_correction_enabled,
+)
 from typing import List, Dict
 
 from librir.low_level.rir_video_io import (
@@ -52,6 +59,10 @@ class IncoherentMetadata(Exception):
     pass
 
 
+class CalibrationNotFound(Exception):
+    pass
+
+
 def create_pcr_header(rows, columns, frequency=50, bits=16):
     pcr_header = np.zeros((256,), dtype=np.uint32)
     pcr_header[2] = columns
@@ -68,7 +79,7 @@ class IRMovie(object):
     _header_offset = 1024
     __tempfile__ = None
     handle = -1
-
+    _calibration_nickname_mapper = {"DL": "Digital Level"}
     _roi_result_line = {"CEDIP": 240, "WEST": 512, "NIT": 256}
 
     _SHAPES = {
@@ -151,17 +162,40 @@ class IRMovie(object):
 
         try:
             self.calibration = "T"
-        except (IndexError, ValueError):
+        except (IndexError, ValueError, CalibrationNotFound):
             logger.debug(
-                f"There is no temperature calibration. Switching back to Digital Level"
+                "There is no temperature calibration. Switching back to Digital Level"
             )
+            self.calibration = "DL"
 
-        # if not ('Type' in self.attributes):
-        #     d = self.attributes
-        #     # inv_shapes = {v: k for k, v in self._SHAPES.items()}
-        #     d['Type'] = self._SHAPES[self.image_size].encode('utf8')
-        #     self.attributes = d
-        #     # self._file_attributes.flush()
+    @property
+    def calibration(self):
+        return list(self._calibration_nickname_mapper.keys())[self._calibration_index]
+
+    @calibration.setter
+    def calibration(self, value: Union[str, int]):
+        searching_keys = self.calibrations + list(
+            self._calibration_nickname_mapper.keys()
+        )
+        _calibrations = self.calibrations
+        if isinstance(value, int):
+            if value >= len(_calibrations):
+                raise CalibrationNotFound(
+                    f"Available calibrations : {self.calibrations}."
+                    "Calibration index out of range"
+                )
+
+            self._calibration_index = value
+            return
+
+        if value not in searching_keys:
+            raise CalibrationNotFound(f"Available calibrations : {self.calibrations}")
+        try:
+            self._calibration_index = list(self._calibration_nickname_mapper).index(
+                value
+            )
+        except ValueError as e:
+            raise CalibrationNotFound(f"calibration {value} is not registered")
 
     def __enter__(self):
         """
@@ -195,12 +229,11 @@ class IRMovie(object):
                 logger.warning(p_exc)
 
             self.__tempfile__ = None
-            
-            
+
     @property
     def registration_file(self) -> Path:
         """
-        Returns the registration file name for this camera, and tries to download it 
+        Returns the registration file name for this camera, and tries to download it
         from ARCADE if not already done.
         """
 
@@ -283,7 +316,9 @@ class IRMovie(object):
         """Returns the image at given position using given calibration index (integer)"""
         if calibration is None:
             calibration = 0
-        res = load_image(self.handle, pos, calibration)
+
+        self.calibration = calibration
+        res = load_image(self.handle, pos, self._calibration_index)
         self._frame_attributes_d[pos] = get_attributes(self.handle)
         # self.frame_attributes = get_attributes(self.handle)
         return res

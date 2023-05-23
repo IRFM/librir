@@ -1,5 +1,5 @@
 import logging
-import os
+
 import sys
 from pathlib import Path
 
@@ -13,11 +13,8 @@ logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-pulse = 56927
 base = Path(thismodule.__file__).parent
 
-ROWS = 512
-COLUMNS = 640
 IMAGES = 10
 N_TIS = 7
 DL_MAX_VALUE = 8192
@@ -33,7 +30,7 @@ def generate_mock_movie_data_uniform(*shape):
     tis = np.zeros(shape, dtype=np.uint16)
     step = 2**13
     if n_images > 1:
-        step /= n_images - 1
+        step /= n_images - 2
 
     for i in range(n_images):
         tis[i] = i % N_TIS
@@ -67,14 +64,15 @@ def generate_random_movie_data(n_rows, n_columns, n_images):
 VALID_3D_SHAPES = [
     (1, 512, 640),
     (10, 512, 640),
-    (10, 515, 640),
+    (10, 515, 640),  # pb
     (10, 240, 320),
-    (10, 243, 320),
+    (10, 243, 320),  # pb
     (10, 256, 320),
     (10, 259, 320),
 ]
 VALID_2D_SHAPES = [
     (512, 640),
+    (515, 640),
 ]
 
 VALID_SHAPES = VALID_2D_SHAPES + VALID_3D_SHAPES
@@ -83,8 +81,6 @@ INVALID_SHAPES = [
     (512,),
     (512, 640, 5, 2),
 ]
-
-
 
 
 VALID_UNIFORM_2D_NUMPY_ARRAYS = [
@@ -106,41 +102,41 @@ INVALID_UNIFORM_NUMPY_ARRAYS = [
 VALID_MASKS = [generate_constant_mask_array(*shape) for shape in VALID_3D_SHAPES]
 
 
-
 # @pytest.fixture(scope="module")
 # def uniform_movies():
 #     return [IRMovie.from_numpy_array(arr) for arr in VALID_UNIFORM_NUMPY_ARRAYS]
-
 
 
 @pytest.fixture(scope="session", params=VALID_SHAPES)
 def array(request):
     shape = request.param
     yield generate_mock_movie_data_uniform(*shape)
-    
+
+
 @pytest.fixture(scope="session", params=VALID_3D_SHAPES)
 def valid_3d_array(request):
     shape = request.param
     yield generate_mock_movie_data_uniform(*shape)
-    
-    
+
+
 @pytest.fixture(scope="session", params=INVALID_SHAPES)
 def bad_array(request):
     shape = request.param
     yield generate_mock_movie_data_uniform(*shape)
-    
+
 
 @pytest.fixture(scope="session", params=VALID_2D_SHAPES)
 def valid_2D_array(request):
     shape = request.param
     yield generate_mock_movie_data_uniform(*shape)
 
+
 @pytest.fixture(scope="session")
 def movie(array):
-    return IRMovie.from_numpy_array(array)
+    with IRMovie.from_numpy_array(array) as mov:
+        yield mov
+
 
 @pytest.fixture(scope="session")
 def filename(movie):
     return movie.filename
-
-# filenames = pytest.mark.parametrize("filenames", [mov.filename for mov in uniform_movies])

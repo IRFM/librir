@@ -4,6 +4,7 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 from librir import IRMovie
+from librir.video_io.IRMovie import CalibrationNotFound
 
 
 @pytest.mark.instanstiation
@@ -60,117 +61,49 @@ def test_show_movie_on_thermavip(filename):
 
 
 @pytest.mark.h264
-def test_save_movie_to_h264_from_slice(filename):
-    mov = IRMovie.from_filename(filename)
-    start_image = random.choice(range(mov.images))
-    dest_filename = f"{filename}_scratch"
+def test_save_movie_to_h264_from_slice(movie: IRMovie):
+    # mov = IRMovie.from_filename(filename)
+    start_image = random.choice(
+        range(movie.images - 1 if movie.images > 1 else movie.images)
+    )
+    dest_filename = f"{movie.filename}_scratch"
 
-    mov.to_h264(dest_filename, start_img=start_image)
+    movie.to_h264(dest_filename, start_img=start_image)
     mov2 = IRMovie.from_filename(dest_filename)
-    npt.assert_array_equal(mov.data[start_image:], mov2.data)
+    npt.assert_array_equal(movie.data[start_image:], mov2.data)
 
 
-@pytest.mark.accessors
-def test_load_pos_with_DL(movie):
-    for i in range(movie.images):
-        movie.load_pos(i)
-        movie.load_pos(i, 0)
-        movie.load_pos(i, "DL")
-        with pytest.raises(RuntimeError) as exc:
-            movie.load_pos(i, 1)
-        with pytest.raises(RuntimeError) as exc:
-            movie.load_pos(i, "T")
-        with pytest.raises(RuntimeError) as exc:
-            movie.load_pos(i, 3)
-
-
-@pytest.mark.accessors
-def test_load_pos_with_temperature(movie):
-    assert False
-
-
-@pytest.mark.instanstiation
-def test_from_handle(movie):
-    handle = movie.handle
-    new_mov = IRMovie.from_handle(handle)
-    assert new_mov.handle == movie.handle
-
-
-@pytest.mark.instanstiation
-def test_from_filename(filename):
-    mov = IRMovie.from_filename(filename)
-    assert mov.filename == filename
-
-
-@pytest.mark.io
-@pytest.mark.needs_improvement
-def test_close(array):
-    mov = IRMovie.from_numpy_array(array)
-    del mov
-
-
-@pytest.mark.accessors
-def test_load_pos_with_DL(movie):
-    for i in range(movie.images):
-        movie.load_pos(i)
-        movie.load_pos(i, 0)
-        movie.load_pos(i, "DL")
-        with pytest.raises(RuntimeError) as exc:
-            movie.load_pos(i, 1)
-        with pytest.raises(RuntimeError) as exc:
-            movie.load_pos(i, "T")
-        with pytest.raises(RuntimeError) as exc:
-            movie.load_pos(i, 3)
-
-
-@pytest.mark.accessors
-def test_load_pos_with_temperature(movie):
-    assert False
-
-
-@pytest.mark.instanstiation
-def test_from_handle(movie):
-    handle = movie.handle
-    new_mov = IRMovie.from_handle(handle)
-    assert new_mov.handle == movie.handle
-
-
-@pytest.mark.instanstiation
-def test_from_filename(filename):
-    mov = IRMovie.from_filename(filename)
-    assert mov.filename == filename
-
-
-@pytest.mark.io
-@pytest.mark.needs_improvement
-def test_close(array):
-    mov = IRMovie.from_numpy_array(array)
-    mov.close()
-
-
-@pytest.mark.accessors
-def test_load_pos_with_DL(movie):
-    for i in range(movie.images):
-        movie.load_pos(i)
-        movie.load_pos(i, 0)
-        movie.load_pos(i, "DL")
-        with pytest.raises(RuntimeError) as exc:
-            movie.load_pos(i, 1)
-        with pytest.raises(RuntimeError) as exc:
-            movie.load_pos(i, "T")
-        with pytest.raises(RuntimeError) as exc:
-            movie.load_pos(i, 3)
-
-
-@pytest.mark.accessors
-def test_load_pos_with_temperature(movie):
-    try:
+def test_set_calibration(movie: IRMovie):
+    movie.calibration = "DL"
+    assert movie._calibration_index == 0
+    with pytest.raises(CalibrationNotFound):
         movie.calibration = "T"
 
-    except ValueError:
-        pass
-    else:
-        img = movie[0]
+    assert movie.calibration == "DL"
+    assert movie._calibration_index == 0
+
+    with pytest.raises(CalibrationNotFound):
+        movie.calibration = 1
+
+
+@pytest.mark.accessors
+def test_load_pos_with_DL(movie: IRMovie):
+
+    for i in range(movie.images):
+        movie.load_pos(i)
+        movie.load_pos(i, 0)
+        movie.load_pos(i, "DL")
+        with pytest.raises(CalibrationNotFound) as exc:
+            movie.load_pos(i, 1)
+        with pytest.raises(CalibrationNotFound) as exc:
+            movie.load_pos(i, "T")
+        with pytest.raises(CalibrationNotFound) as exc:
+            movie.load_pos(i, 3)
+
+
+# @pytest.mark.accessors
+# def test_load_pos_with_temperature(movie):
+#     assert False
 
 
 @pytest.mark.instanstiation

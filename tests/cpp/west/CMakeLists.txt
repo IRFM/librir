@@ -31,11 +31,11 @@ foreach (test ${TestsToRun})
 endforeach ()
 
 # add_executable(test_call_ts test_call_ts.cpp)
-add_dependencies(CommonCxxTests west)
+#add_dependencies(CommonCxxTests west)
 
 
 target_include_directories(CommonCxxTests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(CommonCxxTests west video_io tools geometry signal_processing)# ${FFMPEG_LIBS})
+target_link_libraries(CommonCxxTests  video_io tools geometry signal_processing)# ${FFMPEG_LIBS})
 
 # add_test(NAME test_call_ts 
 		 # WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/out
