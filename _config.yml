@@ -1,0 +1,7 @@
+theme: jekyll-theme-cayman
+show_downloads: true
+title: librir
+description: A C/C++/Python library dedicated to the manipulation of infrared videos
+github:
+  zip_url: https://github.com/IRFM/librir/zipball/main
+  tar_url: https://github.com/IRFM/librir/tarball/main
