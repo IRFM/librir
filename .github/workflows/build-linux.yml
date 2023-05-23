@@ -6,16 +6,20 @@ on:
  # pull_request:
  #   branches: [ "main" ]
   workflow_dispatch:
+      inputs:
+        python-version:
+          required: false
+          type: string
+          default: '3.11'
+          
   workflow_call:
     inputs:
       python-version:
-        required: false
+        required: true
         type: string
-        default: '3.11'
-
 
 jobs:
-
+    
     build-linux:
       runs-on: ubuntu-latest
       steps:
