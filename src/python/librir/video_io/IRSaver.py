@@ -7,7 +7,7 @@ Created on Mon Jan 13 17:53:46 2020
 
 from .. import low_level
 from ..low_level.misc import *
-from ..low_level.rir_video_io import (
+from .rir_video_io import (
     h264_open_file,
     h264_close_file,
     h264_set_parameter,

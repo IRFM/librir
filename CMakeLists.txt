@@ -131,10 +131,10 @@ install(DIRECTORY ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/
 		DESTINATION ${CMAKE_INSTALL_PREFIX}/librir/libs
 )
 
-# Perform this action to copy shared objects into python source folder (for devlopment purposes)
-install(DIRECTORY ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/
-		DESTINATION ${CMAKE_SOURCE_DIR}/librir/libs
-)
+# # Perform this action to copy shared objects into python source folder (for devlopment purposes)
+# install(DIRECTORY ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/
+# 		DESTINATION ${CMAKE_SOURCE_DIR}/src/python/librir/libs
+# )
 
 # Generate requirements.txt
 configure_file(requirements.txt.in requirements.txt @ONLY)

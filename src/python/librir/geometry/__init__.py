@@ -1,3 +1,9 @@
+import sys
+import os
+
+sys.path.insert(1, os.path.realpath(os.path.pardir))
+
+# import useful functions from rir_geometry
 from .rir_geometry import (
     polygon_interpolate,
     rdp_simplify_polygon,
@@ -8,11 +14,7 @@ from .rir_geometry import (
     minimum_area_bbox,
 )
 
-from .rir_tools import zstd_decompress, zstd_compress
-
 __all__ = [
-    "zstd_decompress",
-    "zstd_compress",
     "polygon_interpolate",
     "rdp_simplify_polygon",
     "rdp_simplify_polygon2",

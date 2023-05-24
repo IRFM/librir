@@ -3,7 +3,7 @@ import sys
 
 import numpy as np
 
-from .misc import _signal_processing, toCharP
+from ..low_level.misc import _signal_processing, toCharP
 
 
 def translate(image, dx, dy, strategy=str(), background=None):

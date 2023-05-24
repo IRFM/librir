@@ -8,7 +8,7 @@ Created on Mon Jan 13 17:53:46 2020
 import numpy as np
 from .. import low_level
 from ..low_level.misc import *
-from ..low_level.rir_tools import (
+from .rir_tools import (
     attrs_open_file,
     attrs_close,
     attrs_discard,

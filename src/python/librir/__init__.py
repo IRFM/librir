@@ -1,7 +1,13 @@
 # from .rir import *
 import logging
 
-from .low_level import rir_geometry, rir_signal_processing, rir_tools, rir_video_io
+from .tools import rir_tools
+
+from .signal_processing import rir_signal_processing
+
+from .geometry import rir_geometry
+
+from .video_io import rir_video_io
 from .signal_processing.BadPixels import BadPixels
 from .video_io.IRMovie import IRMovie
 from .video_io.IRSaver import IRSaver
@@ -9,6 +15,13 @@ from .video_io.IRSaver import IRSaver
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+# __all__ = [
+#     "rir_tools",
+#     "rir_signal_processing",
+#     "rir_geometry",
+#     "rir_video_io",
+# ]
 
 # import importlib
 # import pkgutil
@@ -37,4 +50,3 @@ logger.setLevel(logging.INFO)
 # in iter_namespace(plugins)
 # }
 
-# from .plugins import *
