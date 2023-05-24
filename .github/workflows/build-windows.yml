@@ -17,6 +17,7 @@ on:
       compiler:
         required: true
         type: string
+        default: clang
 
 jobs:
     build-windows:
