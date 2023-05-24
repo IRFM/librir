@@ -33,11 +33,11 @@ jobs:
             path: 3rd_64
             key: ${{ github.ref }}-3rd_64
 
-        - name: Install compiler ${{ inputs.compiler }}
+        - name: Install compiler ${{ inputs.compiler || 'latest' }}
           id: install_cc
           uses: rlalik/setup-cpp-compiler@master
           with:
-            compiler: ${{ inputs.compiler }}
+            compiler: ${{ inputs.compiler || 'latest' }}
               
         - name: Build on Linux
           run: ./build.sh
