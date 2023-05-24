@@ -3,8 +3,8 @@ on:
 
   push:
     branches: [ "main" ]
- # pull_request:
- #   branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
   workflow_dispatch:
     inputs:
       compiler:
@@ -26,7 +26,6 @@ jobs:
       steps:
         - uses: actions/checkout@v3
 
-
         - name: Cache Dependencies
           id: cache-dependencies
           uses: actions/cache@v3
@@ -34,27 +33,11 @@ jobs:
             path: 3rd_64
             key: ${{ github.ref }}-3rd_64
 
-        # - name: Download ffmpeg artifact
-        #   uses: actions/download-artifact@v3
-        #   with:
-        #     name: 3rd_64
-
         - name: Install compiler ${{ inputs.compiler }}
           id: install_cc
           uses: rlalik/setup-cpp-compiler@master
           with:
             compiler: ${{ inputs.compiler }}
-
-        # - name: Set up compiler ${{ inputs.compiler }}
-          
-        #   uses: actions/setup-python@v4
-        #   with:
-        #     python-version: ${{ inputs.python-version }}
-
-        # - name: Install python dependencies
-        #   run: |
-        #     python -m pip install --upgrade pip              
-      
               
         - name: Build on Linux
           run: ./build.sh
