@@ -177,7 +177,7 @@ else
    sed -i '/AM_PROG_AR/c\m4_ifdef([AM_PROG_AR], [AM_PROG_AR])' ./configure.ac
    ./autogen.sh
    ./configure --enable-static=yes --enable-shared=no --prefix=$PWD/install CFLAGS="-fPIC" #--extra-ldflags="-Wl,-rpath='$ORIGIN'"
-   make -j4
+   make -j
    make install
    
    # Add -lm -lpthread to kvazaar libs
@@ -208,7 +208,7 @@ else
    echo 'Configuring x264...'
    #sed -i 's/asm=\"auto\"/asm=\"nasm\"/' configure
    ./configure --enable-static --enable-pic --prefix=$PWD/install --enable-strip #--enable-rpath --extra-ldflags="-Wl,-rpath='$ORIGIN'"
-   make -j4
+   make -j
    make install
    # libx264 already produces a valid pc file
    cd ..
@@ -255,7 +255,7 @@ if [ -d $FILE ]; then
 else
     echo 'Building ffmpeg...'
     #make clean
-    make -j4
+    make -j
     make install
 fi
 cd ..

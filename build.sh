@@ -99,7 +99,7 @@ chmod 777 configure_ffmpeg
 mkdir -p build 
 cd build
 $CMAKE ./.. -G "Unix Makefiles" $CMAKE_OPTIONS
-make
+make -j
 make install
 
 # Build wheel if necessary
