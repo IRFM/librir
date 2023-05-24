@@ -5,6 +5,9 @@ add_subdirectory(geometry)
 add_subdirectory(signal_processing)
 add_subdirectory(video_io) 
 
+# some dependency to prevent from making librir before building ffmpeg
+add_dependencies(video_io dummy)
+
 install(TARGETS ${TARGETS} PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install (TARGETS ${TARGETS} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} )
 install (TARGETS ${TARGETS} LIBRARY DESTINATION ${CMAKE_INSTALL_BINDIR} )
