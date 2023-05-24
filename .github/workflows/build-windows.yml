@@ -27,11 +27,11 @@ jobs:
         - uses: actions/checkout@v3
 
 
-        - name: Install compiler ${{ inputs.compiler || 'latest' }}
+        - name: Install compiler ${{ inputs.compiler || 'clang' }}
           id: install_cc
           uses: rlalik/setup-cpp-compiler@master
           with:
-            compiler: ${{ inputs.compiler || 'latest' }}
+            compiler: ${{ inputs.compiler || 'clang' }}
             
         # - name: Set up Python ${{ inputs.python-version }}
           
