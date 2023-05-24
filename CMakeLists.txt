@@ -116,14 +116,14 @@ add_subdirectory(plugins)
 # enable_testing()
 # TOREMOVE
 
-find_package(Python COMPONENTS Interpreter)
-IF(NOT Python_FOUND)
+# find_package(Python COMPONENTS Interpreter)
+# IF(NOT Python_FOUND)
 
-	MESSAGE(STATUS "PYTHON NOT FOUND")
+# 	MESSAGE(STATUS "PYTHON NOT FOUND")
 
-endif() 
+# endif() 
 
-MESSAGE(STATUS "found python")
+# MESSAGE(STATUS "found python")
 
 
 # Perform this action once more (already done in src/CMakeLists.txt) to copy plugins binaries
