@@ -1,5 +1,12 @@
 import numpy as np
 
+import librir.geometry as ge
+import librir.signal_processing as sp
+import librir.signal_processing.BadPixels as bp
+import librir.video_io.IRMovie as movie
+import librir.video_io.IRSaver as saver
+import librir.west as west
+import librir.west.WESTIRMovie as w
 from librir import tools as rts
 
 
@@ -55,7 +62,7 @@ def test_file_attributes():
     print(attrs.frame_attributes(10))
 
 
-import librir.geometry as ge
+
 
 polygon = [[0, 0], [1, 0], [1.2, 0.2], [1.8, 0.1], [5, 5], [3.2, 5], [0, 9]]
 polygon2 = np.array(polygon, dtype=np.float64) * 1.5
@@ -94,8 +101,7 @@ def test_minimum_area_bbox():
     assert ge.minimum_area_bbox(polygon) != ([np.nan, np.nan], 0.0, 0.0, np.nan, np.nan)
 
 
-import librir.signal_processing as sp
-import librir.signal_processing.BadPixels as bp
+
 
 
 def test_translate():
@@ -165,8 +171,7 @@ def test_label_image():
     print(sp.keep_largest_area(img))
 
 
-import librir.video_io.IRSaver as saver
-import librir.video_io.IRMovie as movie
+
 
 
 def test_ir_saver_movie():
@@ -188,8 +193,7 @@ def test_ir_saver_movie():
     print(m[1])
 
 
-import librir.west as west
-import librir.west.WESTIRMovie as w
+
 
 
 def test_pulse_infos():

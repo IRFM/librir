@@ -2,7 +2,7 @@ import ctypes as ct
 
 import numpy as np
 
-from .misc import _video_io, toString, toArray, toBytes
+from ..low_level.misc import _video_io, toString, toArray, toBytes
 
 
 FILE_FORMAT_PCR = 1

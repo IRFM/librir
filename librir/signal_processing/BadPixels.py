@@ -6,7 +6,7 @@ Created on Wed Sep 16 12:59:54 2020
 """
 
 
-from ..low_level.rir_signal_processing import (
+from .rir_signal_processing import (
     bad_pixels_create,
     bad_pixels_correct,
     bad_pixels_destroy,

@@ -5,7 +5,7 @@ import sys
 
 import numpy as np
 
-from .misc import _tools, createZeroArrayHandle, toString, toCharP, toBytes, toArray
+from ..low_level.misc import _tools, createZeroArrayHandle, toString, toCharP, toBytes, toArray
 
 BLOSC_NOSHUFFLE = 0
 BLOSC_SHUFFLE = 1

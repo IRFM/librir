@@ -11,20 +11,14 @@ from librir.tools.utils import init_thermavip, unbind_thermavip_shared_mem
 from librir.tools.FileAttributes import FileAttributes
 from typing import List, Dict, Union
 
-from librir.low_level.rir_video_io import (
+from librir.video_io.rir_video_io import (
     enable_motion_correction,
     load_motion_correction_file,
     motion_correction_enabled,
 )
 from typing import List, Dict
 
-from librir.low_level.rir_video_io import (
-    enable_motion_correction,
-    load_motion_correction_file,
-    motion_correction_enabled,
-)
-
-from ..low_level.rir_video_io import (
+from .rir_video_io import (
     calibrate_image,
     calibration_files,
     close_camera,
@@ -222,7 +216,7 @@ class IRMovie(object):
         if self.__tempfile__:
             try:
                 os.unlink(self.__tempfile__)
-                logger.debug("deleting %s".format(self.__tempfile__))
+                logger.debug(f"deleting {self.__tempfile__}")
             except FileNotFoundError as exc:
                 logger.warning(exc)
             except PermissionError as p_exc:

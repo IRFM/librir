@@ -2,7 +2,7 @@ import ctypes as ct
 
 import numpy as np
 
-from .misc import _geometry, createZeroArrayHandle
+from ..low_level.misc import _geometry, createZeroArrayHandle
 
 
 def polygon_interpolate(xy1, xy2, advance):

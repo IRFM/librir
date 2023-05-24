@@ -4,7 +4,7 @@ import os
 sys.path.insert(1, os.path.realpath(os.path.pardir))
 
 # import useful functions from rir_geometry
-from ..low_level.rir_geometry import (
+from .rir_geometry import (
     polygon_interpolate,
     rdp_simplify_polygon,
     rdp_simplify_polygon2,
