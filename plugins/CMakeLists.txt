@@ -22,7 +22,7 @@ endfunction()
 
 set(INIT_PY_FILES)
 file(WRITE __init__.py.in "")
-cat(${CMAKE_SOURCE_DIR}/librir/__init__.py __init__.py.in )
+cat(${CMAKE_SOURCE_DIR}/src/python/librir/__init__.py __init__.py.in )
 
 foreach(plugin ${_PRESENT_PLUGINS})
         string(TOUPPER ${plugin} UPPERCASE_PLUGIN)

@@ -1,40 +1,26 @@
-SET(TARGETS tools geometry signal_processing video_io)
-# MESSAGE(STATUS "TARGETS : " ${TARGETS})
-add_subdirectory(tools)
-add_subdirectory(geometry)
-add_subdirectory(signal_processing)
-add_subdirectory(video_io) 
 
-# some dependency to prevent from making librir before building ffmpeg
-add_dependencies(video_io dummy)
+add_subdirectory(cpp)
 
-install(TARGETS ${TARGETS} PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-install (TARGETS ${TARGETS} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} )
-install (TARGETS ${TARGETS} LIBRARY DESTINATION ${CMAKE_INSTALL_BINDIR} )
-install (TARGETS ${TARGETS} ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} )
-install (TARGETS ${TARGETS} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} )
 
-# message(STATUS ${EXCLUDED_TARGETS})
 
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/librir
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/librir
 	DESTINATION ${CMAKE_INSTALL_PREFIX}
 	FILES_MATCHING PATTERN "*.py"
 )
 
-install(FILES ${CMAKE_SOURCE_DIR}/setup.py ${CMAKE_SOURCE_DIR}/CMakeLists.txt ${CMAKE_SOURCE_DIR}/extra-requirements.txt ${CMAKE_SOURCE_DIR}/README.md
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/python/setup.py ${CMAKE_SOURCE_DIR}/CMakeLists.txt ${CMAKE_SOURCE_DIR}/extra-requirements.txt ${CMAKE_SOURCE_DIR}/README.md
 		DESTINATION ${CMAKE_INSTALL_PREFIX}
 )
 
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/librir/LICENSES 
+install(DIRECTORY $${CMAKE_CURRENT_SOURCE_DIR}/python/librir/LICENSES 
 		DESTINATION ${CMAKE_INSTALL_PREFIX}/librir
 		FILES_MATCHING PATTERN "*.txt"
 )
 
-install(FILES ${CMAKE_SOURCE_DIR}/librir/LICENSE 
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/python/librir/LICENSE 
 		DESTINATION ${CMAKE_INSTALL_PREFIX}/librir
 )
 
 install(DIRECTORY ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/
 		DESTINATION ${CMAKE_INSTALL_PREFIX}/librir/libs
 )
-
