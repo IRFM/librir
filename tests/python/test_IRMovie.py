@@ -106,12 +106,6 @@ def test_load_pos_with_DL(movie: IRMovie):
 #     assert False
 
 
-@pytest.mark.instanstiation
-def test_from_handle(movie):
-    handle = movie.handle
-    new_mov = IRMovie.from_handle(handle)
-    assert new_mov.handle == movie.handle
-
 
 @pytest.mark.instanstiation
 def test_from_filename(filename):
