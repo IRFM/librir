@@ -43,6 +43,7 @@ from .rir_video_io import (
     supported_calibrations,
 )
 from .IRSaver import IRSaver
+import hashlib
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -73,7 +74,7 @@ class IRMovie(object):
     _header_offset = 1024
     __tempfile__ = None
     handle = -1
-    _calibration_nickname_mapper = {"DL": "Digital Level"}
+    _calibration_nickname_mapper = {"DL": "Digital Level", "T": "Apparent T(C)"}
     _roi_result_line = {"CEDIP": 240, "WEST": 512, "NIT": 256}
 
     _SHAPES = {
@@ -89,23 +90,24 @@ class IRMovie(object):
     _th = None
 
     @classmethod
-    def from_handle(cls, handle):
-        return cls(handle=handle)
-
-    @classmethod
     def from_filename(cls, filename):
         """Create an IRMovie object from a local filename"""
         handle = open_camera_file(str(filename))
-        return cls(handle)
+        return IRMovie(handle)
 
     @classmethod
     def from_bytes(cls, data):
+        _hash_string = hashlib.md5(data).hexdigest()
         with tempfile.NamedTemporaryFile("wb", delete=False) as f:
-            filename = f.name
+            filename = Path(f.name)
             f.write(data)
+        
+        with cls.from_filename(filename) as _instance:     
+            _instance.__tempfile__ = filename
+            dst = Path(filename).parent /  (_hash_string + ".h264")
+            _instance.to_h264(dst)
 
-        instance = cls.from_filename(filename)
-        instance.__tempfile__ = filename
+        instance = cls.from_filename(dst)
         return instance
 
     @classmethod
@@ -128,6 +130,7 @@ class IRMovie(object):
         instance = cls.from_bytes(data)
         if attrs is not None:
             instance.attributes = attrs
+            instance._file_attributes.flush()
         return instance
 
     def __init__(self, handle):
@@ -189,7 +192,7 @@ class IRMovie(object):
                 value
             )
         except ValueError as e:
-            raise CalibrationNotFound(f"calibration {value} is not registered")
+            raise CalibrationNotFound(f"calibration '{value}' is not registered")
 
     def __enter__(self):
         """
@@ -563,7 +566,7 @@ class IRMovie(object):
 
     def to_h264(
         self,
-        dst_filename,
+        dst_filename: Union[str, Path],
         start_img=0,
         count=-1,
         clevel=8,
@@ -771,4 +774,4 @@ class IRMovie(object):
             unbind_thermavip_shared_mem(th)
             return player_id
         else:
-            logger.warning(f"Thermavip not found")
+            logger.warning("Thermavip not found")
