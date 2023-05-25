@@ -187,11 +187,17 @@ class IRMovie(object):
 
         if value not in searching_keys:
             raise CalibrationNotFound(f"Available calibrations : {self.calibrations}")
-        try:
-            self._calibration_index = list(self._calibration_nickname_mapper).index(
-                value
-            )
-        except ValueError as e:
+        lists = list(self._calibration_nickname_mapper), self.calibrations
+        _old_calib_idx = self._calibration_index 
+        idx = None
+        for l in lists:
+            try:
+                idx = l.index(value)
+                self._calibration_index = idx
+            except ValueError as e:
+                pass
+        if idx is None:
+            self._calibration_index = _old_calib_idx
             raise CalibrationNotFound(f"calibration '{value}' is not registered")
 
     def __enter__(self):
