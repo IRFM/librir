@@ -74,7 +74,7 @@ class IRMovie(object):
     _header_offset = 1024
     __tempfile__ = None
     handle = -1
-    _calibration_nickname_mapper = {"DL": "Digital Level", "T": "Apparent T(C)"}
+    _calibration_nickname_mapper = {"DL": "Digital Level"}
     _roi_result_line = {"CEDIP": 240, "WEST": 512, "NIT": 256}
 
     _SHAPES = {
@@ -96,15 +96,16 @@ class IRMovie(object):
         return IRMovie(handle)
 
     @classmethod
-    def from_bytes(cls, data):
-        _hash_string = hashlib.md5(data).hexdigest()
+    def from_bytes(cls, data: bytes):
+        # _hash_string = hashlib.md5(data).hexdigest()
+        # _hash_string = hash(data)
         with tempfile.NamedTemporaryFile("wb", delete=False) as f:
             filename = Path(f.name)
             f.write(data)
         
         with cls.from_filename(filename) as _instance:     
             _instance.__tempfile__ = filename
-            dst = Path(filename).parent /  (_hash_string + ".h264")
+            dst = Path(filename).parent /  (f"{filename.stem}.h264")
             _instance.to_h264(dst)
 
         instance = cls.from_filename(dst)
