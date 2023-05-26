@@ -158,13 +158,7 @@ class IRMovie(object):
         self._file_attributes = FileAttributes(self.filename)
         self._file_attributes.attributes = get_global_attributes(self.handle)
 
-        try:
-            self.calibration = "T"
-        except (IndexError, ValueError, CalibrationNotFound):
-            logger.debug(
-                "There is no temperature calibration. Switching back to Digital Level"
-            )
-            self.calibration = "DL"
+        self.calibration = "DL"
 
     @property
     def calibration(self):
@@ -176,18 +170,19 @@ class IRMovie(object):
             self._calibration_nickname_mapper.keys()
         )
         _calibrations = self.calibrations
+        
         if isinstance(value, int):
             if value >= len(_calibrations):
                 raise CalibrationNotFound(
-                    f"Available calibrations : {self.calibrations}."
-                    "Calibration index out of range"
+                    f"Available calibrations : {self.calibrations}. "
+                    f"Calibration index out of range : {self._calibration_index}"
                 )
 
             self._calibration_index = value
             return
 
         if value not in searching_keys:
-            raise CalibrationNotFound(f"Available calibrations : {self.calibrations}")
+            raise CalibrationNotFound(f"{value} not in available calibrations : {searching_keys}")
         lists = list(self._calibration_nickname_mapper), self.calibrations
         _old_calib_idx = self._calibration_index 
         idx = None
@@ -301,7 +296,7 @@ class IRMovie(object):
         """
         try:
             self._identifier = get_camera_identifier(self.handle)
-        except RuntimeError as exc:
+        except RuntimeError:
             if self.handle > 0:
                 logger.warning(
                     "'{}' is user defined identifier".format(self._identifier)
@@ -357,8 +352,7 @@ class IRMovie(object):
     def calibration_files(self) -> List[str]:
         try:
             return calibration_files(self.handle)
-        except:
-            # TODO : find exception raised
+        except RuntimeError:
             return list()
 
     @property

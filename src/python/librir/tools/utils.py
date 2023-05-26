@@ -1,6 +1,6 @@
 import logging
 import os
-from subprocess import PIPE, Popen, check_output
+from subprocess import PIPE, Popen, check_output, CalledProcessError
 
 
 import functools
@@ -91,7 +91,10 @@ def is_thermavip_opened():
     names = ["Thermavip.exe", "Thermavip", "thermavip"]
     processes = []
     for n in names:
-        processes = get_pid_of(n)
+        try:
+            processes = get_pid_of(n)
+        except CalledProcessError:
+            continue
         if processes:
             break
     return any(processes)

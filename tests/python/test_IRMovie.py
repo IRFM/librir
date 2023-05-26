@@ -33,13 +33,14 @@ def test_IRMovie_instantiation_with_bad_numpy_array(bad_array):
 
 
 @pytest.mark.h264
-def test_save_movie_to_h264(filename):
-    mov = IRMovie.from_filename(filename)
+def test_save_movie_to_h264(movie: IRMovie):
+    # mov = IRMovie.from_filename(filename)
+    filename = movie.filename
     dest_filename = f"{filename}_scratch.h264"
 
-    mov.to_h264(dest_filename)
+    movie.to_h264(dest_filename)
     mov2 = IRMovie.from_filename(dest_filename)
-    npt.assert_array_equal(mov.data, mov2.data)
+    npt.assert_array_equal(movie.data, mov2.data)
 
 
 @pytest.mark.h264
@@ -53,11 +54,12 @@ def test_save_movie_with_pcr2h264(filename):
     npt.assert_array_equal(mov.data, mov2.data)
 
 
-@pytest.mark.thermavip
-def test_show_movie_on_thermavip(filename):
-    # import Thermavip as th
-    mov = IRMovie.from_filename(filename)
-    player_id = mov.to_thermavip()
+# @pytest.mark.thermavip
+# def test_show_movie_on_thermavip(movie: IRMovie):
+#     # import Thermavip as th
+    
+    
+#     player_id = movie.to_thermavip()
 
 
 @pytest.mark.h264
