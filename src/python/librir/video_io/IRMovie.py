@@ -15,6 +15,8 @@ from librir.video_io.rir_video_io import (
     enable_motion_correction,
     load_motion_correction_file,
     motion_correction_enabled,
+    video_file_format,
+    FILE_FORMAT_H264,
 )
 from typing import List, Dict
 
@@ -102,10 +104,10 @@ class IRMovie(object):
         with tempfile.NamedTemporaryFile("wb", delete=False) as f:
             filename = Path(f.name)
             f.write(data)
-        
-        with cls.from_filename(filename) as _instance:     
+
+        with cls.from_filename(filename) as _instance:
             _instance.__tempfile__ = filename
-            dst = Path(filename).parent /  (f"{filename.stem}.h264")
+            dst = Path(filename).parent / (f"{filename.stem}.h264")
             _instance.to_h264(dst)
 
         instance = cls.from_filename(dst)
@@ -170,7 +172,7 @@ class IRMovie(object):
             self._calibration_nickname_mapper.keys()
         )
         _calibrations = self.calibrations
-        
+
         if isinstance(value, int):
             if value >= len(_calibrations):
                 raise CalibrationNotFound(
@@ -182,9 +184,11 @@ class IRMovie(object):
             return
 
         if value not in searching_keys:
-            raise CalibrationNotFound(f"{value} not in available calibrations : {searching_keys}")
+            raise CalibrationNotFound(
+                f"{value} not in available calibrations : {searching_keys}"
+            )
         lists = list(self._calibration_nickname_mapper), self.calibrations
-        _old_calib_idx = self._calibration_index 
+        _old_calib_idx = self._calibration_index
         idx = None
         for l in lists:
             try:
@@ -534,6 +538,10 @@ class IRMovie(object):
         """
         return calibrate_image(self.handle, image, calib)
 
+    @property
+    def video_file_format(self):
+        return video_file_format(self.filename)
+
     def pcr2h264(self, outfile=None, overwrite=False, **kwargs):
         """
         If movie is stored into a PCR file, it converts it into h264
@@ -547,23 +555,20 @@ class IRMovie(object):
             self.to_h264(outfile, **kwargs)
         return outfile
 
-    def _build_outfile(self, outfile=None) -> str:
+    def _build_outfile(self) -> str:
         f = self.__tempfile__ or self.filename
 
         # pathlib is not used because this class must be compatible with python 2
+        # TODO: go with pathlib, no need for python 2 compatibility
         _, suffix = os.path.splitext(f)
         parent, basename = os.path.split(f)
         stem = basename.replace(suffix, "")
-        if suffix == ".pcr" or self.__tempfile__:
-            default_dest_filename = os.path.abspath(
-                (os.path.join(parent, (stem + ".h264")))
-            )
-            outfile = outfile or default_dest_filename
-            return outfile
-        elif suffix == ".h264":
-            return self.filename
-        # else:
-        #     logger.info("'{}' is not a PCR file".format(self.filename))
+
+        if self.video_file_format != FILE_FORMAT_H264:
+            return os.path.abspath((os.path.join(parent, (stem + ".h264"))))
+
+        return self.filename
+
 
     def to_h264(
         self,
@@ -655,7 +660,7 @@ class IRMovie(object):
         if self._payload is None:
             self._payload = self.data[:, : self.last_line_index, :]
         return self._payload
-    
+
     @property
     def payload_generator(self):
         for img in self:
