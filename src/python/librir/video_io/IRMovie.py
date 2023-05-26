@@ -655,6 +655,11 @@ class IRMovie(object):
         if self._payload is None:
             self._payload = self.data[:, : self.last_line_index, :]
         return self._payload
+    
+    @property
+    def payload_generator(self):
+        for img in self:
+            yield img[: self.last_line_index, :]
 
     # @cached_property
     @property
