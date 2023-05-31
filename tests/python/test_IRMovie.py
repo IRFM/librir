@@ -120,3 +120,8 @@ def test_from_filename(filename):
 def test_close(array):
     mov = IRMovie.from_numpy_array(array)
     del mov
+
+
+
+def test_payload_generator(movie: IRMovie):
+    npt.assert_array_equal(movie.payload[0], next(movie.payload_generator))
