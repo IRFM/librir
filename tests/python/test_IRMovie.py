@@ -5,6 +5,7 @@ import numpy.testing as npt
 import pytest
 from librir import IRMovie
 from librir.video_io.IRMovie import CalibrationNotFound
+from librir.video_io.rir_video_io import FILE_FORMAT_H264
 
 
 @pytest.mark.instanstiation
@@ -125,3 +126,7 @@ def test_close(array):
 
 def test_payload_generator(movie: IRMovie):
     npt.assert_array_equal(movie.payload[0], next(movie.payload_generator))
+    
+    
+def test_video_file_format(movie: IRMovie):
+    assert movie.video_file_format == FILE_FORMAT_H264
