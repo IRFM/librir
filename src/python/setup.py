@@ -68,7 +68,7 @@ def get_extra_requires(path, add_all=True):
 def package_files(directory):
     print(directory)
     paths = []
-    for (path, directories, filenames) in os.walk(directory):
+    for path, directories, filenames in os.walk(directory):
         for filename in filenames:
             paths.append(os.path.join(".", path, filename))
             paths[-1] = paths[-1].replace("\\", "/")
@@ -101,19 +101,12 @@ setup(
         ("librir-core", ["./librir/LICENSE"]),
     ],
     include_package_data=True,
-    install_requires=["numpy", "pandas", "future-annotations;python_version<'3.7'",]
+    install_requires=[
+        "numpy",
+        "pandas",
+        "future-annotations;python_version<'3.7'",
+    ]
     + get_requires("requirements.txt"),
-    # dependency_links=[
-    #     # location to your egg file
-    #     "git+http://irfm-gitlab.intra.cea.fr/exploitation/data-access/pywed"
-    #     # f"file://{os.path.join(os.getcwd(), '3rd_64', 'dist_PyWED-0.3.1.tar.gz')}#egg=PyWED-0.3.1",
-    # ],
-    extras_require=get_extra_requires("extra-requirements.txt"),
-    # extras_require={'lab': ['pandas', 'matplotlib', 'opencv-python', 'pymysql==0.10.1'],
-    #                 'west': ['pymysql'],
-    #                 'test': ['pytest', 'chardet'],
-    #                 'full': ['pandas', 'matplotlib', 'opencv-python', 'pytest', 'chardet', 'pymysql'],
-    #                 'dev': ['pandas', 'matplotlib', 'opencv-python', 'pytest', 'chardet', 'pymysql']},
     python_requires=">=3.7",
     url="",
     license="CEA",

@@ -8,7 +8,7 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python/librir
 	FILES_MATCHING PATTERN "*.py"
 )
 
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/python/setup.py ${CMAKE_SOURCE_DIR}/CMakeLists.txt ${CMAKE_SOURCE_DIR}/extra-requirements.txt ${CMAKE_SOURCE_DIR}/README.md
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/python/setup.py ${CMAKE_SOURCE_DIR}/CMakeLists.txt ${CMAKE_SOURCE_DIR}/README.md
 		DESTINATION ${CMAKE_INSTALL_PREFIX}
 )
 
