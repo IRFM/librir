@@ -112,7 +112,11 @@ setup(
     license="CEA",
     author="VM213788, LD243615, EG264877",
     author_email="victor.moncada@cea.fr, leo.dubus@cea.fr, erwan.grelier@cea.fr",
-    description="Librir is a C/C++/Python library to manipulate infrared video from the WEST tokamak, accessing WEST diagnostic signals and building Cognitive Vision/Machine Learning applications.",
+    description=(
+        "Librir is a C/C++/Python library to manipulate infrared video from the"
+        "WEST tokamak, accessing WEST diagnostic signals and building "
+        "Cognitive Vision/Machine Learning applications."
+    ),
     long_description=open("README.md", "rt").read(),
     long_description_content_type="text/markdown",
 )
