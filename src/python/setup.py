@@ -109,7 +109,7 @@ setup(
     + get_requires("requirements.txt"),
     python_requires=">=3.7",
     url="",
-    license="CEA",
+    license="BSD-3-clause",
     author="VM213788, LD243615, EG264877",
     author_email="victor.moncada@cea.fr, leo.dubus@cea.fr, erwan.grelier@cea.fr",
     description=(
