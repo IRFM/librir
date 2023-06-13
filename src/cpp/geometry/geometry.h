@@ -93,6 +93,12 @@ Returns 0 on success, -1 on error.
 */
 GEOMETRY_EXPORT int minimum_area_bbox(double* xy, int point_count, double* x_center, double* y_center, double* width, double* height, double* widthAngle, double* heightAngle);
 
+    /**
+     * Returns the area inside a polygon defined by (x0,y0,..,xn,yn) points
+     * @param xy: input points
+     * @param point_count: input number of points
+     */
+    GEOMETRY_EXPORT int count_pixel_in_polygon(double *xy, int point_count, double *area);
 
 #ifdef __cplusplus
 }
