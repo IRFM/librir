@@ -305,3 +305,31 @@ def minimum_area_bbox(points):
         widthAngle[0],
         heightAngle[0],
     )
+
+
+def count_pixel_in_polygon(points):
+    """
+    Count pixel inside a polygon
+    @param points: input points on the form [[x1,y1],...,[xn,yn]]
+    """
+
+    if len(points) == 0:
+        return 0
+
+    _geometry.count_pixel_in_polygon.argtypes = [
+        ct.POINTER(ct.c_double),
+    ]
+
+    xy = np.array(points, dtype=np.float64)
+
+    area = np.zeros((1), dtype=np.float64)
+
+    _tmp = _geometry.count_pixel_in_polygon(
+        xy.ctypes.data_as(ct.POINTER(ct.c_double)),
+        len(points),
+        area.ctypes.data_as(ct.POINTER(ct.c_double)),
+    )
+    if _tmp < 0:
+        raise RuntimeError("count_pixel_in_polygon: unknown error")
+
+    return area[0]

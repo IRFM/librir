@@ -269,10 +269,10 @@ namespace rir
 			sum2 += poly[i].y() * poly[i + 1].x();
 		}
 
-		//Add xn.y1
-		sum1 += poly.last().x() * poly[0].y();
-		//Add x1.yn
-		sum2 += poly[0].x() * poly.last().y();
+		// Add xn.y1
+		sum1 += poly.back().x() * poly[0].y();
+		// Add x1.yn
+		sum2 += poly[0].x() * poly.back().y();
 
 		double area = std::abs(sum1 - sum2) / 2;
 		return area;
