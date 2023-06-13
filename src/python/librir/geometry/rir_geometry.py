@@ -318,10 +318,11 @@ def count_pixel_in_polygon(points):
 
     _geometry.count_pixel_in_polygon.argtypes = [
         ct.POINTER(ct.c_double),
+        ct.c_int,
+        ct.POINTER(ct.c_double),
     ]
 
     xy = np.array(points, dtype=np.float64)
-
     area = np.zeros((1), dtype=np.float64)
 
     _tmp = _geometry.count_pixel_in_polygon(
