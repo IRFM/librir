@@ -5,21 +5,22 @@ import math
 import os
 import tempfile
 from pathlib import Path
-import pandas as pd
-import numpy as np
-from librir.tools.utils import init_thermavip, unbind_thermavip_shared_mem
-from librir.tools.FileAttributes import FileAttributes
-from typing import List, Dict, Union
+from typing import List, Union
 
+import numpy as np
+import pandas as pd
+
+from librir.tools.FileAttributes import FileAttributes
+from librir.tools.utils import init_thermavip, unbind_thermavip_shared_mem
 from librir.video_io.rir_video_io import (
+    FILE_FORMAT_H264,
     enable_motion_correction,
     load_motion_correction_file,
     motion_correction_enabled,
     video_file_format,
-    FILE_FORMAT_H264,
 )
-from typing import List, Dict
 
+from .IRSaver import IRSaver
 from .rir_video_io import (
     calibrate_image,
     calibration_files,
@@ -44,8 +45,6 @@ from .rir_video_io import (
     support_emissivity,
     supported_calibrations,
 )
-from .IRSaver import IRSaver
-import hashlib
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -116,7 +115,8 @@ class IRMovie(object):
     @classmethod
     def from_numpy_array(cls, arr, attrs=None):
         """
-        Create a IRMovie object via numpy arrays. It creates non-pulse indexed IRMovie object.
+        Create a IRMovie object via numpy arrays. It creates non-pulse indexed IRMovie
+        object.
         Hence, calibration data are not available.
         :param arr: data
         :return:
@@ -190,11 +190,11 @@ class IRMovie(object):
         lists = list(self._calibration_nickname_mapper), self.calibrations
         _old_calib_idx = self._calibration_index
         idx = None
-        for l in lists:
+        for _list in lists:
             try:
-                idx = l.index(value)
+                idx = _list.index(value)
                 self._calibration_index = idx
-            except ValueError as e:
+            except ValueError:
                 pass
         if idx is None:
             self._calibration_index = _old_calib_idx
@@ -295,7 +295,8 @@ class IRMovie(object):
     @property
     def identifier(self):
         """
-        Stores and gives handle identifier via librir by default. If not available, gives the user defined one.
+        Stores and gives handle identifier via librir by default. If not available,
+        gives the user defined one.
         :return: identifier (str)
         """
         try:
@@ -316,7 +317,9 @@ class IRMovie(object):
     #     return self._file_attributes.frame_attributes(frame_index)
 
     def load_pos(self, pos, calibration=None):
-        """Returns the image at given position using given calibration index (integer)"""
+        """
+        Returns the image at given position using given calibration index (integer)
+        """
         if calibration is None:
             calibration = 0
 
@@ -327,7 +330,10 @@ class IRMovie(object):
         return res
 
     def load_secs(self, time, calibration=None):
-        """Returns the image at given time in seconds using given calibration index (integer)"""
+        """
+        Returns the image at given time in seconds using given calibration index
+        (integer)
+        """
         if calibration is None:
             calibration = 0
         if self.times is None:
@@ -400,7 +406,8 @@ class IRMovie(object):
 
             - Movie filename is uncompressed (.pcr format):
                 data is not read through librir C functions.
-                Instead, the whole data is read directly from the file to speed up computation.
+                Instead, the whole data is read directly from the file to speed up
+                computation.
                 It can only work with calibration_index == 0
 
             - Movie filename is compressed (.bin, .h264 formats):
@@ -425,7 +432,8 @@ class IRMovie(object):
         """
         Set the optical temperature for given handle in degree Celsius.
         This should be the temperature of the B30.
-        Not all cameras support this feature. Use support_optical_temperature() function to test it.
+        Not all cameras support this feature. Use support_optical_temperature() function
+        to test it.
         """
         set_optical_temperature(self.handle, temperature)
 
@@ -569,7 +577,6 @@ class IRMovie(object):
 
         return self.filename
 
-
     def to_h264(
         self,
         dst_filename: Union[str, Path],
@@ -673,9 +680,11 @@ class IRMovie(object):
         res = self.frames_attributes["Camera #"].astype(np.uint8)
         cam_numbers = np.unique(res)
         if not len(np.unique(res)) == 1:
-            raise IncoherentMetadata(
-                f"Many cameras used for this movie: {cam_numbers}\n Something is wrong..."
+            msg = (
+                f"Many cameras used for this movie: {cam_numbers}\n"
+                "Something is wrong..."
             )
+            raise IncoherentMetadata(msg)
         return cam_numbers[0]
 
     @classmethod
@@ -695,11 +704,11 @@ class IRMovie(object):
     @property
     @functools.lru_cache()
     def frames_attributes(self) -> pd.DataFrame:
-        l = []
+        # l = []
         for i in range(self.images):
             self.load_pos(i)
             # val = self.frame_attributes[key]
-            l.append(self._frame_attributes_d[i])
+            # l.append(self._frame_attributes_d[i])
         df = pd.DataFrame(self._frame_attributes_d).T
         return df
 
