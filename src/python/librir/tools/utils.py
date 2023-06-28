@@ -114,7 +114,7 @@ def init_thermavip(th_instance="Thermavip-1"):
     try:
         import Thermavip as th
     except ImportError as e:
-        logger.error(f"Thermavip Python module couldn't be imported")
+        logger.error("Thermavip Python module couldn't be imported")
         logger.error(e)
     else:
         th.setSharedMemoryName(th_instance)

@@ -7,8 +7,8 @@ Created on Wed Sep 16 12:59:54 2020
 
 
 from .rir_signal_processing import (
-    bad_pixels_create,
     bad_pixels_correct,
+    bad_pixels_create,
     bad_pixels_destroy,
 )
 

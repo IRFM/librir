@@ -8,8 +8,9 @@ from ..low_level.misc import _geometry, createZeroArrayHandle
 def polygon_interpolate(xy1, xy2, advance):
     """
     Interpolate 2 polygons based on the advance parameter [0,1].
-    If advance == 0, first polygon is returned as is, and if advance ==1 second polygon is returned as is.
-    The interpolated polygon is guaranteed to have a maximum size of (len(x1) + len(x2) -2).
+    If advance == 0, first polygon is returned as is, and if advance ==1 second polygon
+    is returned as is. The interpolated polygon is guaranteed to have a maximum
+    size of (len(x1) + len(x2) -2).
 
     Returns the new polygon points as a tuple (x,y)
     """
@@ -90,7 +91,8 @@ def rdp_simplify_polygon(xy, epsilon=0):
 def rdp_simplify_polygon2(xy, max_points):
     """
     Simplify given polygon using Ramer-Douglas-Peucker algorithm.
-    Unlinke rdp_simplify_polygon, this function takes a maximum number of points as input.
+    Unlinke rdp_simplify_polygon, this function takes a maximum number of points as
+    input.
     """
     _geometry.rdp_simplify_polygon2.argtypes = [
         ct.POINTER(ct.c_double),
@@ -128,7 +130,8 @@ def draw_polygon(img, polygon, fill_value):
     - fill_value: filling value
     Returns the new image.
 
-    Note that, if possible, this function directly writes to the input array if possible (to avoid unecessary copy)
+    Note that, if possible, this function directly writes to the input array if possible
+    (to avoid unecessary copy)
     """
 
     if len(img.shape) != 2:
@@ -264,11 +267,21 @@ def minimum_area_bbox(points):
     """
     Extract the minimum area oriented bounding box around given polygon.
     Returns the tuple (center,width,height,widthAngle,heightAngle) where:
-        center is the bounding box center
-        width is the smaller box side
-        height is the larger box side
-        widthAngle is the angle between smaller box side and X axis in radians, positive value means box orientation from bottom right to top left, negative value means opposite
-        heightAngle is the angle between larger box side and X axis in radians, positive value means box orientation from bottom left to top right, negative value means opposite
+
+        center       is the bounding box center
+
+        width        is the smaller box side
+
+        height       is the larger box side
+
+        widthAngle   is the angle between smaller box side and X axis in radians,
+                     positive value means box orientation from bottom right to top
+                     left, negative value means opposite
+
+        heightAngle  is the angle between larger box side and X axis in radians,
+                     positive value means box orientation from bottom left to top
+                     right, negative value means opposite
+
     """
     if len(points) == 0:
         return ([0, 0], 0, 0, 0, 0)

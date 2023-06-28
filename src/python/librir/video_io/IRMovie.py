@@ -9,7 +9,6 @@ from typing import List, Union
 
 import numpy as np
 import pandas as pd
-
 from librir.tools.FileAttributes import FileAttributes
 from librir.tools.utils import init_thermavip, unbind_thermavip_shared_mem
 from librir.video_io.rir_video_io import (
@@ -689,13 +688,13 @@ class IRMovie(object):
         return df
 
     def _frame_attribute_getter(self, key) -> np.ndarray:
-        l = []
+        values = []
         try:
-            l = self.frames_attributes[key]
+            values = self.frames_attributes[key]
         except KeyError:
             logger.warning(f"attribute '{key}' not found in movie !")
         finally:
-            return np.array(l, dtype=float)
+            return np.array(values, dtype=float)
 
     # @cached_property
     @property

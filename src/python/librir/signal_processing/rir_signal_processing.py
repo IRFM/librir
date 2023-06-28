@@ -14,7 +14,8 @@ def translate(image, dx, dy, strategy=str(), background=None):
     If strategy is empty, border pixels are set to the original image ones.
     If strategy is "constant", border pixels are set to the given background value.
     If strategy is "nearest", border pixels are set to closest valid pixels.
-    If strategy is "wrap", border pixels are extended by wrapping around to the opposite edge.
+    If strategy is "wrap", border pixels are extended by wrapping around to the opposite
+    edge.
     """
     _signal_processing.translate.argtypes = [
         ct.c_int,

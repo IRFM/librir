@@ -325,4 +325,6 @@ if __name__ == "__main__":
 
     # PATH_TO_STABILISATION_FOLDER = r"path\to\your\stabilisation\folder"
 
-    # from_pulses_to_csv_files(PULSES, CAMERA, FIRST_IMG_STUDIED, PATH_TO_STABILISATION_FOLDER)
+    # from_pulses_to_csv_files(
+    #     PULSES, CAMERA, FIRST_IMG_STUDIED, PATH_TO_STABILISATION_FOLDER
+    # )

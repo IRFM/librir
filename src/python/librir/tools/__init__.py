@@ -1,18 +1,12 @@
-import os
-import sys
-
-sys.path.insert(1, os.path.realpath(os.path.pardir))
-
-# import useful functions from rir_tools
 from .rir_tools import (
-    zstd_compress_bound,
-    zstd_compress,
-    zstd_decompress,
-    blosc_compress_zstd,
-    blosc_decompress_zstd,
+    BLOSC_BITSHUFFLE,
     BLOSC_NOSHUFFLE,
     BLOSC_SHUFFLE,
-    BLOSC_BITSHUFFLE,
+    blosc_compress_zstd,
+    blosc_decompress_zstd,
+    zstd_compress,
+    zstd_compress_bound,
+    zstd_decompress,
 )
 
 __all__ = [
