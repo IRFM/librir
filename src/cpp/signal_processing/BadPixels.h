@@ -4,27 +4,27 @@
 #include "Primitives.h"
 
 /** @file
-*/
+ */
 
 namespace rir
 {
 	/**
-	* Bad pixels correction for an IR video of unisgned short images
-	*/
+	 * Bad pixels correction for an IR video of unisgned short images
+	 */
 	class SIGNAL_PROCESSING_EXPORT BadPixels
 	{
 	public:
 		BadPixels();
-		~BadPixels() {};
+		~BadPixels(){};
 
 		/**
-		* Create the bad pixel list on the first image
-		*/
-		void init(const unsigned short* img, int width, int height, int std_factor = 5);
+		 * Create the bad pixel list on the first image
+		 */
+		void init(const unsigned short *img, int width, int height, int std_factor = 5);
 		/**
-		* Correct image
-		*/
-		void correct(const unsigned short* in, unsigned short* out);
+		 * Correct image
+		 */
+		void correct(const unsigned short *in, unsigned short *out);
 
 	private:
 		int m_width;
