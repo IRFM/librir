@@ -57,22 +57,6 @@ def close_camera(camera):
     _video_io.close_camera(camera)
 
 
-def get_camera_identifier(camera):
-    """
-    Returns a camera unique identifier.
-
-    C signature:
-    int get_camera_identifier(void * camera, char * identifier);
-    """
-
-    unique_identifier = np.zeros(200, dtype="c")
-    u_p = unique_identifier.ctypes.data_as(ct.POINTER(ct.c_char))
-    res = _video_io.get_camera_identifier(camera, u_p)
-    if res < 0:
-        raise RuntimeError("cannot retrieve camera identifier")
-    return toString(unique_identifier)
-
-
 def get_filename(camera):
     """Returns the camera filename (if any)"""
     fname = np.zeros(200, dtype="c")
@@ -393,7 +377,7 @@ def get_attributes(camera):
             )
         if tmp < 0:
             raise RuntimeError("An error occured while calling 'get_attributes'")
-        res[toString(key)] = toBytes(value)[0 : vlen[0]]
+        res[toString(key)] = toString(value)[0 : vlen[0]]
 
     return res
 
