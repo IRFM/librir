@@ -22,7 +22,6 @@ def deprecated(reason):
     """
 
     if isinstance(reason, string_types):
-
         # The @deprecated is used with a 'reason'.
         #
         # .. code-block:: python
@@ -32,7 +31,6 @@ def deprecated(reason):
         #      pass
 
         def decorator(func1):
-
             if inspect.isclass(func1):
                 fmt1 = "Call to deprecated class {name} ({reason})."
             else:
@@ -54,7 +52,6 @@ def deprecated(reason):
         return decorator
 
     elif inspect.isclass(reason) or inspect.isfunction(reason):
-
         # The @deprecated is used without any 'reason'.
         #
         # .. code-block:: python
@@ -117,7 +114,7 @@ def init_thermavip(th_instance="Thermavip-1"):
     try:
         import Thermavip as th
     except ImportError as e:
-        logger.error(f"Thermavip Python module couldn't be imported")
+        logger.error("Thermavip Python module couldn't be imported")
         logger.error(e)
     else:
         th.setSharedMemoryName(th_instance)

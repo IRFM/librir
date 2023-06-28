@@ -1,11 +1,14 @@
 import ctypes as ct
-import os
-import shutil
 import sys
 
 import numpy as np
 
-from ..low_level.misc import _tools, createZeroArrayHandle, toString, toCharP, toBytes, toArray
+from ..low_level.misc import (
+    _tools,
+    toArray,
+    toBytes,
+    toString,
+)
 
 BLOSC_NOSHUFFLE = 0
 BLOSC_SHUFFLE = 1
@@ -51,7 +54,8 @@ def zstd_compress(src, level=0):
 def zstd_decompress(src):
     """
     Zstd interface.
-    Decompress a bytes object (previously compressed with zstd_compress) and return the result.
+    Decompress a bytes object (previously compressed with zstd_compress) and return the
+    result.
     """
     _tools.zstd_decompress.argtypes = [
         ct.POINTER(ct.c_char),
@@ -112,7 +116,8 @@ def blosc_compress_zstd(src, typesize, shuffle, level=1):
 def blosc_decompress_zstd(src):
     """
     Zstd interface.
-    Decompress a bytes object (previously compressed with zstd_compress) and return the result.
+    Decompress a bytes object (previously compressed with zstd_compress) and return the
+    result.
     """
     _tools.blosc_decompress_zstd.argtypes = [
         ct.POINTER(ct.c_char),

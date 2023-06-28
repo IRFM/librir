@@ -6,8 +6,7 @@ Created on Mon Jan 13 17:53:46 2020
 """
 
 import numpy as np
-from .. import low_level
-from ..low_level.misc import *
+
 from .rir_tools import (
     attrs_open_file,
     attrs_close,
@@ -29,11 +28,11 @@ from .rir_tools import (
 class FileAttributes(object):
     """
     Small class handling file attributes based on librir attributes format.
-    Note that any files can have attributes as they are pushed back to the file, but it is
-    currently only used for MP4 video files.
+    Note that any files can have attributes as they are pushed back to the file, but it
+    is currently only used for MP4 video files.
 
-    Newly defined attributes are only written to the file when the FileAttributes object is destroyed
-    or the flush() function is called.
+    Newly defined attributes are only written to the file when the FileAttributes object
+    is destroyed or the flush() function is called.
 
     Use the discard() function to avoid writting attributes to the file.
     """

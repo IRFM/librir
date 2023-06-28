@@ -16,9 +16,10 @@ namespace rir
 		int m_fd;
 		std::string m_name;
 		std::mutex m_mutex;
+
 	public:
-		explicit FileLock(const char* fname) :m_fd(-1), m_name(fname) {}
-		explicit FileLock(const std::string& fname) :m_fd(-1), m_name(fname) {}
+		explicit FileLock(const char *fname) : m_fd(-1), m_name(fname) {}
+		explicit FileLock(const std::string &fname) : m_fd(-1), m_name(fname) {}
 		~FileLock();
 
 		void lock();
@@ -31,9 +32,10 @@ namespace rir
 	*/
 	class TOOLS_EXPORT FileLockGuard
 	{
-		FileLock* m_lock;
+		FileLock *m_lock;
+
 	public:
-		FileLockGuard(FileLock& lock);
+		FileLockGuard(FileLock &lock);
 		~FileLockGuard();
 	};
 

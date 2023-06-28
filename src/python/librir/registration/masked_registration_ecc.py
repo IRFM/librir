@@ -5,9 +5,8 @@ Created on Fri Mar 26 14:39:16 2021
 @author: CS266247
 """
 
+from librir import signal_processing
 import numpy as np
-import librir as lr
-import librir.signal_processing
 import cv2
 
 ########################
@@ -15,22 +14,30 @@ import cv2
 
 class MaskedRegistratorECC:
     """
-    Compute sub-pixels translations in a movie based on the OpenCV findTransformECC function.
+    Compute sub-pixels translations in a movie based on the OpenCV findTransformECC
+    function.
 
-    This class uses a "smart" way to update the reference image from which translations are computed.
-    Basically, the reference image is updated when the error value returned by findTransformECC
-    is less than a certain threshold : min(Confidences) - 2*std(Confidences)
+    This class uses a "smart" way to update the reference image from which translations
+    are computed.
+    Basically, the reference image is updated when the error value returned by
+    findTransformECC is less than a certain threshold :
+        min(Confidences) - 2*std(Confidences)
 
-    To maximize the chances to get a good translation estimation, the input images can be cropped based
-    on the window_factor value (that takes a centered sub window of input image) and sigma (to apply
-    a gaussian filter on input image).
+    To maximize the chances to get a good translation estimation, the input images can
+    be cropped based on the window_factor value (that takes a centered sub window of
+    input image) and sigma (to apply a gaussian filter on input image).
 
-    Furtheremore, the computation can be performed on static mask only (boolean image) or on a dynamic mask that only contains the X% lowest pixels.
+    Furtheremore, the computation can be performed on static mask only (boolean image)
+    or on a dynamic mask that only contains the X% lowest pixels.
 
-    The first image must be processed with MaskedRegistratorECC.start() function, the remaining ones with MaskedRegistratorECC.compute().
-    The results are stored in MaskedRegistratorECC.x and MaskedRegistratorECC.y (lists of translations). The confidence on the computed translations is accessible in MaskedRegistratorECC.confidences.
+    The first image must be processed with MaskedRegistratorECC.start() function, the
+    remaining ones with MaskedRegistratorECC.compute().
+    The results are stored in MaskedRegistratorECC.x and MaskedRegistratorECC.y (lists
+    of translations). The confidence on the computed translations is accessible in
+    MaskedRegistratorECC.confidences.
 
-    Note that the returned translation values correspond to the translation from the very first image passed to MaskedRegistratorECC.start().
+    Note that the returned translation values correspond to the translation from the
+    very first image passed to MaskedRegistratorECC.start().
     """
 
     def __init__(
@@ -47,11 +54,26 @@ class MaskedRegistratorECC:
         """
         Initialize the registrator object.
         Parameters:
-            - window_factorh compute registration on a sub-part of the image only (crop taking horizontally (window_factorh*100) percent of the image centered)
-            - window_factorv compute registration on a sub-part of the image only (crop taking vertically (window_factorv*100) percent of the image centered)
-            - sigma: apply a gaussian filter with given sigma (0 to disable) to input images. This might help the computation process by removing some noise.
-            - mask: static mask (image of 0 and 1) to only compute the registration on some parts of the image. This allows (for instance) to remove the vignetting part (borders) from the computation.
-            - median: dynamic mask. For each new image, only consider the (median*100) percent of the lowest pixels (ignoring highest values).
+            - *window_factorh* computes registration on a sub-part of the image only
+              (crop taking horizontally (window_factorh*100) percent of the image
+              centered)
+
+            - *window_factorv* computes registration on a sub-part of the image only
+                               (crop taking vertically (window_factorv*100) percent of
+                               the image centered)
+
+            - *sigma*:         apply a gaussian filter with given sigma (0 to disable)
+                               to input images. This might help the computation process
+                               by removing some noise.
+
+            - *mask*:          static mask (image of 0 and 1) to only compute the
+                               registration on some parts of the image.
+                               This allows (for instance) to remove the vignetting part
+                               (borders) from the computation.
+
+            - *median*:        dynamic mask. For each new image, only consider the
+                               (median*100) percent of the lowest pixels
+                               (ignoring highest values).
         """
         self.sigma = sigma
         self.x = []
@@ -62,7 +84,7 @@ class MaskedRegistratorECC:
         if ref is not None and pre_process is not None:
             self.ref = pre_process(ref)
         if sigma > 0 and self.ref is not None:
-            self.ref = lr.signal_processing.gaussian_filter(self.ref, sigma)
+            self.ref = signal_processing.gaussian_filter(self.ref, sigma)
         self.mask_ref_img = None
         self.window_factorH = window_factorh
         self.window_factorV = window_factorv
@@ -82,7 +104,7 @@ class MaskedRegistratorECC:
         if self.pre_process is not None:
             img = self.pre_process(img)
         if self.sigma > 0:
-            img = lr.signal_processing.gaussian_filter(img, self.sigma)
+            img = signal_processing.gaussian_filter(img, self.sigma)
 
         self.ref_img = img[
             self.startY : self.startY + self.subH, self.startX : self.startX + self.subW
@@ -102,7 +124,7 @@ class MaskedRegistratorECC:
         if self.pre_process is not None:
             img = self.pre_process(img)
         if self.sigma > 0:
-            img = lr.signal_processing.gaussian_filter(img, self.sigma)
+            img = signal_processing.gaussian_filter(img, self.sigma)
         new_im = img[
             self.startY : self.startY + self.subH, self.startX : self.startX + self.subW
         ].copy()
@@ -128,7 +150,8 @@ class MaskedRegistratorECC:
             termination_eps,
         )
 
-        # TODO: do not necessarly make a copy, as the array could already be a float array due to gaussian filter
+        # TODO: do not necessarly make a copy, as the array could already be a float
+        # array due to gaussian filter
         if self.ref is None:
             im1 = np.array(self.ref_img, dtype=np.float32)
         else:
@@ -140,9 +163,8 @@ class MaskedRegistratorECC:
             mask = self.mask
 
         if self.median < 1:
-
-            thresh1 = lr.signal_processing.find_median_pixel(new_im, self.median, mask)
-            thresh2 = lr.signal_processing.find_median_pixel(
+            thresh1 = signal_processing.find_median_pixel(new_im, self.median, mask)
+            thresh2 = signal_processing.find_median_pixel(
                 self.ref_img, self.median, mask
             )
             thresh = max(thresh1, thresh2)
@@ -183,7 +205,7 @@ class MaskedRegistratorECC:
                 print("confidence:", self.conf_thresh)
             if confidence < self.conf_thresh:
                 print("reset at confidence ", len(self.x), confidence)
-                new_im = lr.signal_processing.translate(new_im, -shift[1], -shift[0])
+                new_im = signal_processing.translate(new_im, -shift[1], -shift[0])
                 self.ref_img = new_im
                 self.start_mat = np.eye(2, 3, dtype=np.float32)
 

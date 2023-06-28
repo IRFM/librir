@@ -15,7 +15,8 @@ FILE_FORMAT_H264 = 5
 def open_camera_file(filename):
     """
     Open a video file.
-    Returns an integer value representing the camera. This value can be used by the functions:
+    Returns an integer value representing the camera. 
+    This value can be used by the functions:
     - close_camera
     - get_camera_identifier
     - get_camera_pulse
@@ -221,7 +222,10 @@ def get_emissivity(camera):
 
 
 def support_emissivity(camera):
-    """Returns True if given camera supports setting a custom emissivity value, False otherwise"""
+    """
+    Returns True if given camera supports setting a custom emissivity value,
+    False otherwise
+    """
     res = _video_io.support_emissivity(int(camera))
     if res == 1:
         return True
@@ -230,8 +234,8 @@ def support_emissivity(camera):
 
 def camera_saturate(camera):
     """
-    Returns true if setting the emissivity saturates the temperature calibration for the last call
-    to load_image, False otherwise.
+    Returns true if setting the emissivity saturates the temperature
+    calibration for the last call to load_image, False otherwise.
     """
     res = _video_io.camera_saturate(int(camera))
     if res == 1:
@@ -243,7 +247,8 @@ def set_optical_temperature(camera, temperature):
     """
     Set the optical temperature for given camera in degree Celsius.
     This should be the temperature of the B30.
-    Not all cameras supoort this feature. Use support_optical_temperature() function to test it.
+    Not all cameras supoort this feature.
+    Use support_optical_temperature() function to test it.
     """
     _video_io.set_optical_temperature.argtypes = [ct.c_int, ct.c_uint16]
     res = _video_io.set_optical_temperature(int(camera), np.ushort(temperature))
@@ -260,7 +265,8 @@ def get_optical_temperature(camera):
 def set_STEFI_temperature(camera, temperature):
     """
     Set the STEFI temperature for given camera in degree Celsius.
-    Not all cameras supoort this feature. Use support_optical_temperature() function to test it.
+    Not all cameras supoort this feature.
+    Use support_optical_temperature() function to test it.
     """
     _video_io.set_STEFI_temperature.argtypes = [ct.c_int, ct.c_uint16]
     res = _video_io.set_STEFI_temperature(int(camera), np.ushort(temperature))
@@ -269,13 +275,17 @@ def set_STEFI_temperature(camera, temperature):
 
 
 def get_STEFI_temperature(camera):
-    """Returns the STEFI temperature degree Celsius for given camera"""
+    """
+    Returns the STEFI temperature degree Celsius for given camera
+    """
     res = _video_io.get_STEFI_temperature(camera)
     return res
 
 
 def support_optical_temperature(camera):
-    """Returns True if given camera supports custom optical temperature; False otherwise"""
+    """
+    Returns True if given camera supports custom optical temperature; False otherwise
+    """
     res = _video_io.support_optical_temperature(camera)
     if res == 0:
         return False
@@ -427,8 +437,8 @@ def get_global_attributes(camera):
 def h264_open_file(filename, width, height, lossy_height=None):
     """
     Open output video file with given width and height.
-    In case of lossy compression, lossy_height  controls where the loss stops (in order to keep the last rows lossless).
-    Returns file identifier on success.
+    In case of lossy compression, lossy_height  controls where the loss stops (in order
+    to keep the last rows lossless). Returns file identifier on success.
     """
     _video_io.h264_open_file.argtypes = [ct.c_char_p, ct.c_int, ct.c_int, ct.c_int]
     if lossy_height is None:
@@ -451,10 +461,18 @@ def h264_close_file(saver):
 def h264_set_parameter(saver, param, value):
     """
     Set a compression parameter. Supported values:
-        - compressionLevel: h264 compression level (0 for very fast, 8 for maximum compression)
-        - lowValueError: for lossy compression, maximum error on temperature values < background
-        - highValueError: for lossy compression, maximum error on temperature values >= background
-        - autoUpdatePixelInterval: for lossy compression, force update each pixel every X frames
+
+        - compressionLevel:         h264 compression level
+                                    (0 for very fast, 8 for maximum compression)
+
+        - lowValueError:            for lossy compression,
+                                    maximum error on temperature values < background
+
+        - highValueError:           for lossy compression,
+                                    maximum error on temperature values >= background
+
+        - autoUpdatePixelInterval:  for lossy compression, force update each pixel
+                                    every X frames
     """
     tmp = _video_io.h264_set_parameter(
         saver, str(param).encode("ascii"), str(value).encode("ascii")
@@ -718,19 +736,23 @@ def correct_PCR_file(filename, width, height, frequency):
     assert header_verif[10] == width
     assert header_verif[11] == height
 
-    # res = _video_io.correct_PCR_file(filename.encode(),int(width), int(height), int(frequency))
+    # res = _video_io.correct_PCR_file(
+    #     filename.encode(), int(width), int(height), int(frequency)
+    # )
     # if res < 0:
     #     raise RuntimeError("'correct_PCR_file': unknown error")
 
 
 def bzstd_open_file(filename, width, height, rate, method, clevel):
     """
-    Open output video file compressed using zstd and blosc, with given image width and height, frame rate, comrpession method and compression level.
+    Open output video file compressed using zstd and blosc, with given image width and 
+    height, frame rate, comrpession method and compression level.
         method == 1 means ZSTD standard compression (clevel goes from 0 to 22),
         method == 2 means blosc+ZSTD standard compression (clevel goes from 1 to 10),
         method == 3 means blosc+ZSTD advanced compression (clevel goes from 1 to 10).
     Returns file identifier on success.
-    The bzstd format is provided for tests only and should not be used (prefer the h264 format instead)
+    The bzstd format is provided for tests only and should not be used (prefer the h264
+    format instead)
     """
     _video_io.open_video_write.argtypes = [
         ct.c_char_p,

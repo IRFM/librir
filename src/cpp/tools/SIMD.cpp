@@ -1,19 +1,19 @@
 #include "SIMD.h"
 
-//https://stackoverflow.com/questions/6121792/how-to-check-if-a-cpu-supports-the-sse3-instruction-set
-
+// https://stackoverflow.com/questions/6121792/how-to-check-if-a-cpu-supports-the-sse3-instruction-set
 
 #ifdef _MSC_VER
 
 #include "Windows.h"
 //  Windows
-#define cpuid(info, x)    __cpuidex(info, x, 0)
+#define cpuid(info, x) __cpuidex(info, x, 0)
 
 #else
 
 //  GCC Intrinsics
 #include <cpuid.h>
-void cpuid(int info[4], int InfoType) {
+void cpuid(int info[4], int InfoType)
+{
 	__cpuid_count(InfoType, 0, info[0], info[1], info[2], info[3]);
 }
 
@@ -21,7 +21,7 @@ void cpuid(int info[4], int InfoType) {
 
 namespace rir
 {
-	SIMD& detectInstructionSet()
+	SIMD &detectInstructionSet()
 	{
 		static SIMD simd;
 		static bool detect = false;
@@ -37,7 +37,8 @@ namespace rir
 		unsigned nExIds = info[0];
 
 		//  Detect Features
-		if (nIds >= 0x00000001) {
+		if (nIds >= 0x00000001)
+		{
 			cpuid(info, 0x00000001);
 			simd.HW_MMX = (info[3] & ((int)1 << 23)) != 0;
 			simd.HW_SSE = (info[3] & ((int)1 << 25)) != 0;
@@ -54,7 +55,8 @@ namespace rir
 
 			simd.HW_RDRAND = (info[2] & ((int)1 << 30)) != 0;
 		}
-		if (nIds >= 0x00000007) {
+		if (nIds >= 0x00000007)
+		{
 			cpuid(info, 0x00000007);
 			simd.HW_AVX2 = (info[1] & ((int)1 << 5)) != 0;
 
@@ -74,7 +76,8 @@ namespace rir
 			simd.HW_AVX512IFMA = (info[1] & ((int)1 << 21)) != 0;
 			simd.HW_AVX512VBMI = (info[2] & ((int)1 << 1)) != 0;
 		}
-		if (nExIds >= 0x80000001) {
+		if (nExIds >= 0x80000001)
+		{
 			cpuid(info, 0x80000001);
 			simd.HW_x64 = (info[3] & ((int)1 << 29)) != 0;
 			simd.HW_ABM = (info[2] & ((int)1 << 5)) != 0;

@@ -1,19 +1,13 @@
-import sys
-import os
-
-sys.path.insert(1, os.path.realpath(os.path.pardir))
-
-# import useful functions from rir_tools
 from .rir_signal_processing import (
-    translate,
-    gaussian_filter,
-    find_median_pixel,
     extract_times,
-    resample_time_serie,
-    jpegls_encode,
+    find_median_pixel,
+    gaussian_filter,
     jpegls_decode,
-    label_image,
+    jpegls_encode,
     keep_largest_area,
+    label_image,
+    resample_time_serie,
+    translate,
 )
 
 __all__ = [

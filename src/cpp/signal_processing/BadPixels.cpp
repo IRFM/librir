@@ -6,10 +6,11 @@ namespace rir
 {
 
 	BadPixels::BadPixels()
-		:m_width(0), m_height(0), m_median_value(-1)
-	{}
+		: m_width(0), m_height(0), m_median_value(-1)
+	{
+	}
 
-	void BadPixels::init(const unsigned short* first, int width, int height, int std_factor)
+	void BadPixels::init(const unsigned short *first, int width, int height, int std_factor)
 	{
 		m_width = width;
 		m_height = height;
@@ -20,7 +21,7 @@ namespace rir
 		std::sort(img.data(), img.data() + size);
 		m_median_value = img[size / 2];
 
-		//compute std
+		// compute std
 		double sum = 0;
 		int c = 0;
 		for (int i = 0; i < size; ++i, ++c)
@@ -28,26 +29,27 @@ namespace rir
 		sum /= c;
 		sum = sqrt(sum);
 		m_median_value -= (int)(sum * 2);
-
 	}
 
-	void BadPixels::correct(const unsigned short* in, unsigned short* out)
+	void BadPixels::correct(const unsigned short *in, unsigned short *out)
 	{
 		unsigned short pixels[9];
-		//unsigned short buff[10];
+		// unsigned short buff[10];
 		int w = m_width;
 		int h = m_height;
 
 		if (in != out)
 			memcpy(out, in, m_width * m_height * 2);
-		for (size_t i = 0; i < m_bad_pixels.size(); ++i) {
+		for (size_t i = 0; i < m_bad_pixels.size(); ++i)
+		{
 			int x = m_bad_pixels[i].x();
 			int y = m_bad_pixels[i].y();
 
-			unsigned short* pix = pixels;
+			unsigned short *pix = pixels;
 			for (int dx = x - 1; dx <= x + 1; ++dx)
 				for (int dy = y - 1; dy <= y + 1; ++dy)
-					if (dx >= 0 && dy >= 0 && dx < w && dy < h) {
+					if (dx >= 0 && dy >= 0 && dx < w && dy < h)
+					{
 						*pix++ = in[dx + dy * w];
 					}
 			int c = (int)(pix - pixels);
@@ -56,8 +58,9 @@ namespace rir
 			out[x + y * w] = pixels[c / 2];
 		}
 
-		//remove low values
-		if (m_median_value > 0) {
+		// remove low values
+		if (m_median_value > 0)
+		{
 			clampMin(out, w * h, m_median_value);
 		}
 	}

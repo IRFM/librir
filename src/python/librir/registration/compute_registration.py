@@ -61,7 +61,6 @@ def compute_confidence_and_x_y_trajectories(
         is_div = False
 
     for img_number in range(lower_bound, upper_bound + 1):
-
         if img_number % 50 == 0:
             print(img_number)
         img = pulse_obj.load_pos(img_number, calibration)
@@ -310,7 +309,6 @@ def compute_registration_ir(view_name, pulse_or_filename, outfile):
 
 
 if __name__ == "__main__":
-
     # Arguments: view_name pulse_or_file out_file
     import sys
 
@@ -327,4 +325,6 @@ if __name__ == "__main__":
 
     # PATH_TO_STABILISATION_FOLDER = r"path\to\your\stabilisation\folder"
 
-    # from_pulses_to_csv_files(PULSES, CAMERA, FIRST_IMG_STUDIED, PATH_TO_STABILISATION_FOLDER)
+    # from_pulses_to_csv_files(
+    #     PULSES, CAMERA, FIRST_IMG_STUDIED, PATH_TO_STABILISATION_FOLDER
+    # )

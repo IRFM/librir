@@ -49,4 +49,3 @@ logger.setLevel(logging.INFO)
 # for finder, name, ispkg
 # in iter_namespace(plugins)
 # }
-
