@@ -176,6 +176,7 @@ build
 /librir.egg-info/
 
 src/python/librir/libs/*
+src/labview/libs
 
 plugins/*
 
