@@ -28,7 +28,6 @@ from .rir_video_io import (
     enable_bad_pixels,
     flip_camera_calibration,
     get_attributes,
-    get_camera_identifier,
     get_emissivity,
     get_filename,
     get_global_attributes,
@@ -144,10 +143,8 @@ class IRMovie(object):
         if get_image_count(handle) < 0:
             raise RuntimeError("Invalid ir_movie descriptor")
 
-        # consider pulse as a handle identifier
         self.handle = handle
         self.times = None
-        self._identifier = None
         self._enable_bad_pixels = False
         self._last_lines = None
         self._payload = None
@@ -291,27 +288,6 @@ class IRMovie(object):
         return supported_calibrations(
             self.handle
         )  # possible calibrations (usually 'Digital Level' and 'Temperature(C)')
-
-    @property
-    def identifier(self):
-        """
-        Stores and gives handle identifier via librir by default. If not available,
-        gives the user defined one.
-        :return: identifier (str)
-        """
-        try:
-            self._identifier = get_camera_identifier(self.handle)
-        except RuntimeError:
-            if self.handle > 0:
-                logger.warning(
-                    "'{}' is user defined identifier".format(self._identifier)
-                )
-        finally:
-            return self._identifier
-
-    @identifier.setter
-    def identifier(self, value):
-        self._identifier = value
 
     # def frame_attributes(self, frame_index):
     #     return self._file_attributes.frame_attributes(frame_index)
