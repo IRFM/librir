@@ -140,7 +140,6 @@ class MaskedRegistratorECC:
             mask = self.mask
 
         if self.median < 1:
-
             thresh1 = lr.signal_processing.find_median_pixel(new_im, self.median, mask)
             thresh2 = lr.signal_processing.find_median_pixel(
                 self.ref_img, self.median, mask
