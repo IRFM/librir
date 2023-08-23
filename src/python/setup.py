@@ -104,6 +104,7 @@ setup(
     install_requires=[
         "numpy",
         "pandas",
+        "joblib",
         "future-annotations;python_version<'3.7'",
     ]
     + get_requires("requirements.txt"),
