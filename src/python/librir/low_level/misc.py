@@ -35,7 +35,7 @@ _video_io = None
 
 __groups = {}
 
-memory = Memory(tempfile.gettempdir())
+memory = Memory(tempfile.gettempdir(), verbose=0)
 
 
 def toString(ar):
