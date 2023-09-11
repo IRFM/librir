@@ -111,7 +111,7 @@ set(PLUGINS_PYTHON_REQUIRE "" CACHE INTERNAL "")
 
 add_subdirectory(src)
 add_subdirectory(plugins)
-#add_subdirectory(tests)
+add_subdirectory(tests)
 
 # enable_testing()
 # TOREMOVE

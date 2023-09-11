@@ -16,6 +16,154 @@ extern "C" {
 
 using namespace rir;
 
+
+
+
+
+
+
+static std::string tools_get_temp_dir()
+{
+	std::string dirname;
+
+#ifdef _MSC_VER
+	char* tmp = std::getenv("TEMP");
+	if (!tmp)
+		tmp = std::getenv("TMP");
+	if (!tmp)
+		tmp = std::getenv("TMPDIR");
+	if (!tmp) {
+#ifdef P_tmpdir
+		tmp = (char*)P_tmpdir;
+#endif
+	}
+
+	dirname = tmp ? tmp : "";
+	if (dirname.empty())
+		dirname = "./west_data/";
+	else
+	{
+		dirname = format_dir_path(dirname.c_str());
+		dirname += "west_data/";
+	}
+#else
+	//unix system
+
+	//try to use the global thermavip user
+	/*if (dir_exists("/Home/thermavip/west_data"))
+		dirname = "/Home/thermavip/west_data/";
+	else*/ {
+		std::string home = getenv("HOME");
+		if (home.empty()) {
+
+			//if not, use the user's home directory
+			dirname = "~/.west_data/";
+		}
+		else {
+			if (home[home.size() - 1] != '/') home += "/";
+			home += ".west_data/";
+			dirname = home;
+		}
+	}
+
+#endif
+	replace(dirname, "\\", "/");
+
+	if (!dir_exists(dirname.c_str()))
+		if (!make_path(dirname.c_str()))
+			return std::string();
+
+	/*#ifdef _WIN32
+		// On Windows only, create (if necessary) the SIGNALS directory that bufferize signals read with ts_read_signals and ts_read_group, as well as list of views for each pulse
+		std::string signals_path = dirname + "SIGNALS/";
+		if (!dir_exists(signals_path.c_str()))
+			make_path(signals_path.c_str());
+	#endif*/
+
+	return dirname;
+}
+
+class ToolsTmpDir
+{
+public:
+	std::string dirname;
+	std::string default_dirname;
+	ToolsTmpDir()
+	{
+
+		dirname = tools_get_temp_dir().c_str();// +toString(msecs_since_epoch()) + "/";
+
+		printf("tmp dir: %s\n", dirname.c_str()); fflush(stdout);
+		//int s2 = sizeof(dirname);
+
+
+		if (!dir_exists(dirname.c_str()))
+			if (!make_path(dirname.c_str()))
+				dirname = "./west_data/";
+
+		default_dirname = dirname;
+
+		//Create the folder SIGNALS if it does not exist
+		std::string signals_path = dirname + "SIGNALS/";
+		if (!dir_exists(signals_path.c_str()))
+			make_path(signals_path.c_str());
+	}
+	~ToolsTmpDir()
+	{
+
+	}
+};
+
+static ToolsTmpDir& tmpDir()
+{
+	static ToolsTmpDir tmp;
+	return tmp;
+}
+
+
+int set_temp_directory(const char* dirname)
+{
+	if (!dir_exists(dirname))
+		if (!make_path(dirname))
+			return -1;
+
+
+	std::string dir = dirname;
+	replace(dir, "\\", "/");
+	if (dir.back() != '/')
+		dir += "/";
+	tmpDir().dirname = dir;
+
+	//#ifdef _WIN32
+	std::string signals_path = dir + "SIGNALS/";
+	if (!dir_exists(signals_path.c_str()))
+		make_path(signals_path.c_str());
+	//#endif
+
+	return 0;
+}
+
+
+void get_temp_directory(char* dirname)
+{
+	sprintf(dirname, "%s", tmpDir().dirname.c_str());
+}
+
+void get_default_temp_directory(char* dirname)
+{
+	sprintf(dirname, "%s", tmpDir().default_dirname.c_str());
+}
+
+
+
+
+
+
+
+
+
+
+
 void set_print_function(print_function function)
 {
 	set_log_function(function);

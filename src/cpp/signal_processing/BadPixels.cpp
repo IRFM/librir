@@ -62,4 +62,61 @@ namespace rir
 		}
 	}
 
+
+	void BadPixels::correctOnePass(unsigned short* img, int width, int height, int std_factor )
+	{
+		long long st = msecs_since_epoch();
+		static constexpr int win_w = 5;
+		static constexpr int win_h = 5;
+
+#pragma omp parallel for //threads(2)
+		for (int y = 0; y < height; ++y) {
+
+			unsigned short pixels[win_w * win_h];
+
+			for (int x = 0; x < width; ++x) {
+
+				unsigned short* pix = pixels;
+				for (int dy = y - win_h / 2; dy <= y + win_h / 2; ++dy)
+					for (int dx = x - win_w / 2; dx <= x + win_w / 2; ++dx)
+						if (dx >= 0 && dy >= 0 && dx < width && dy < height)
+							*pix++ = img[dx + dy * width];
+
+				int size = (int)(pix - pixels);
+				std::sort(pixels, pixels + size);
+				int med = pixels[size / 2];
+				double sum2 = 0;
+				int c = 0;
+				for (int i = size / 5; i < size * 4 / 5; ++i, ++c)
+					sum2 += (signed_integral)(pixels[i] - med) * (signed_integral)(pixels[i] - med);
+				sum2 /= c;
+				double std = std::sqrt(sum2);
+
+				//consider pixels outside avg +- 5*std
+				double lower =  med - std_factor * std;
+				double upper =  med + std_factor * std;
+
+				int pix2 = img[x + y * width];
+				if (pix2 < lower || pix2 > upper)
+				{
+					//correct
+					unsigned short* pix = pixels;
+					for (int dx = x - 1; dx <= x + 1; ++dx)
+						for (int dy = y - 1; dy <= y + 1; ++dy)
+							if (dx >= 0 && dy >= 0 && dx < width && dy < height) {
+								*pix++ = img[dx + dy * width];
+							}
+					int c = (int)(pix - pixels);
+
+					std::nth_element(pixels, pixels + c / 2, pixels + c);
+					img[x + y * width] = pixels[c / 2];
+				}
+			}
+		}
+
+		long long el = msecs_since_epoch() - st;
+		printf("el: %i\n", (int)el);
+	}
+
 }
+

@@ -6,6 +6,8 @@
 #include "ReadFileChunk.h"
 #include "IRFileLoader.h"
 #include "tools.h"
+#include "IRLoader.h"
+#include "west.h"
 
 #include "HCCLoader.h"
 
@@ -17,6 +19,36 @@ using namespace rir;
 
 int test_full(int argc, char** const argv)
 {
+	{
+		IRLoader l(56927, "WA");
+		if (!l.isValid())
+			return -1;
+		return 0;
+	}
+	{
+		int format = 0;
+		int c = open_camera_file("C:/Users/VM213788/Desktop/hublotWA_avant_300C_Cam21C_ti500.h264",&format);
+		enable_bad_pixels(c, 1);
+		std::vector<unsigned short> img(640 * 515);
+		std::fill(img.begin(), img.end(), 0);
+		int ret = load_image(c, 165, 0, img.data());
+		return 0;
+	}
+	{
+		double v[21];
+		char config[100];
+		char date[100];
+		int res=ts_pulse_infos(54966, &v[0], &v[1], &v[2], &v[3], &v[4], &v[5], &v[6], &v[7], &v[8], &v[9], &v[10], &v[11], &v[12], &v[13], &v[14], &v[15], &v[16], &v[17], &v[18], &v[19], config, date, &v[20]);
+		bool stop = true;
+	}
+	{
+		convert_to_h264(56654, "LH1");
+		/*rir::IRLoader l(56654, "LH1");
+		std::vector<unsigned short> img(640 * 515);
+		bool ok = l.readImage(10, 1, img.data());*/
+		bool stop = true;
+
+	}
 	{
 		rir::IRFileLoader l;
 		bool ok = l.open("C:/Users/VM213788/Desktop/tmpf602soaj");

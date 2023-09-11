@@ -5,6 +5,9 @@
 #include <vector>
 #include <algorithm>
 #include <limits>
+#include <atomic>
+#include <mutex>
+#include <chrono>
 
 #include "Misc.h"
 
@@ -348,5 +351,75 @@ namespace rir
 	typedef std::vector<PointF> PolygonF;
 	/**Integer polygon*/
 	typedef std::vector<Point> Polygon;
+
+
+
+	/// @brief Lightweight and fast spinlock implementation based on https://rigtorp.se/spinlock/
+	///
+	/// spinlock is a lightweight spinlock implementation following the TimedMutex requirements.
+	///  
+	class spinlock {
+
+		spinlock(const spinlock&) = delete;
+		spinlock(spinlock&&) = delete;
+		spinlock& operator=(const spinlock&) = delete;
+		spinlock& operator=(spinlock&&) = delete;
+
+		std::atomic<bool> d_lock;
+
+	public:
+		spinlock() : d_lock(0) {}
+
+		void lock() noexcept {
+			for (;;) {
+				// Optimistically assume the lock is free on the first try
+				if (!d_lock.exchange(true, std::memory_order_acquire)) {
+					return;
+				}
+
+				// Wait for lock to be released without generating cache misses
+				while (d_lock.load(std::memory_order_relaxed)) {
+					// Issue X86 PAUSE or ARM YIELD instruction to reduce contention between
+					// hyper-threads
+
+					std::this_thread::yield();
+				}
+			}
+		}
+
+		bool is_locked() const noexcept { return d_lock.load(std::memory_order_relaxed); }
+		bool try_lock() noexcept {
+			// First do a relaxed load to check if lock is free in order to prevent
+			// unnecessary cache misses if someone does while(!try_lock())
+			return !d_lock.load(std::memory_order_relaxed) &&
+				!d_lock.exchange(true, std::memory_order_acquire);
+		}
+
+		void unlock() noexcept {
+			d_lock.store(false, std::memory_order_release);
+		}
+
+		template<class Rep, class Period>
+		bool try_lock_for(const std::chrono::duration<Rep, Period>& duration) noexcept
+		{
+			return try_lock_until(std::chrono::system_clock::now() + duration);
+		}
+
+		template<class Clock, class Duration>
+		bool try_lock_until(const std::chrono::time_point<Clock, Duration>& timePoint) noexcept
+		{
+			for (;;) {
+				if (!d_lock.exchange(true, std::memory_order_acquire))
+					return true;
+
+				while (d_lock.load(std::memory_order_relaxed)) {
+					if (std::chrono::system_clock::now() > timePoint)
+						return false;
+					std::this_thread::yield();
+				}
+			}
+		}
+	};
+
 
 }

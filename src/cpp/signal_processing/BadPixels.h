@@ -26,6 +26,8 @@ namespace rir
 		*/
 		void correct(const unsigned short* in, unsigned short* out);
 
+		static void correctOnePass(unsigned short* img, int width, int height, int std_factor = 5);
+
 	private:
 		int m_width;
 		int m_height;

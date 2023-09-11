@@ -605,7 +605,7 @@ void IRFileLoader::setBadPixelsEnabled(bool enable)
 			readImage(0, 0, img.data());
 			m_data->bad_pixels = badPixels(img.data(), imageSize().width, imageSize().height - 3);
 
-			if (m_data->median_value < 0) {
+			/*if (m_data->median_value < 0) {
 				int size = imageSize().width*(imageSize().height - 3);
 				std::sort(img.data(), img.data() + size);
 				m_data->median_value = img[size / 2];
@@ -618,7 +618,7 @@ void IRFileLoader::setBadPixelsEnabled(bool enable)
 				sum /= c;
 				sum = sqrt(sum);
 				m_data->median_value -= (int)(sum * 3);
-			}
+			}*/
 		}
 		m_data->bp_enabled = enable;
 
@@ -635,6 +635,7 @@ void IRFileLoader::removeBadPixels(unsigned short * img, int w, int h)
 {
 	if (!m_data->bp_enabled)
 		return;
+	
 
 	unsigned short pixels[9];
 	//unsigned short buff[10];
@@ -655,9 +656,10 @@ void IRFileLoader::removeBadPixels(unsigned short * img, int w, int h)
 	}
 
 	//remove low values
-	if (m_data->median_value > 0) {
-		clampMin(img, w*h, m_data->median_value);
-	}
+	//if (m_data->median_value > 0) {
+	//	clampMin(img, w*h, m_data->median_value);
+	//}
+	
 }
 
 

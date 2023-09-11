@@ -61,6 +61,19 @@ TOOLS_EXPORT int get_last_log_error(char* text, int* len);
 
 
 
+
+
+/**
+For compatibility with older thermavip versions, new versions should NOT use these 3 functions
+*/
+
+TOOLS_EXPORT void get_temp_directory(char* dirname);
+TOOLS_EXPORT void get_default_temp_directory(char* dirname);
+TOOLS_EXPORT int set_temp_directory(const char* dirname);
+
+
+
+
 /**
 Object handler functions
 */
