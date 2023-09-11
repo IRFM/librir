@@ -241,3 +241,15 @@ int minimum_area_bbox(double* xy, int point_count, double* x_center, double* y_c
 	*heightAngle = r.heightAngle;
 	return 0;
 }
+
+int count_pixel_in_polygon(double *xy, int point_count, double *area)
+{
+	PolygonF poly(point_count);
+	for (int i = 0; i < point_count; ++i)
+	{
+		poly[i] = PointF(xy[i * 2], xy[i * 2 + 1]);
+	}
+	double _area = polygonArea(poly);
+	*area = _area;
+	return 0;
+}

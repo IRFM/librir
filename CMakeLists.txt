@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(librir
-    VERSION 4.0.1
+    VERSION 4.1.0
     DESCRIPTION "librir"
     HOMEPAGE_URL "https://github.com/IRFM/librir"
     LANGUAGES CXX C

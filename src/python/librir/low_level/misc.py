@@ -3,6 +3,8 @@ import glob
 import logging
 import os
 import sys
+import tempfile
+from joblib import Memory
 
 import numpy as np
 
@@ -18,6 +20,7 @@ __all__ = [
     "toCharP",
     "createZeroArrayHandle",
     "loadDlls",
+    "memory",
 ]
 
 logging.basicConfig()
@@ -31,6 +34,8 @@ _video_io = None
 
 
 __groups = {}
+
+memory = Memory(tempfile.gettempdir(), verbose=0)
 
 
 def toString(ar):

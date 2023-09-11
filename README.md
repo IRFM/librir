@@ -69,6 +69,16 @@ add_executable(test test.cpp)
 target_link_libraries(test ${LIBRIR_LIBRARIES} )
 ```
 
+
+# Using Librir in Labview
+
+A Labview wrapper is also available. So far, it only implements limited functionalities, such as:
+
+- converting PCR file to h264 lossless
+- saving as `.h264` files 
+- handling `.h264` files
+
+
 # Authors
 
 Librir is developed and maintained by:
