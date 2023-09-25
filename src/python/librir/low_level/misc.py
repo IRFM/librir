@@ -36,12 +36,21 @@ _video_io = None
 
 __groups = {}
 
-_memory_folder = os.getenv("LIBRIR_TEMP_FOLDER") or tempfile.gettempdir()
-_memory_folder = Path(_memory_folder)
-if not _memory_folder.name.endswith("joblib"):
-    _memory_folder /= "joblib"
-memory = Memory(_memory_folder, verbose=0)
-_memory_folder.chmod(0o775)
+
+def get_memory_folder():
+    _memory_folder = os.getenv("LIBRIR_TEMP_FOLDER") or tempfile.gettempdir()
+    _memory_folder = Path(_memory_folder)
+    if not _memory_folder.name.endswith("joblib"):
+        _memory_folder /= "joblib"
+
+    if not _memory_folder.exists():
+        _memory_folder.mkdir()
+        _memory_folder.chmod(0o775)
+
+    return _memory_folder
+
+
+memory = Memory(get_memory_folder(), verbose=0)
 
 
 def toString(ar):
