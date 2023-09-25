@@ -8,6 +8,7 @@
 #include <atomic>
 #include <mutex>
 #include <chrono>
+#include <thread>
 
 #include "Misc.h"
 
