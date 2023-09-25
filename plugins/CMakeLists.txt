@@ -21,6 +21,7 @@ function(cat IN_FILE OUT_FILE)
 endfunction()
 
 set(INIT_PY_FILES)
+file(REMOVE __init__.py.in)
 file(WRITE __init__.py.in "")
 cat(${CMAKE_SOURCE_DIR}/src/python/librir/__init__.py __init__.py.in )
 

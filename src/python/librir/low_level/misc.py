@@ -4,9 +4,10 @@ import logging
 import os
 import sys
 import tempfile
-from joblib import Memory
+from pathlib import Path
 
 import numpy as np
+from joblib import Memory
 
 __all__ = [
     "_tools",
@@ -35,7 +36,12 @@ _video_io = None
 
 __groups = {}
 
-memory = Memory(tempfile.gettempdir(), verbose=0)
+_memory_folder = os.getenv("LIBRIR_TEMP_FOLDER") or tempfile.gettempdir()
+_memory_folder = Path(_memory_folder)
+if not _memory_folder.name.endswith("joblib"):
+    _memory_folder /= "joblib"
+memory = Memory(_memory_folder, verbose=0)
+_memory_folder.chmod(0o775)
 
 
 def toString(ar):
