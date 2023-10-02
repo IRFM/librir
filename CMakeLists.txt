@@ -15,6 +15,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(GNUInstallDirs) 
 
 option(LOCAL_INSTALL "Install locally" ON)
+option(WITH_WEST "Fetch WEST plugin" OFF)
+
 IF(LOCAL_INSTALL)
 	SET(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install) 
 	MESSAGE(STATUS ${CMAKE_INSTALL_PREFIX})
@@ -30,6 +32,17 @@ IF(LOCAL_INSTALL)
 		SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 	ENDIF()
 ENDIF()
+
+
+IF(WITH_WEST)
+	IF(EXISTS ${PROJECT_SOURCE_DIR}/plugins/west)
+		message(STATUS "Pulling WEST repository...")
+		execute_process(COMMAND git pull WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/plugins/west)
+	ELSE()
+		message(STATUS "Cloning WEST repository...")
+		execute_process(COMMAND git clone http://irfm-gitlab.intra.cea.fr/data-analysis/infrared/west.git ${PROJECT_SOURCE_DIR}/plugins/west)
+	ENDIF()
+endif()
 
 
 IF (UNIX)
