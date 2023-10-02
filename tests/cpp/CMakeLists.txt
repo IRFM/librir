@@ -71,4 +71,4 @@
 		 # COMMAND test_west)
 
 
-add_subdirectory(west)
+
