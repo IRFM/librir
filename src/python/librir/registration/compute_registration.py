@@ -1,4 +1,4 @@
-﻿"""
+"""
 Ce fichier est le fichier qui permet d'avoir les estimations du deplacement
 des pixels par l'algorithme masked_registrator_ecc.
 """
@@ -36,7 +36,7 @@ def manage_computation_and_tries(img, regis_obj):
             if regis_obj.check_median_value(1):
                 regis_obj.define_median_value(1)
         except cv2.error:
-            regis_obj.decrease_median_value(0.01)
+            regis_obj.decrease_median(0.01)
             nb_try += 1
         if nb_try > 0:
             print("try number : {}".format(nb_try))
