@@ -5,9 +5,12 @@ Created on Fri Mar 26 14:39:16 2021
 @author: CS266247
 """
 
+from librir.signal_processing.rir_signal_processing import (
+    find_median_pixel,
+    gaussian_filter,
+    translate,
+)
 import numpy as np
-import librir as lr
-import librir.signal_processing
 import cv2
 
 ########################
@@ -62,7 +65,7 @@ class MaskedRegistratorECC:
         if ref is not None and pre_process is not None:
             self.ref = pre_process(ref)
         if sigma > 0 and self.ref is not None:
-            self.ref = lr.signal_processing.gaussian_filter(self.ref, sigma)
+            self.ref = gaussian_filter(self.ref, sigma)
         self.mask_ref_img = None
         self.window_factorH = window_factorh
         self.window_factorV = window_factorv
@@ -82,7 +85,7 @@ class MaskedRegistratorECC:
         if self.pre_process is not None:
             img = self.pre_process(img)
         if self.sigma > 0:
-            img = lr.signal_processing.gaussian_filter(img, self.sigma)
+            img = gaussian_filter(img, self.sigma)
 
         self.ref_img = img[
             self.startY : self.startY + self.subH, self.startX : self.startX + self.subW
@@ -102,7 +105,7 @@ class MaskedRegistratorECC:
         if self.pre_process is not None:
             img = self.pre_process(img)
         if self.sigma > 0:
-            img = lr.signal_processing.gaussian_filter(img, self.sigma)
+            img = gaussian_filter(img, self.sigma)
         new_im = img[
             self.startY : self.startY + self.subH, self.startX : self.startX + self.subW
         ].copy()
@@ -140,11 +143,8 @@ class MaskedRegistratorECC:
             mask = self.mask
 
         if self.median < 1:
-
-            thresh1 = lr.signal_processing.find_median_pixel(new_im, self.median, mask)
-            thresh2 = lr.signal_processing.find_median_pixel(
-                self.ref_img, self.median, mask
-            )
+            thresh1 = find_median_pixel(new_im, self.median, mask)
+            thresh2 = find_median_pixel(self.ref_img, self.median, mask)
             thresh = max(thresh1, thresh2)
 
             m = (im1 > thresh) | (im2 > thresh)
@@ -183,7 +183,7 @@ class MaskedRegistratorECC:
                 print("confidence:", self.conf_thresh)
             if confidence < self.conf_thresh:
                 print("reset at confidence ", len(self.x), confidence)
-                new_im = lr.signal_processing.translate(new_im, -shift[1], -shift[0])
+                new_im = translate(new_im, -shift[1], -shift[0])
                 self.ref_img = new_im
                 self.start_mat = np.eye(2, 3, dtype=np.float32)
 
