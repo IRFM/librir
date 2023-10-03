@@ -40,8 +40,8 @@ __groups = {}
 def get_memory_folder():
     _memory_folder = os.getenv("LIBRIR_TEMP_FOLDER") or tempfile.gettempdir()
     _memory_folder = Path(_memory_folder)
-    if not _memory_folder.name.endswith("joblib"):
-        _memory_folder /= "joblib"
+    if not _memory_folder.name.endswith("cache"):
+        _memory_folder /= "cache"
 
     if not _memory_folder.exists():
         _memory_folder.mkdir()
