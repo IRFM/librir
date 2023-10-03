@@ -37,8 +37,10 @@ _video_io = None
 __groups = {}
 
 
-def get_memory_folder():
-    _memory_folder = os.getenv("LIBRIR_TEMP_FOLDER") or tempfile.gettempdir()
+def get_memory_folder(_memory_folder: Path = None):
+    _memory_folder = (
+        _memory_folder or os.getenv("LIBRIR_TEMP_FOLDER") or tempfile.gettempdir()
+    )
     _memory_folder = Path(_memory_folder)
     if not _memory_folder.name.endswith("cache"):
         _memory_folder /= "cache"
