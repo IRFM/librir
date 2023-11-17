@@ -138,5 +138,10 @@ def movie(array):
 
 
 @pytest.fixture(scope="session")
-def filename(movie):
+def filename(movie: IRMovie):
     return movie.filename
+
+
+@pytest.fixture(scope="session")
+def timestamps(array):
+    return np.arange(len(array), dtype=float) * 2
