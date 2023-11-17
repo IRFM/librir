@@ -383,7 +383,7 @@ class IRMovie(object):
         return self.image_size[0]
 
     @property
-    @functools.lru_cache
+    @functools.lru_cache(maxsize=None)
     def data(self) -> np.array:
         """
         Accessor to data contained in movie file.
