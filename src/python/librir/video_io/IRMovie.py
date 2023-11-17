@@ -514,6 +514,16 @@ class IRMovie(object):
             )
         return self._timestamps
 
+    @timestamps.setter
+    def timestamps(self, value: List[float]):
+        """_summary_
+
+        Args:
+            value (List[float]): in nanoseconds
+        """
+        value = np.array(value) * 1e-9
+        self._timestamps = value
+
     @property
     def frame_period(self) -> float:
         return np.diff(self.timestamps).mean().round(3)
