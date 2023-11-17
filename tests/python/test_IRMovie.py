@@ -58,8 +58,8 @@ def test_save_movie_with_pcr2h264(filename):
 # @pytest.mark.thermavip
 # def test_show_movie_on_thermavip(movie: IRMovie):
 #     # import Thermavip as th
-    
-    
+
+
 #     player_id = movie.to_thermavip()
 
 
@@ -91,7 +91,6 @@ def test_set_calibration(movie: IRMovie):
 
 @pytest.mark.accessors
 def test_load_pos_with_DL(movie: IRMovie):
-
     for i in range(movie.images):
         movie.load_pos(i)
         movie.load_pos(i, 0)
@@ -107,13 +106,22 @@ def test_load_pos_with_DL(movie: IRMovie):
 # @pytest.mark.accessors
 # def test_load_pos_with_temperature(movie):
 #     assert False
-
+@pytest.fixture(scope="function")
+def movie_as_bytes(filename) -> bytes:
+    with open(filename, "rb") as f:
+        data = f.read()
+    return data
 
 
 @pytest.mark.instanstiation
 def test_from_filename(filename):
     mov = IRMovie.from_filename(filename)
     assert mov.filename == filename
+
+
+def test_from_bytes_with_timestamps(movie_as_bytes, timestamps):
+    mov2 = IRMovie.from_bytes(movie_as_bytes, times=timestamps)
+    npt.assert_array_equal(mov2.timestamps, timestamps)
 
 
 @pytest.mark.io
@@ -123,10 +131,12 @@ def test_close(array):
     del mov
 
 
-
 def test_payload_generator(movie: IRMovie):
     npt.assert_array_equal(movie.payload[0], next(movie.payload_generator))
-    
-    
+
+
 def test_video_file_format(movie: IRMovie):
     assert movie.video_file_format == FILE_FORMAT_H264
+
+
+# def test_last_line()
