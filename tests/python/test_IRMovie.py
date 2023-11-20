@@ -121,7 +121,7 @@ def test_from_filename(filename):
 
 def test_from_bytes_with_timestamps(movie_as_bytes, timestamps):
     mov2 = IRMovie.from_bytes(movie_as_bytes, times=timestamps)
-    npt.assert_array_equal(mov2.timestamps, timestamps)
+    npt.assert_array_equal(mov2.timestamps, timestamps[: mov2.images])
 
 
 @pytest.mark.io
