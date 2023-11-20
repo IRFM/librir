@@ -141,6 +141,7 @@ class IRMovie(object):
         if attrs is not None:
             instance.attributes = attrs
             instance._file_attributes.flush()
+
         return instance
 
     def __init__(self, handle):
@@ -655,7 +656,7 @@ class IRMovie(object):
 
     @property
     def last_line_index(self):
-        return self._roi_result_line.get(self.camera_type, -1)
+        return self._roi_result_line.get(self.camera_type, -3)
 
     @property
     def payload(self):
@@ -708,13 +709,13 @@ class IRMovie(object):
         return df
 
     def _frame_attribute_getter(self, key) -> np.ndarray:
-        l = []
+        values = []
         try:
-            l = self.frames_attributes[key]
+            values = self.frames_attributes[key]
         except KeyError:
             logger.warning(f"attribute '{key}' not found in movie !")
         finally:
-            return np.array(l, dtype=float)
+            return np.array(values, dtype=float)
 
     # @cached_property
     @property
