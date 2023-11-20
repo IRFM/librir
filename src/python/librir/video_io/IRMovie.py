@@ -384,7 +384,7 @@ class IRMovie(object):
 
     @property
     @functools.lru_cache(maxsize=None)
-    def data(self) -> np.array:
+    def data(self) -> np.ndarray:
         """
         Accessor to data contained in movie file.
         There are two strategies for getting the data.
