@@ -96,7 +96,7 @@ class IRMovie(object):
         return IRMovie(handle)
 
     @classmethod
-    def from_bytes(cls, data: bytes, times: List[float] = None):
+    def from_bytes(cls, data: bytes, times: List[float] = None, cthreads: int = 8):
         """_summary_
 
         Args:
@@ -113,13 +113,13 @@ class IRMovie(object):
         with cls.from_filename(filename) as _instance:
             _instance.__tempfile__ = filename
             dst = Path(filename).parent / (f"{filename.stem}.h264")
-            _instance.to_h264(dst, times=times)
+            _instance.to_h264(dst, times=times, cthreads=cthreads)
 
         instance = cls.from_filename(dst)
         return instance
 
     @classmethod
-    def from_numpy_array(cls, arr, attrs=None, times=None):
+    def from_numpy_array(cls, arr, attrs=None, times=None, cthreads: int = 8):
         """
         Create a IRMovie object via numpy arrays. It creates non-pulse indexed IRMovie
         object.
@@ -136,7 +136,7 @@ class IRMovie(object):
         else:
             raise ValueError("mismatch array shape. Must be 2D or 3D")
         data = header.astype(np.uint32).tobytes() + arr.astype(np.uint16).tobytes()
-        instance = cls.from_bytes(data, times=times)
+        instance = cls.from_bytes(data, times=times, cthreads=cthreads)
 
         if attrs is not None:
             instance.attributes = attrs
