@@ -140,3 +140,15 @@ def test_video_file_format(movie: IRMovie):
 
 
 # def test_last_line()
+def test_firmware_date_pixel(movie_with_firmware_date: IRMovie):
+    movie_with_firmware_date.load_pos(0)
+    assert movie_with_firmware_date.frame_attributes["Firmware Date"] == "23-1-2023"
+
+    # firmware_date = movie_with_firmware_date.metadata[0, 0, 254:256].tobytes()
+    # firmware_date = np.frombuffer(firmware_date, dtype=np.uint32)[0]
+    # day = (firmware_date >> 24) & 0xFF
+    # assert day == 23
+    # month = (firmware_date >> 16) & 0xFF
+    # assert month == 1
+    # year = (firmware_date) & 0xFFFF
+    # assert year == 2023
