@@ -11,13 +11,12 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <string.h>
-#include <errno.h>    // errno, ENOENT, EEXIST
+#include <errno.h> // errno, ENOENT, EEXIST
 #if defined(_WIN32) || defined(_MSC_VER)
-#include <direct.h>   // _mkdir
+#include <direct.h> // _mkdir
 #include <Windows.h>
 #include <io.h>
 #endif
-
 
 #ifdef _MSC_VER
 #include <conio.h>
@@ -30,9 +29,6 @@
 #include <ftw.h>
 #define access_fun access
 #endif
-
-
-
 
 #ifndef _MSC_VER
 
@@ -68,44 +64,45 @@ std::string ws2s(const std::wstring& wstr)
 
 */
 
-
 namespace rir
 {
 
-
-	std::wstring s2ws(const std::string& str)
+	std::wstring s2ws(const std::string &str)
 	{
 		return std::wstring(str.begin(), str.end());
 	}
 
-	std::string ws2s(const std::wstring& wstr)
+	std::string ws2s(const std::wstring &wstr)
 	{
 		std::string res(wstr.size(), (char)0);
-		std::transform(wstr.begin(), wstr.end(), res.begin(), [](wchar_t c) {return static_cast<char>(c); });
+		std::transform(wstr.begin(), wstr.end(), res.begin(), [](wchar_t c)
+					   { return static_cast<char>(c); });
 		return res;
 	}
 
 	// returns count of non-overlapping occurrences of 'sub' in 'str'
-	int count_substring(const std::string& str, const std::string& sub)
+	int count_substring(const std::string &str, const std::string &sub)
 	{
-		if (sub.length() == 0) return 0;
+		if (sub.length() == 0)
+			return 0;
 		int count = 0;
 		for (size_t offset = str.find(sub); offset != std::string::npos;
-			offset = str.find(sub, offset + sub.length()))
+			 offset = str.find(sub, offset + sub.length()))
 		{
 			++count;
 		}
 		return count;
 	}
 
-	int replace(std::string& in, const char* _from, const char* _to)
+	int replace(std::string &in, const char *_from, const char *_to)
 	{
-		std::string& str = in;
+		std::string &str = in;
 		std::string from = _from;
 		std::string to = _to;
 		int res = 0;
 		size_t start_pos = 0;
-		while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
+		while ((start_pos = str.find(from, start_pos)) != std::string::npos)
+		{
 			str.replace(start_pos, from.length(), to);
 			start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
 			++res;
@@ -113,15 +110,17 @@ namespace rir
 		return res;
 	}
 
-	StringList split(const std::string& in, const char* _match, bool keep_empty_strings)
+	StringList split(const std::string &in, const char *_match, bool keep_empty_strings)
 	{
 		StringList res;
 		std::string match = _match;
 		size_t start_pos = 0;
 		size_t previous_pos = 0;
-		while ((start_pos = in.find(match, start_pos)) != std::string::npos) {
-			//str.replace(start_pos, from.length(), to);
-			if (previous_pos != start_pos || keep_empty_strings) {
+		while ((start_pos = in.find(match, start_pos)) != std::string::npos)
+		{
+			// str.replace(start_pos, from.length(), to);
+			if (previous_pos != start_pos || keep_empty_strings)
+			{
 				res.push_back(in.substr(previous_pos, start_pos - previous_pos));
 			}
 			start_pos += match.length();
@@ -133,12 +132,12 @@ namespace rir
 		return res;
 	}
 
-	StringList split(const char* in, const char* match, bool keep_empty_strings)
+	StringList split(const char *in, const char *match, bool keep_empty_strings)
 	{
 		return split(std::string(in), match, keep_empty_strings);
 	}
 
-	std::string join(const StringList& lst, const char* str)
+	std::string join(const StringList &lst, const char *str)
 	{
 		std::string res;
 		if (lst.empty())
@@ -150,10 +149,7 @@ namespace rir
 		return res;
 	}
 
-
-
-
-	bool file_exists(const char* filename)
+	bool file_exists(const char *filename)
 	{
 		if (!filename)
 			return false;
@@ -164,24 +160,25 @@ namespace rir
 		else
 			return 0;*/
 
-			/*#ifdef _MSC_VER
-				std::ifstream fin(filename);
-				return !fin.fail();
-			#else*/
+		/*#ifdef _MSC_VER
+			std::ifstream fin(filename);
+			return !fin.fail();
+		#else*/
 
-			//on linux, opening a directory might return a valid file descriptor!
-		FILE* f = fopen(filename, "r");
+		// on linux, opening a directory might return a valid file descriptor!
+		FILE *f = fopen(filename, "r");
 		if (!f)
 			return false;
-		else {
+		else
+		{
 			bool res = fseek(f, 0, SEEK_END) == 0;
 			fclose(f);
 			return res && !dir_exists(filename);
 		}
-		//#endif
+		// #endif
 	}
 
-	size_t file_size(const char* filename)
+	size_t file_size(const char *filename)
 	{
 		if (!file_exists(filename))
 			return 0;
@@ -192,21 +189,24 @@ namespace rir
 		return fin.tellg();
 	}
 
-	std::string read_file(const char* filename, bool* ok)
+	std::string read_file(const char *filename, bool *ok)
 	{
 		size_t fsize = file_size(filename);
 		std::ifstream fin(filename, std::ios::binary);
-		if (!fin) {
-			if (ok) *ok = false;
+		if (!fin)
+		{
+			if (ok)
+				*ok = false;
 			return std::string();
 		}
-		if (ok) *ok = true;
+		if (ok)
+			*ok = true;
 		std::string res(fsize, (char)0);
-		fin.read((char*)res.data(), fsize);
+		fin.read((char *)res.data(), fsize);
 		return res;
 	}
 
-	bool dir_exists(const char* dirname)
+	bool dir_exists(const char *dirname)
 	{
 		if (!dirname)
 			return 0;
@@ -216,12 +216,9 @@ namespace rir
 		return (stat(dirname, &sb) == 0 && S_ISDIR(sb.st_mode));
 	}
 
-
-
 #ifndef _MSC_VER
 
-
-	int unlink_cb(const char* fpath, const struct stat*/*sb*/, int /*typeflag*/, struct FTW*/*ftwbuf*/)
+	int unlink_cb(const char *fpath, const struct stat * /*sb*/, int /*typeflag*/, struct FTW * /*ftwbuf*/)
 	{
 		int rv = remove(fpath);
 
@@ -231,7 +228,7 @@ namespace rir
 		return rv;
 	}
 
-	bool rm_file_or_dir(const char* path)
+	bool rm_file_or_dir(const char *path)
 	{
 		if (file_exists(path))
 			return remove(path) == 0;
@@ -243,25 +240,25 @@ namespace rir
 
 #else
 
-	static std::wstring fromStr(const std::string& str)
+	static std::wstring fromStr(const std::string &str)
 	{
 		std::wstring w(str.begin(), str.end());
 		return w;
 	}
 
-	bool rm_file_or_dir(const char* path)
+	bool rm_file_or_dir(const char *path)
 	{
 		if (file_exists(path))
 			return remove(path) == 0;
 		else if (!dir_exists(path))
 			return false;
 
-		bool            bSubdirectory = false;       // Flag, indicating whether
-													 // subdirectories have been found
-		HANDLE          hFile;                       // Handle to directory
-		std::string     strFilePath;                 // Filepath
-		std::string     strPattern;                  // Pattern
-		WIN32_FIND_DATA FileInformation;             // File information
+		bool bSubdirectory = false;		 // Flag, indicating whether
+										 // subdirectories have been found
+		HANDLE hFile;					 // Handle to directory
+		std::string strFilePath;		 // Filepath
+		std::string strPattern;			 // Pattern
+		WIN32_FIND_DATA FileInformation; // File information
 		std::string refcstrRootDirectory = path;
 
 		strPattern = refcstrRootDirectory + "\\*.*";
@@ -286,12 +283,12 @@ namespace rir
 					{
 						// Set file attributes
 						if (::SetFileAttributes(s2ws(strFilePath).c_str(),
-							FILE_ATTRIBUTE_NORMAL) == FALSE)
+												FILE_ATTRIBUTE_NORMAL) == FALSE)
 							return false;
 
 						// Delete file
 						if (::DeleteFile(s2ws(strFilePath).c_str()) == FALSE)
-							return false;// ::GetLastError();
+							return false; // ::GetLastError();
 					}
 				}
 			} while (::FindNextFile(hFile, &FileInformation) == TRUE);
@@ -301,19 +298,19 @@ namespace rir
 
 			DWORD dwError = ::GetLastError();
 			if (dwError != ERROR_NO_MORE_FILES)
-				return false;//dwError;
+				return false; // dwError;
 			else
 			{
 				if (!bSubdirectory)
 				{
 					// Set directory attributes
 					if (::SetFileAttributes(s2ws(refcstrRootDirectory).c_str(),
-						FILE_ATTRIBUTE_NORMAL) == FALSE)
-						return false;// ::GetLastError();
+											FILE_ATTRIBUTE_NORMAL) == FALSE)
+						return false; // ::GetLastError();
 
 					// Delete directory
 					if (::RemoveDirectory(s2ws(refcstrRootDirectory).c_str()) == FALSE)
-						return false;// ::GetLastError();
+						return false; // ::GetLastError();
 				}
 			}
 		}
@@ -323,9 +320,7 @@ namespace rir
 
 #endif
 
-
-
-	static bool isDirExist(const std::string& path)
+	static bool isDirExist(const std::string &path)
 	{
 #if defined(_WIN32)
 		struct _stat info;
@@ -334,7 +329,7 @@ namespace rir
 			return false;
 		}
 		return (info.st_mode & _S_IFDIR) != 0;
-#else 
+#else
 		struct stat info;
 		if (stat(path.c_str(), &info) != 0)
 		{
@@ -344,7 +339,7 @@ namespace rir
 #endif
 	}
 
-	bool make_path(const char* _path)
+	bool make_path(const char *_path)
 	{
 		std::string path = _path;
 #if defined(_WIN32)
@@ -360,22 +355,22 @@ namespace rir
 		{
 		case ENOENT:
 			// parent didn't exist, try to create it
-		{
-			std::size_t pos = path.find_last_of('/');
-			if (pos == std::string::npos)
+			{
+				std::size_t pos = path.find_last_of('/');
+				if (pos == std::string::npos)
 #if defined(_WIN32)
-				pos = path.find_last_of('\\');
-			if (pos == std::string::npos)
+					pos = path.find_last_of('\\');
+				if (pos == std::string::npos)
 #endif
-				return false;
-			if (!make_path(path.substr(0, pos).c_str()))
-				return false;
-		}
-		// now, try to create again
+					return false;
+				if (!make_path(path.substr(0, pos).c_str()))
+					return false;
+			}
+			// now, try to create again
 #if defined(_WIN32)
-		return 0 == _mkdir(path.c_str());
-#else 
-		return 0 == mkdir(path.c_str(), mode);
+			return 0 == _mkdir(path.c_str());
+#else
+			return 0 == mkdir(path.c_str(), mode);
 #endif
 
 		case EEXIST:
@@ -387,20 +382,19 @@ namespace rir
 		}
 	}
 
-
-	int rename_file(const char* old, const char* _new)
+	int rename_file(const char *old, const char *_new)
 	{
 #ifdef WIN32
 		return rename(old, _new);
 #else
-		if(!file_exists(_new))
-			//rename is a POSIX function, however it does not work when copying local file to another filesystem, while mv works (copy + delete)
+		if (!file_exists(_new))
+			// rename is a POSIX function, however it does not work when copying local file to another filesystem, while mv works (copy + delete)
 			return std::system(("mv -f \"" + std::string(old) + "\" \"" + std::string(_new) + "\"").c_str());
 		return -1;
 #endif
 	}
 
-	std::string format_file_path(const char* fname)
+	std::string format_file_path(const char *fname)
 	{
 		std::string res = fname;
 		replace(res, "\\", "/");
@@ -409,7 +403,7 @@ namespace rir
 		return res;
 	}
 
-	std::string format_dir_path(const char* dname)
+	std::string format_dir_path(const char *dname)
 	{
 		std::string res = dname;
 		replace(res, "\\", "/");
@@ -417,10 +411,6 @@ namespace rir
 			res += "/";
 		return res;
 	}
-
-
-
-
 
 #ifndef _MSC_VER
 
@@ -432,21 +422,21 @@ namespace rir
 	{
 		struct timeval tp;
 		gettimeofday(&tp, NULL);
-		long long  ms = tp.tv_sec * 1000LL + tp.tv_usec / 1000LL;
+		long long ms = tp.tv_sec * 1000LL + tp.tv_usec / 1000LL;
 		return ms;
 	}
 
 #else
 
 	/**Truncate given file*/
-	int truncate(const char* fname, size_t off)
+	int truncate(const char *fname, size_t off)
 	{
-		FILE* f = fopen(fname, "ab");
+		FILE *f = fopen(fname, "ab");
 		if (!f)
 			return -1;
 		int r = _chsize_s(_fileno(f), off);
 		fclose(f);
-		return  r;
+		return r;
 	}
 
 	void msleep(int msecs)
@@ -454,23 +444,23 @@ namespace rir
 		Sleep(msecs);
 	}
 
-
 	// MSVC defines this in winsock2.h!?
-	typedef struct timeval_s {
+	typedef struct timeval_s
+	{
 		long tv_sec;
 		long tv_usec;
 	} timeval_s;
 
-	int gettimeofday(struct timeval_s* tp, struct timezone*)
+	int gettimeofday(struct timeval_s *tp, struct timezone *)
 	{
 		// Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
 		// This magic number is the number of 100 nanosecond intervals since January 1, 1601 (UTC)
 		// until 00:00:00 January 1, 1970
 		static const uint64_t EPOCH = ((uint64_t)116444736000000000ULL);
 
-		SYSTEMTIME  system_time;
-		FILETIME    file_time;
-		uint64_t    time;
+		SYSTEMTIME system_time;
+		FILETIME file_time;
+		uint64_t time;
 
 		GetSystemTime(&system_time);
 		SystemTimeToFileTime(&system_time, &file_time);
@@ -486,26 +476,26 @@ namespace rir
 	{
 		struct timeval_s tp;
 		gettimeofday(&tp, NULL);
-		long long  ms = tp.tv_sec * 1000LL + tp.tv_usec / 1000LL;
+		long long ms = tp.tv_sec * 1000LL + tp.tv_usec / 1000LL;
 		return ms;
 	}
 
-
 #endif
 
-
-
-	FileFloatStream::FileFloatStream(const char* filename, const char* format)
-		:file(NULL), string(NULL), len(0), pos(0) {
+	FileFloatStream::FileFloatStream(const char *filename, const char *format)
+		: file(NULL), string(NULL), len(0), pos(0)
+	{
 		file = fopen(filename, format);
-		if (file) {
+		if (file)
+		{
 			fseek(file, 0, SEEK_END);
 			len = ftell(file);
 			fseek(file, 0, SEEK_SET);
 		}
 	}
-	FileFloatStream::FileFloatStream(const char* str, size_t len)
-		:file(NULL), string(NULL), len(len), pos(0) {
+	FileFloatStream::FileFloatStream(const char *str, size_t len)
+		: file(NULL), string(NULL), len(len), pos(0)
+	{
 		if (len && str)
 			this->string = str;
 	}
@@ -525,11 +515,12 @@ namespace rir
 		pos = (0);
 	}
 
-	bool FileFloatStream::open(const char* filename, const char* format)
+	bool FileFloatStream::open(const char *filename, const char *format)
 	{
 		close();
 		file = fopen(filename, format);
-		if (file) {
+		if (file)
+		{
 			fseek(file, 0, SEEK_END);
 			len = ftell(file);
 			fseek(file, 0, SEEK_SET);
@@ -537,29 +528,35 @@ namespace rir
 		}
 		return false;
 	}
-	bool FileFloatStream::open(const char* str, size_t len)
+	bool FileFloatStream::open(const char *str, size_t len)
 	{
 		close();
-		if (len && str) {
+		if (len && str)
+		{
 			this->string = str;
 			return true;
 		}
 		return false;
 	}
 
-	bool FileFloatStream::isOpen() const {
+	bool FileFloatStream::isOpen() const
+	{
 		return file || string;
 	}
-	size_t FileFloatStream::size() const {
+	size_t FileFloatStream::size() const
+	{
 		return len;
 	}
 
-	size_t FileFloatStream::tell() const {
+	size_t FileFloatStream::tell() const
+	{
 		return pos;
 	}
 
-	bool FileFloatStream::seek(size_t p) {
-		if (p >= len) return false;
+	bool FileFloatStream::seek(size_t p)
+	{
+		if (p >= len)
+			return false;
 		pos = p;
 		return true;
 	}
@@ -568,17 +565,20 @@ namespace rir
 	{
 		if (pos >= len)
 			return std::string();
-		else if (file) {
+		else if (file)
+		{
 			fseek(file, (long)pos, SEEK_SET);
 			std::string res(len - pos, (char)0);
-			size_t read = fread((char*)res.data(), 1,res.size(),  file);
-			if (read > 0) {
+			size_t read = fread((char *)res.data(), 1, res.size(), file);
+			if (read > 0)
+			{
 				pos += read;
-				return res.substr(0,read);
+				return res.substr(0, read);
 			}
 			return std::string();
 		}
-		else if (string) {
+		else if (string)
+		{
 			std::string res(string + pos, len - pos);
 			pos = len;
 			return res;
@@ -591,20 +591,25 @@ namespace rir
 	{
 		if (!isOpen() || pos >= len)
 			return std::string();
-		else {
+		else
+		{
 			if (file)
 				fseek(file, (long)pos, SEEK_SET);
 			size_t max_read = len - pos;
 			std::string res;
 			size_t i = 0;
-			for (; i < max_read; ++i) {
+			for (; i < max_read; ++i)
+			{
 				int c = file ? getc(file) : string[pos + i];
-				if (c == EOF) {
+				if (c == EOF)
+				{
 					--i;
 					break;
 				}
-				if (c == '\n' || c == '\r') {
-					if (c == '\r' && pos < len) ++pos; //windows EOL
+				if (c == '\n' || c == '\r')
+				{
+					if (c == '\r' && pos < len)
+						++pos; // windows EOL
 					break;
 				}
 				res.push_back((char)c);
@@ -613,10 +618,5 @@ namespace rir
 			return res;
 		}
 	}
-
-
-
-
-
 
 }

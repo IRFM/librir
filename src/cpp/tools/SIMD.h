@@ -2,24 +2,24 @@
 
 #include "rir_config.h"
 
-//Add missing defines with msvc
+// Add missing defines with msvc
 #ifdef _MSC_VER
 
 #ifdef __AVX2__
-//AVX2
-#elif defined ( __AVX__ )
-//AVX
+// AVX2
+#elif defined(__AVX__)
+// AVX
 #elif (defined(_M_AMD64) || defined(_M_X64))
-//SSE2 x64
+// SSE2 x64
 #define __SSE2__
 #elif _M_IX86_FP == 2
-//SSE2 x32
+// SSE2 x32
 #define __SSE2__
 #elif _M_IX86_FP == 1
-//SSE x32
+// SSE x32
 #define __SSE__
 #else
-//nothing
+// nothing
 #endif
 
 #endif
@@ -27,8 +27,7 @@
 #include <immintrin.h>
 
 /** @file
-*/
-
+ */
 
 namespace rir
 {
@@ -40,7 +39,7 @@ namespace rir
 		//  Misc.
 		bool HW_MMX;
 		bool HW_x64;
-		bool HW_ABM;      // Advanced Bit Manipulation
+		bool HW_ABM; // Advanced Bit Manipulation
 		bool HW_RDRAND;
 		bool HW_BMI1;
 		bool HW_BMI2;
@@ -66,13 +65,13 @@ namespace rir
 		bool HW_AVX2;
 
 		//  SIMD: 512-bit
-		bool HW_AVX512F;    //  AVX512 Foundation
-		bool HW_AVX512CD;   //  AVX512 Conflict Detection
-		bool HW_AVX512PF;   //  AVX512 Prefetch
-		bool HW_AVX512ER;   //  AVX512 Exponential + Reciprocal
-		bool HW_AVX512VL;   //  AVX512 Vector Length Extensions
-		bool HW_AVX512BW;   //  AVX512 Byte + Word
-		bool HW_AVX512DQ;   //  AVX512 Doubleword + Quadword
+		bool HW_AVX512F;	//  AVX512 Foundation
+		bool HW_AVX512CD;	//  AVX512 Conflict Detection
+		bool HW_AVX512PF;	//  AVX512 Prefetch
+		bool HW_AVX512ER;	//  AVX512 Exponential + Reciprocal
+		bool HW_AVX512VL;	//  AVX512 Vector Length Extensions
+		bool HW_AVX512BW;	//  AVX512 Byte + Word
+		bool HW_AVX512DQ;	//  AVX512 Doubleword + Quadword
 		bool HW_AVX512IFMA; //  AVX512 Integer 52-bit Fused Multiply-Add
 		bool HW_AVX512VBMI; //  AVX512 Vector Byte Manipulation Instructions
 	};
@@ -80,6 +79,6 @@ namespace rir
 	/**
 	Returns supported instruction sets for current CPUs
 	*/
-	TOOLS_EXPORT SIMD& detectInstructionSet();
+	TOOLS_EXPORT SIMD &detectInstructionSet();
 
 }
