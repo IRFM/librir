@@ -1,11 +1,14 @@
 import ctypes as ct
-import os
-import shutil
 import sys
 
 import numpy as np
 
-from ..low_level.misc import _tools, createZeroArrayHandle, toString, toCharP, toBytes, toArray
+from ..low_level.misc import (
+    _tools,
+    toString,
+    toBytes,
+    toArray,
+)
 
 BLOSC_NOSHUFFLE = 0
 BLOSC_SHUFFLE = 1
@@ -448,15 +451,15 @@ def attrs_set_global_attributes(handle, attributes):
         if type(k) == bytes:
             ks = k
         elif type(k) == str:
-            ks = k.encode("ascii")
+            ks = k.encode("utf8")
         else:
-            ks = str(k).encode("ascii")
+            ks = str(k).encode("utf8")
         if type(v) == bytes:
             vs = v
         elif type(v) == str:
-            vs = v.encode("ascii")
+            vs = v.encode("utf8")
         else:
-            vs = str(v).encode("ascii")
+            vs = str(v).encode("utf8")
         klens.append(len(ks))
         vlens.append(len(vs))
         keys += ks
