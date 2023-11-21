@@ -158,7 +158,7 @@ def timestamps(array):
 
 
 @pytest.fixture(scope="session")
-def movie_with_firmware_date(valid_2D_array: np.ndarray[np.float64]):
+def movie_with_firmware_date(valid_2D_array):
     # 23-01-2023
     day = 23
     month = 1
