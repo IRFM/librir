@@ -14,20 +14,21 @@
 #include "blosc-common.h"
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-/**
-  AVX2-accelerated shuffle routine.
-*/
-BLOSC_NO_EXPORT void blosc_internal_shuffle_avx2(const size_t bytesoftype, const size_t blocksize,
-                                                 const uint8_t* const _src, uint8_t* const _dest);
+  /**
+    AVX2-accelerated shuffle routine.
+  */
+  BLOSC_NO_EXPORT void blosc_internal_shuffle_avx2(const size_t bytesoftype, const size_t blocksize,
+                                                   const uint8_t *const _src, uint8_t *const _dest);
 
-/**
-  AVX2-accelerated unshuffle routine.
-*/
-BLOSC_NO_EXPORT void blosc_internal_unshuffle_avx2(const size_t bytesoftype, const size_t blocksize,
-                                                   const uint8_t* const _src, uint8_t* const _dest);
+  /**
+    AVX2-accelerated unshuffle routine.
+  */
+  BLOSC_NO_EXPORT void blosc_internal_unshuffle_avx2(const size_t bytesoftype, const size_t blocksize,
+                                                     const uint8_t *const _src, uint8_t *const _dest);
 
 #ifdef __cplusplus
 }

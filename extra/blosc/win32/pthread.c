@@ -36,7 +36,6 @@
 #include <errno.h>
 #include <limits.h>
 
-
 void die(const char *err, ...)
 {
 	printf("%s", err);
@@ -45,15 +44,15 @@ void die(const char *err, ...)
 
 static unsigned __stdcall win32_start_routine(void *arg)
 {
-	pthread_t *thread = (pthread_t*)arg;
+	pthread_t *thread = (pthread_t *)arg;
 	thread->arg = thread->start_routine(thread->arg);
 	return 0;
 }
 
 int pthread_create(pthread_t *thread, const void *unused,
-		   void *(*start_routine)(void*), void *arg)
+				   void *(*start_routine)(void *), void *arg)
 {
-	(void*)unused;
+	(void *)unused;
 	thread->arg = arg;
 	thread->start_routine = start_routine;
 	thread->handle = (HANDLE)
@@ -68,15 +67,16 @@ int pthread_create(pthread_t *thread, const void *unused,
 int win32_pthread_join(pthread_t *thread, void **value_ptr)
 {
 	DWORD result = WaitForSingleObject(thread->handle, INFINITE);
-	switch (result) {
-		case WAIT_OBJECT_0:
-			if (value_ptr)
-				*value_ptr = thread->arg;
-			return 0;
-		case WAIT_ABANDONED:
-			return EINVAL;
-		default:
-			return GetLastError();
+	switch (result)
+	{
+	case WAIT_OBJECT_0:
+		if (value_ptr)
+			*value_ptr = thread->arg;
+		return 0;
+	case WAIT_ABANDONED:
+		return EINVAL;
+	default:
+		return GetLastError();
 	}
 }
 
@@ -91,10 +91,10 @@ int pthread_cond_init(pthread_cond_t *cond, const void *unused)
 	if (!cond->sema)
 		die("CreateSemaphore() failed");
 
-	cond->continue_broadcast = CreateEvent(NULL,	/* security */
-				FALSE,			/* auto-reset */
-				FALSE,			/* not signaled */
-				NULL);			/* name */
+	cond->continue_broadcast = CreateEvent(NULL,  /* security */
+										   FALSE, /* auto-reset */
+										   FALSE, /* not signaled */
+										   NULL); /* name */
 	if (!cond->continue_broadcast)
 		die("CreateEvent() failed");
 
@@ -139,7 +139,8 @@ int pthread_cond_wait(pthread_cond_t *cond, CRITICAL_SECTION *mutex)
 	last_waiter = cond->was_broadcast && cond->waiters == 0;
 	LeaveCriticalSection(&cond->waiters_lock);
 
-	if (last_waiter) {
+	if (last_waiter)
+	{
 		/*
 		 * cond_broadcast was issued while mutex was held. This means
 		 * that all other waiters have continued, but are contending
@@ -179,8 +180,7 @@ int pthread_cond_signal(pthread_cond_t *cond)
 	 * Signal only when there are waiters
 	 */
 	if (have_waiters)
-		return ReleaseSemaphore(cond->sema, 1, NULL) ?
-			0 : GetLastError();
+		return ReleaseSemaphore(cond->sema, 1, NULL) ? 0 : GetLastError();
 	else
 		return 0;
 }
@@ -194,7 +194,8 @@ int pthread_cond_broadcast(pthread_cond_t *cond)
 {
 	EnterCriticalSection(&cond->waiters_lock);
 
-	if ((cond->was_broadcast = cond->waiters > 0)) {
+	if ((cond->was_broadcast = cond->waiters > 0))
+	{
 		/* wake up all waiters */
 		ReleaseSemaphore(cond->sema, cond->waiters, NULL);
 		LeaveCriticalSection(&cond->waiters_lock);
@@ -213,7 +214,9 @@ int pthread_cond_broadcast(pthread_cond_t *cond)
 		 * without cond->waiters_lock held.
 		 */
 		cond->was_broadcast = 0;
-	} else {
+	}
+	else
+	{
 		LeaveCriticalSection(&cond->waiters_lock);
 	}
 	return 0;

@@ -16,11 +16,10 @@
  */
 
 /* When ZSTD_MULTITHREAD is not defined, this file would become an empty translation unit.
-* Include some ISO C header code to prevent this and portably avoid related warnings.
-* (Visual C++: C4206 / GCC: -Wpedantic / Clang: -Wempty-translation-unit)
-*/
+ * Include some ISO C header code to prevent this and portably avoid related warnings.
+ * (Visual C++: C4206 / GCC: -Wpedantic / Clang: -Wempty-translation-unit)
+ */
 #include <stddef.h>
-
 
 #if defined(ZSTD_MULTITHREAD) && defined(_WIN32)
 
@@ -29,29 +28,27 @@
  * http://www.cse.wustl.edu/~schmidt/win32-cv-1.html
  */
 
-
 /* ===  Dependencies  === */
 #include <process.h>
 #include <errno.h>
 #include "threading.h"
 
-
 /* ===  Implementation  === */
 
 static unsigned __stdcall worker(void *arg)
 {
-    pthread_t* const thread = (pthread_t*) arg;
+    pthread_t *const thread = (pthread_t *)arg;
     thread->arg = thread->start_routine(thread->arg);
     return 0;
 }
 
-int pthread_create(pthread_t* thread, const void* unused,
-            void* (*start_routine) (void*), void* arg)
+int pthread_create(pthread_t *thread, const void *unused,
+                   void *(*start_routine)(void *), void *arg)
 {
     (void)unused;
     thread->arg = arg;
     thread->start_routine = start_routine;
-    thread->handle = (HANDLE) _beginthreadex(NULL, 0, worker, thread, 0, NULL);
+    thread->handle = (HANDLE)_beginthreadex(NULL, 0, worker, thread, 0, NULL);
 
     if (!thread->handle)
         return errno;
@@ -59,16 +56,19 @@ int pthread_create(pthread_t* thread, const void* unused,
         return 0;
 }
 
-int _pthread_join(pthread_t * thread, void **value_ptr)
+int _pthread_join(pthread_t *thread, void **value_ptr)
 {
     DWORD result;
 
-    if (!thread->handle) return 0;
+    if (!thread->handle)
+        return 0;
 
     result = WaitForSingleObject(thread->handle, INFINITE);
-    switch (result) {
+    switch (result)
+    {
     case WAIT_OBJECT_0:
-        if (value_ptr) *value_ptr = thread->arg;
+        if (value_ptr)
+            *value_ptr = thread->arg;
         return 0;
     case WAIT_ABANDONED:
         return EINVAL;
@@ -77,4 +77,4 @@ int _pthread_join(pthread_t * thread, void **value_ptr)
     }
 }
 
-#endif   /* ZSTD_MULTITHREAD */
+#endif /* ZSTD_MULTITHREAD */

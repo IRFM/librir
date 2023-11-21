@@ -9,15 +9,16 @@
 #if !defined(_MSC_VER) && __cplusplus < 201402L
 namespace std
 {
-	template<typename T, typename... Args>
-	unique_ptr<T> make_unique(Args&&... args)
+	template <typename T, typename... Args>
+	unique_ptr<T> make_unique(Args &&...args)
 	{
 		return unique_ptr<T>(new T(std::forward<Args>(args)...));
 	}
 }
 #endif
 
-namespace charls {
+namespace charls
+{
 
 	// Default threshold values for JPEG-LS statistical modeling as defined in ISO/IEC 14495-1, Table C.3
 	// for the case MAXVAL = 255 and NEAR = 0.
@@ -48,6 +49,5 @@ namespace charls {
 
 	// The size of a SPIFF header when serialized to a JPEG byte stream.
 	constexpr size_t spiff_header_size_in_bytes = 34;
-
 
 } // namespace charls
