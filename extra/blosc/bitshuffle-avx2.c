@@ -16,7 +16,6 @@
 #include "bitshuffle-sse2.h"
 #include "bitshuffle-avx2.h"
 
-
 /* Make sure AVX2 is available for the compilation target and compiler. */
 #if defined(__AVX2__)
 
@@ -44,17 +43,16 @@ static void printymm(__m256i ymm0)
 }
 #endif
 
-
 /* ---- Code that requires AVX2. Intel Haswell (2013) and later. ---- */
 
-
 /* Transpose bits within bytes. */
-static int64_t bshuf_trans_bit_byte_avx2(void* in, void* out, const size_t size,
-                                         const size_t elem_size) {
+static int64_t bshuf_trans_bit_byte_avx2(void *in, void *out, const size_t size,
+                                         const size_t elem_size)
+{
 
-    char* in_b = (char*) in;
-    char* out_b = (char*) out;
-    int32_t* out_i32;
+    char *in_b = (char *)in;
+    char *out_b = (char *)out;
+    int32_t *out_i32;
 
     size_t nbyte = elem_size * size;
 
@@ -64,23 +62,26 @@ static int64_t bshuf_trans_bit_byte_avx2(void* in, void* out, const size_t size,
     int32_t bt;
     size_t ii, kk;
 
-    for (ii = 0; ii + 31 < nbyte; ii += 32) {
-        ymm = _mm256_loadu_si256((__m256i *) &in_b[ii]);
-        for (kk = 0; kk < 8; kk++) {
+    for (ii = 0; ii + 31 < nbyte; ii += 32)
+    {
+        ymm = _mm256_loadu_si256((__m256i *)&in_b[ii]);
+        for (kk = 0; kk < 8; kk++)
+        {
             bt = _mm256_movemask_epi8(ymm);
             ymm = _mm256_slli_epi16(ymm, 1);
-            out_i32 = (int32_t*) &out_b[((7 - kk) * nbyte + ii) / 8];
+            out_i32 = (int32_t *)&out_b[((7 - kk) * nbyte + ii) / 8];
             *out_i32 = bt;
         }
     }
     count = blosc_internal_bshuf_trans_bit_byte_remainder(in, out, size, elem_size,
-            nbyte - nbyte % 32);
+                                                          nbyte - nbyte % 32);
     return count;
 }
 
 /* Transpose bits within elements. */
-int64_t blosc_internal_bshuf_trans_bit_elem_avx2(void* in, void* out, const size_t size,
-                                                 const size_t elem_size, void* tmp_buf) {
+int64_t blosc_internal_bshuf_trans_bit_elem_avx2(void *in, void *out, const size_t size,
+                                                 const size_t elem_size, void *tmp_buf)
+{
     int64_t count;
 
     CHECK_MULT_EIGHT(size);
@@ -96,11 +97,12 @@ int64_t blosc_internal_bshuf_trans_bit_elem_avx2(void* in, void* out, const size
 
 /* For data organized into a row for each bit (8 * elem_size rows), transpose
  * the bytes. */
-static int64_t bshuf_trans_byte_bitrow_avx2(void* in, void* out, const size_t size,
-                                            const size_t elem_size) {
+static int64_t bshuf_trans_byte_bitrow_avx2(void *in, void *out, const size_t size,
+                                            const size_t elem_size)
+{
 
-    char* in_b = (char*) in;
-    char* out_b = (char*) out;
+    char *in_b = (char *)in;
+    char *out_b = (char *)out;
 
     size_t nrows = 8 * elem_size;
     size_t nbyte_row = size / 8;
@@ -109,54 +111,64 @@ static int64_t bshuf_trans_byte_bitrow_avx2(void* in, void* out, const size_t si
     CHECK_MULT_EIGHT(size);
 
     if (elem_size % 4)
-      return blosc_internal_bshuf_trans_byte_bitrow_sse2(in, out, size, elem_size);
+        return blosc_internal_bshuf_trans_byte_bitrow_sse2(in, out, size, elem_size);
 
     __m256i ymm_0[8];
     __m256i ymm_1[8];
     __m256i ymm_storeage[8][4];
 
-    for (jj = 0; jj + 31 < nbyte_row; jj += 32) {
-        for (ii = 0; ii + 3 < elem_size; ii += 4) {
-            for (hh = 0; hh < 4; hh ++) {
+    for (jj = 0; jj + 31 < nbyte_row; jj += 32)
+    {
+        for (ii = 0; ii + 3 < elem_size; ii += 4)
+        {
+            for (hh = 0; hh < 4; hh++)
+            {
 
-                for (kk = 0; kk < 8; kk ++){
-                    ymm_0[kk] = _mm256_loadu_si256((__m256i *) &in_b[
-                            (ii * 8 + hh * 8 + kk) * nbyte_row + jj]);
+                for (kk = 0; kk < 8; kk++)
+                {
+                    ymm_0[kk] = _mm256_loadu_si256((__m256i *)&in_b[(ii * 8 + hh * 8 + kk) * nbyte_row + jj]);
                 }
 
-                for (kk = 0; kk < 4; kk ++){
+                for (kk = 0; kk < 4; kk++)
+                {
                     ymm_1[kk] = _mm256_unpacklo_epi8(ymm_0[kk * 2],
-                            ymm_0[kk * 2 + 1]);
+                                                     ymm_0[kk * 2 + 1]);
                     ymm_1[kk + 4] = _mm256_unpackhi_epi8(ymm_0[kk * 2],
-                            ymm_0[kk * 2 + 1]);
+                                                         ymm_0[kk * 2 + 1]);
                 }
 
-                for (kk = 0; kk < 2; kk ++){
-                    for (mm = 0; mm < 2; mm ++){
+                for (kk = 0; kk < 2; kk++)
+                {
+                    for (mm = 0; mm < 2; mm++)
+                    {
                         ymm_0[kk * 4 + mm] = _mm256_unpacklo_epi16(
-                                ymm_1[kk * 4 + mm * 2],
-                                ymm_1[kk * 4 + mm * 2 + 1]);
+                            ymm_1[kk * 4 + mm * 2],
+                            ymm_1[kk * 4 + mm * 2 + 1]);
                         ymm_0[kk * 4 + mm + 2] = _mm256_unpackhi_epi16(
-                                ymm_1[kk * 4 + mm * 2],
-                                ymm_1[kk * 4 + mm * 2 + 1]);
+                            ymm_1[kk * 4 + mm * 2],
+                            ymm_1[kk * 4 + mm * 2 + 1]);
                     }
                 }
 
-                for (kk = 0; kk < 4; kk ++){
+                for (kk = 0; kk < 4; kk++)
+                {
                     ymm_1[kk * 2] = _mm256_unpacklo_epi32(ymm_0[kk * 2],
-                            ymm_0[kk * 2 + 1]);
+                                                          ymm_0[kk * 2 + 1]);
                     ymm_1[kk * 2 + 1] = _mm256_unpackhi_epi32(ymm_0[kk * 2],
-                            ymm_0[kk * 2 + 1]);
+                                                              ymm_0[kk * 2 + 1]);
                 }
 
-                for (kk = 0; kk < 8; kk ++){
+                for (kk = 0; kk < 8; kk++)
+                {
                     ymm_storeage[kk][hh] = ymm_1[kk];
                 }
             }
 
-            for (mm = 0; mm < 8; mm ++) {
+            for (mm = 0; mm < 8; mm++)
+            {
 
-                for (kk = 0; kk < 4; kk ++){
+                for (kk = 0; kk < 4; kk++)
+                {
                     ymm_0[kk] = ymm_storeage[mm][kk];
                 }
 
@@ -170,36 +182,34 @@ static int64_t bshuf_trans_byte_bitrow_avx2(void* in, void* out, const size_t si
                 ymm_0[2] = _mm256_permute2x128_si256(ymm_1[0], ymm_1[1], 49);
                 ymm_0[3] = _mm256_permute2x128_si256(ymm_1[2], ymm_1[3], 49);
 
-                _mm256_storeu_si256((__m256i *) &out_b[
-                        (jj + mm * 2 + 0 * 16) * nrows + ii * 8], ymm_0[0]);
-                _mm256_storeu_si256((__m256i *) &out_b[
-                        (jj + mm * 2 + 0 * 16 + 1) * nrows + ii * 8], ymm_0[1]);
-                _mm256_storeu_si256((__m256i *) &out_b[
-                        (jj + mm * 2 + 1 * 16) * nrows + ii * 8], ymm_0[2]);
-                _mm256_storeu_si256((__m256i *) &out_b[
-                        (jj + mm * 2 + 1 * 16 + 1) * nrows + ii * 8], ymm_0[3]);
+                _mm256_storeu_si256((__m256i *)&out_b[(jj + mm * 2 + 0 * 16) * nrows + ii * 8], ymm_0[0]);
+                _mm256_storeu_si256((__m256i *)&out_b[(jj + mm * 2 + 0 * 16 + 1) * nrows + ii * 8], ymm_0[1]);
+                _mm256_storeu_si256((__m256i *)&out_b[(jj + mm * 2 + 1 * 16) * nrows + ii * 8], ymm_0[2]);
+                _mm256_storeu_si256((__m256i *)&out_b[(jj + mm * 2 + 1 * 16 + 1) * nrows + ii * 8], ymm_0[3]);
             }
         }
     }
-    for (ii = 0; ii < nrows; ii ++ ) {
-        for (jj = nbyte_row - nbyte_row % 32; jj < nbyte_row; jj ++) {
+    for (ii = 0; ii < nrows; ii++)
+    {
+        for (jj = nbyte_row - nbyte_row % 32; jj < nbyte_row; jj++)
+        {
             out_b[jj * nrows + ii] = in_b[ii * nbyte_row + jj];
         }
     }
     return size * elem_size;
 }
 
-
 /* Shuffle bits within the bytes of eight element blocks. */
-static int64_t bshuf_shuffle_bit_eightelem_avx2(void* in, void* out, const size_t size,
-                                                const size_t elem_size) {
+static int64_t bshuf_shuffle_bit_eightelem_avx2(void *in, void *out, const size_t size,
+                                                const size_t elem_size)
+{
 
     CHECK_MULT_EIGHT(size);
 
     /*  With a bit of care, this could be written such that such that it is */
     /*  in_buf = out_buf safe. */
-    char* in_b = (char*) in;
-    char* out_b = (char*) out;
+    char *in_b = (char *)in;
+    char *out_b = (char *)out;
 
     size_t nbyte = elem_size * size;
     size_t ii, jj, kk, ind;
@@ -207,18 +217,24 @@ static int64_t bshuf_shuffle_bit_eightelem_avx2(void* in, void* out, const size_
     __m256i ymm;
     int32_t bt;
 
-    if (elem_size % 4) {
+    if (elem_size % 4)
+    {
         return blosc_internal_bshuf_shuffle_bit_eightelem_sse2(in, out, size, elem_size);
-    } else {
-        for (jj = 0; jj + 31 < 8 * elem_size; jj += 32) {
+    }
+    else
+    {
+        for (jj = 0; jj + 31 < 8 * elem_size; jj += 32)
+        {
             for (ii = 0; ii + 8 * elem_size - 1 < nbyte;
-                    ii += 8 * elem_size) {
-                ymm = _mm256_loadu_si256((__m256i *) &in_b[ii + jj]);
-                for (kk = 0; kk < 8; kk++) {
+                 ii += 8 * elem_size)
+            {
+                ymm = _mm256_loadu_si256((__m256i *)&in_b[ii + jj]);
+                for (kk = 0; kk < 8; kk++)
+                {
                     bt = _mm256_movemask_epi8(ymm);
                     ymm = _mm256_slli_epi16(ymm, 1);
                     ind = (ii + jj / 8 + (7 - kk) * elem_size);
-                    * (int32_t *) &out_b[ind] = bt;
+                    *(int32_t *)&out_b[ind] = bt;
                 }
             }
         }
@@ -226,10 +242,10 @@ static int64_t bshuf_shuffle_bit_eightelem_avx2(void* in, void* out, const size_
     return size * elem_size;
 }
 
-
 /* Untranspose bits within elements. */
-int64_t blosc_internal_bshuf_untrans_bit_elem_avx2(void* in, void* out, const size_t size,
-                                                   const size_t elem_size, void* tmp_buf) {
+int64_t blosc_internal_bshuf_untrans_bit_elem_avx2(void *in, void *out, const size_t size,
+                                                   const size_t elem_size, void *tmp_buf)
+{
 
     int64_t count;
 
@@ -237,7 +253,7 @@ int64_t blosc_internal_bshuf_untrans_bit_elem_avx2(void* in, void* out, const si
 
     count = bshuf_trans_byte_bitrow_avx2(in, tmp_buf, size, elem_size);
     CHECK_ERR(count);
-    count =  bshuf_shuffle_bit_eightelem_avx2(tmp_buf, out, size, elem_size);
+    count = bshuf_shuffle_bit_eightelem_avx2(tmp_buf, out, size, elem_size);
 
     return count;
 }

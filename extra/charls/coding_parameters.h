@@ -5,14 +5,15 @@
 
 #include <public_types.h>
 
-namespace charls {
-
-struct coding_parameters final
+namespace charls
 {
-    int32_t near_lossless;
-    charls::interleave_mode interleave_mode;
-    color_transformation transformation;
-    bool output_bgr;
-};
+
+    struct coding_parameters final
+    {
+        int32_t near_lossless;
+        charls::interleave_mode interleave_mode;
+        color_transformation transformation;
+        bool output_bgr;
+    };
 
 } // namespace charls

@@ -8,33 +8,34 @@
 using std::error_category;
 using std::string;
 
-namespace charls {
-
-class jpegls_category final : public error_category
+namespace charls
 {
-public:
-    const char* name() const noexcept override
-    {
-        return "charls::jpegls";
-    }
 
-    string message(int error_value) const override
+    class jpegls_category final : public error_category
     {
-        return charls_get_error_message(static_cast<jpegls_errc>(error_value));
-    }
-};
+    public:
+        const char *name() const noexcept override
+        {
+            return "charls::jpegls";
+        }
+
+        string message(int error_value) const override
+        {
+            return charls_get_error_message(static_cast<jpegls_errc>(error_value));
+        }
+    };
 
 } // namespace charls
 
 using namespace charls;
 
-const void* CHARLS_API_CALLING_CONVENTION charls_get_jpegls_category()
+const void *CHARLS_API_CALLING_CONVENTION charls_get_jpegls_category()
 {
     static class jpegls_category instance;
     return &instance;
 }
 
-const char* CHARLS_API_CALLING_CONVENTION charls_get_error_message(const charls_jpegls_errc error_value)
+const char *CHARLS_API_CALLING_CONVENTION charls_get_error_message(const charls_jpegls_errc error_value)
 {
     switch (error_value)
     {

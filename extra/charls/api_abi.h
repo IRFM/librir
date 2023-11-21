@@ -8,7 +8,7 @@
 #if defined(CHARLS_STATIC)
 
 // CharLS is used as a static library, just define the entry points as extern.
-#define CHARLS_API_IMPORT_EXPORT //extern
+#define CHARLS_API_IMPORT_EXPORT // extern
 #define CHARLS_API_CALLING_CONVENTION
 
 #else

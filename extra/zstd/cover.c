@@ -18,8 +18,8 @@
  ******************************************************************************/
 
 /*-*************************************
-*  Dependencies
-***************************************/
+ *  Dependencies
+ ***************************************/
 #include <stdio.h>  /* fprintf */
 #include <stdlib.h> /* malloc, free, qsort */
 #include <string.h> /* memset */
@@ -35,54 +35,59 @@
 #include "zdict.h"
 
 /*-*************************************
-*  Constants
-***************************************/
+ *  Constants
+ ***************************************/
 #define COVER_MAX_SAMPLES_SIZE (sizeof(size_t) == 8 ? ((U32)-1) : ((U32)1 GB))
 
 /*-*************************************
-*  Console display
-***************************************/
+ *  Console display
+ ***************************************/
 static int g_displayLevel = 2;
-#define DISPLAY(...)                                                           \
-  {                                                                            \
-    fprintf(stderr, __VA_ARGS__);                                              \
-    fflush(stderr);                                                            \
+#define DISPLAY(...)              \
+  {                               \
+    fprintf(stderr, __VA_ARGS__); \
+    fflush(stderr);               \
   }
-#define LOCALDISPLAYLEVEL(displayLevel, l, ...)                                \
-  if (displayLevel >= l) {                                                     \
-    DISPLAY(__VA_ARGS__);                                                      \
+#define LOCALDISPLAYLEVEL(displayLevel, l, ...) \
+  if (displayLevel >= l)                        \
+  {                                             \
+    DISPLAY(__VA_ARGS__);                       \
   } /* 0 : no display;   1: errors;   2: default;  3: details;  4: debug */
 #define DISPLAYLEVEL(l, ...) LOCALDISPLAYLEVEL(g_displayLevel, l, __VA_ARGS__)
 
-#define LOCALDISPLAYUPDATE(displayLevel, l, ...)                               \
-  if (displayLevel >= l) {                                                     \
-    if ((clock() - g_time > refreshRate) || (displayLevel >= 4)) {             \
-      g_time = clock();                                                        \
-      DISPLAY(__VA_ARGS__);                                                    \
-      if (displayLevel >= 4)                                                   \
-        fflush(stdout);                                                        \
-    }                                                                          \
+#define LOCALDISPLAYUPDATE(displayLevel, l, ...)                 \
+  if (displayLevel >= l)                                         \
+  {                                                              \
+    if ((clock() - g_time > refreshRate) || (displayLevel >= 4)) \
+    {                                                            \
+      g_time = clock();                                          \
+      DISPLAY(__VA_ARGS__);                                      \
+      if (displayLevel >= 4)                                     \
+        fflush(stdout);                                          \
+    }                                                            \
   }
 #define DISPLAYUPDATE(l, ...) LOCALDISPLAYUPDATE(g_displayLevel, l, __VA_ARGS__)
 static const clock_t refreshRate = CLOCKS_PER_SEC * 15 / 100;
 static clock_t g_time = 0;
 
 /*-*************************************
-* Hash table
-***************************************
-* A small specialized hash map for storing activeDmers.
-* The map does not resize, so if it becomes full it will loop forever.
-* Thus, the map must be large enough to store every value.
-* The map implements linear probing and keeps its load less than 0.5.
-*/
+ * Hash table
+ ***************************************
+ * A small specialized hash map for storing activeDmers.
+ * The map does not resize, so if it becomes full it will loop forever.
+ * Thus, the map must be large enough to store every value.
+ * The map implements linear probing and keeps its load less than 0.5.
+ */
 
 #define MAP_EMPTY_VALUE ((U32)-1)
-typedef struct COVER_map_pair_t_s {
+typedef struct COVER_map_pair_t_s
+{
   U32 key;
   U32 value;
 } COVER_map_pair_t;
 
-typedef struct COVER_map_s {
+typedef struct COVER_map_s
+{
   COVER_map_pair_t *data;
   U32 sizeLog;
   U32 size;
@@ -92,7 +97,8 @@ typedef struct COVER_map_s {
 /**
  * Clear the map.
  */
-static void COVER_map_clear(COVER_map_t *map) {
+static void COVER_map_clear(COVER_map_t *map)
+{
   memset(map->data, MAP_EMPTY_VALUE, map->size * sizeof(COVER_map_pair_t));
 }
 
@@ -102,12 +108,14 @@ static void COVER_map_clear(COVER_map_t *map) {
  * The map must be destroyed with COVER_map_destroy().
  * The map is only guaranteed to be large enough to hold size elements.
  */
-static int COVER_map_init(COVER_map_t *map, U32 size) {
+static int COVER_map_init(COVER_map_t *map, U32 size)
+{
   map->sizeLog = ZSTD_highbit32(size) + 2;
   map->size = (U32)1 << map->sizeLog;
   map->sizeMask = map->size - 1;
   map->data = (COVER_map_pair_t *)malloc(map->size * sizeof(COVER_map_pair_t));
-  if (!map->data) {
+  if (!map->data)
+  {
     map->sizeLog = 0;
     map->size = 0;
     return 0;
@@ -120,22 +128,27 @@ static int COVER_map_init(COVER_map_t *map, U32 size) {
  * Internal hash function
  */
 static const U32 prime4bytes = 2654435761U;
-static U32 COVER_map_hash(COVER_map_t *map, U32 key) {
+static U32 COVER_map_hash(COVER_map_t *map, U32 key)
+{
   return (key * prime4bytes) >> (32 - map->sizeLog);
 }
 
 /**
  * Helper function that returns the index that a key should be placed into.
  */
-static U32 COVER_map_index(COVER_map_t *map, U32 key) {
+static U32 COVER_map_index(COVER_map_t *map, U32 key)
+{
   const U32 hash = COVER_map_hash(map, key);
   U32 i;
-  for (i = hash;; i = (i + 1) & map->sizeMask) {
+  for (i = hash;; i = (i + 1) & map->sizeMask)
+  {
     COVER_map_pair_t *pos = &map->data[i];
-    if (pos->value == MAP_EMPTY_VALUE) {
+    if (pos->value == MAP_EMPTY_VALUE)
+    {
       return i;
     }
-    if (pos->key == key) {
+    if (pos->key == key)
+    {
       return i;
     }
   }
@@ -146,9 +159,11 @@ static U32 COVER_map_index(COVER_map_t *map, U32 key) {
  * If key is not in the map, it is inserted and the value is set to 0.
  * The map must not be full.
  */
-static U32 *COVER_map_at(COVER_map_t *map, U32 key) {
+static U32 *COVER_map_at(COVER_map_t *map, U32 key)
+{
   COVER_map_pair_t *pos = &map->data[COVER_map_index(map, key)];
-  if (pos->value == MAP_EMPTY_VALUE) {
+  if (pos->value == MAP_EMPTY_VALUE)
+  {
     pos->key = key;
     pos->value = 0;
   }
@@ -158,27 +173,34 @@ static U32 *COVER_map_at(COVER_map_t *map, U32 key) {
 /**
  * Deletes key from the map if present.
  */
-static void COVER_map_remove(COVER_map_t *map, U32 key) {
+static void COVER_map_remove(COVER_map_t *map, U32 key)
+{
   U32 i = COVER_map_index(map, key);
   COVER_map_pair_t *del = &map->data[i];
   U32 shift = 1;
-  if (del->value == MAP_EMPTY_VALUE) {
+  if (del->value == MAP_EMPTY_VALUE)
+  {
     return;
   }
-  for (i = (i + 1) & map->sizeMask;; i = (i + 1) & map->sizeMask) {
+  for (i = (i + 1) & map->sizeMask;; i = (i + 1) & map->sizeMask)
+  {
     COVER_map_pair_t *const pos = &map->data[i];
     /* If the position is empty we are done */
-    if (pos->value == MAP_EMPTY_VALUE) {
+    if (pos->value == MAP_EMPTY_VALUE)
+    {
       del->value = MAP_EMPTY_VALUE;
       return;
     }
     /* If pos can be moved to del do so */
-    if (((i - COVER_map_hash(map, pos->key)) & map->sizeMask) >= shift) {
+    if (((i - COVER_map_hash(map, pos->key)) & map->sizeMask) >= shift)
+    {
       del->key = pos->key;
       del->value = pos->value;
       del = pos;
       shift = 1;
-    } else {
+    }
+    else
+    {
       ++shift;
     }
   }
@@ -187,8 +209,10 @@ static void COVER_map_remove(COVER_map_t *map, U32 key) {
 /**
  * Destroyes a map that is inited with COVER_map_init().
  */
-static void COVER_map_destroy(COVER_map_t *map) {
-  if (map->data) {
+static void COVER_map_destroy(COVER_map_t *map)
+{
+  if (map->data)
+  {
     free(map->data);
   }
   map->data = NULL;
@@ -196,10 +220,11 @@ static void COVER_map_destroy(COVER_map_t *map) {
 }
 
 /*-*************************************
-* Context
-***************************************/
+ * Context
+ ***************************************/
 
-typedef struct {
+typedef struct
+{
   const BYTE *samples;
   size_t *offsets;
   const size_t *samplesSizes;
@@ -215,16 +240,18 @@ typedef struct {
 static COVER_ctx_t *g_ctx = NULL;
 
 /*-*************************************
-*  Helper functions
-***************************************/
+ *  Helper functions
+ ***************************************/
 
 /**
  * Returns the sum of the sample sizes.
  */
-static size_t COVER_sum(const size_t *samplesSizes, unsigned nbSamples) {
+static size_t COVER_sum(const size_t *samplesSizes, unsigned nbSamples)
+{
   size_t sum = 0;
   size_t i;
-  for (i = 0; i < nbSamples; ++i) {
+  for (i = 0; i < nbSamples; ++i)
+  {
     sum += samplesSizes[i];
   }
   return sum;
@@ -235,7 +262,8 @@ static size_t COVER_sum(const size_t *samplesSizes, unsigned nbSamples) {
  * Return 0 if the dmers at lp and rp are equal.
  * Returns 1 if the dmer at lp is greater than the dmer at rp.
  */
-static int COVER_cmp(COVER_ctx_t *ctx, const void *lp, const void *rp) {
+static int COVER_cmp(COVER_ctx_t *ctx, const void *lp, const void *rp)
+{
   const U32 lhs = *(const U32 *)lp;
   const U32 rhs = *(const U32 *)rp;
   return memcmp(ctx->samples + lhs, ctx->samples + rhs, ctx->d);
@@ -246,9 +274,11 @@ static int COVER_cmp(COVER_ctx_t *ctx, const void *lp, const void *rp) {
  * NOTE: g_ctx must be set to call this function.  A global is required because
  * qsort doesn't take an opaque pointer.
  */
-static int COVER_strict_cmp(const void *lp, const void *rp) {
+static int COVER_strict_cmp(const void *lp, const void *rp)
+{
   int result = COVER_cmp(g_ctx, lp, rp);
-  if (result == 0) {
+  if (result == 0)
+  {
     result = lp < rp ? -1 : 1;
   }
   return result;
@@ -259,16 +289,21 @@ static int COVER_strict_cmp(const void *lp, const void *rp) {
  * less than value.  If no such element exists it returns last.
  */
 static const size_t *COVER_lower_bound(const size_t *first, const size_t *last,
-                                       size_t value) {
+                                       size_t value)
+{
   size_t count = last - first;
-  while (count != 0) {
+  while (count != 0)
+  {
     size_t step = count / 2;
     const size_t *ptr = first;
     ptr += step;
-    if (*ptr < value) {
+    if (*ptr < value)
+    {
       first = ++ptr;
       count -= step + 1;
-    } else {
+    }
+    else
+    {
       count = step;
     }
   }
@@ -283,13 +318,16 @@ static const size_t *COVER_lower_bound(const size_t *first, const size_t *last,
 static void
 COVER_groupBy(const void *data, size_t count, size_t size, COVER_ctx_t *ctx,
               int (*cmp)(COVER_ctx_t *, const void *, const void *),
-              void (*grp)(COVER_ctx_t *, const void *, const void *)) {
+              void (*grp)(COVER_ctx_t *, const void *, const void *))
+{
   const BYTE *ptr = (const BYTE *)data;
   size_t num = 0;
-  while (num < count) {
+  while (num < count)
+  {
     const BYTE *grpEnd = ptr + size;
     ++num;
-    while (num < count && cmp(ctx, ptr, grpEnd) == 0) {
+    while (num < count && cmp(ctx, ptr, grpEnd) == 0)
+    {
       grpEnd += size;
       ++num;
     }
@@ -299,8 +337,8 @@ COVER_groupBy(const void *data, size_t count, size_t size, COVER_ctx_t *ctx,
 }
 
 /*-*************************************
-*  Cover functions
-***************************************/
+ *  Cover functions
+ ***************************************/
 
 /**
  * Called on each group of positions with the same dmer.
@@ -308,7 +346,8 @@ COVER_groupBy(const void *data, size_t count, size_t size, COVER_ctx_t *ctx,
  * Fills `ctx->dmerAt`.
  */
 static void COVER_group(COVER_ctx_t *ctx, const void *group,
-                        const void *groupEnd) {
+                        const void *groupEnd)
+{
   /* The group consists of all the positions with the same first d bytes. */
   const U32 *grpPtr = (const U32 *)group;
   const U32 *grpEnd = (const U32 *)groupEnd;
@@ -326,14 +365,16 @@ static void COVER_group(COVER_ctx_t *ctx, const void *group,
    * different sample than the last.
    */
   size_t curSampleEnd = ctx->offsets[0];
-  for (; grpPtr != grpEnd; ++grpPtr) {
+  for (; grpPtr != grpEnd; ++grpPtr)
+  {
     /* Save the dmerId for this position so we can get back to it. */
     ctx->dmerAt[*grpPtr] = dmerId;
     /* Dictionaries only help for the first reference to the dmer.
      * After that zstd can reference the match from the previous reference.
      * So only count each dmer once for each sample it is in.
      */
-    if (*grpPtr < curSampleEnd) {
+    if (*grpPtr < curSampleEnd)
+    {
       continue;
     }
     freq += 1;
@@ -341,7 +382,8 @@ static void COVER_group(COVER_ctx_t *ctx, const void *group,
      * In the common case that grpPtr + 1 == grpEnd we can skip the binary
      * search because the loop is over.
      */
-    if (grpPtr + 1 != grpEnd) {
+    if (grpPtr + 1 != grpEnd)
+    {
       const size_t *sampleEndPtr =
           COVER_lower_bound(curOffsetPtr, offsetsEnd, *grpPtr);
       curSampleEnd = *sampleEndPtr;
@@ -359,7 +401,8 @@ static void COVER_group(COVER_ctx_t *ctx, const void *group,
 /**
  * A segment is a range in the source as well as the score of the segment.
  */
-typedef struct {
+typedef struct
+{
   U32 begin;
   U32 end;
   double score;
@@ -378,7 +421,8 @@ typedef struct {
  */
 static COVER_segment_t COVER_selectSegment(const COVER_ctx_t *ctx, U32 *freqs,
                                            COVER_map_t *activeDmers, U32 begin,
-                                           U32 end, COVER_params_t parameters) {
+                                           U32 end, COVER_params_t parameters)
+{
   /* Constants */
   const U32 k = parameters.k;
   const U32 d = parameters.d;
@@ -395,13 +439,15 @@ static COVER_segment_t COVER_selectSegment(const COVER_ctx_t *ctx, U32 *freqs,
   /* Slide the activeSegment through the whole epoch.
    * Save the best segment in bestSegment.
    */
-  while (activeSegment.end < end) {
+  while (activeSegment.end < end)
+  {
     /* The dmerId for the dmer at the next position */
     U32 newDmer = ctx->dmerAt[activeSegment.end];
     /* The entry in activeDmers for this dmerId */
     U32 *newDmerOcc = COVER_map_at(activeDmers, newDmer);
     /* If the dmer isn't already present in the segment add its score. */
-    if (*newDmerOcc == 0) {
+    if (*newDmerOcc == 0)
+    {
       /* The paper suggest using the L-0.5 norm, but experiments show that it
        * doesn't help.
        */
@@ -412,20 +458,23 @@ static COVER_segment_t COVER_selectSegment(const COVER_ctx_t *ctx, U32 *freqs,
     *newDmerOcc += 1;
 
     /* If the window is now too large, drop the first position */
-    if (activeSegment.end - activeSegment.begin == dmersInK + 1) {
+    if (activeSegment.end - activeSegment.begin == dmersInK + 1)
+    {
       U32 delDmer = ctx->dmerAt[activeSegment.begin];
       U32 *delDmerOcc = COVER_map_at(activeDmers, delDmer);
       activeSegment.begin += 1;
       *delDmerOcc -= 1;
       /* If this is the last occurence of the dmer, subtract its score */
-      if (*delDmerOcc == 0) {
+      if (*delDmerOcc == 0)
+      {
         COVER_map_remove(activeDmers, delDmer);
         activeSegment.score -= freqs[delDmer];
       }
     }
 
     /* If this segment is the best so far save it */
-    if (activeSegment.score > bestSegment.score) {
+    if (activeSegment.score > bestSegment.score)
+    {
       bestSegment = activeSegment;
     }
   }
@@ -434,9 +483,11 @@ static COVER_segment_t COVER_selectSegment(const COVER_ctx_t *ctx, U32 *freqs,
     U32 newBegin = bestSegment.end;
     U32 newEnd = bestSegment.begin;
     U32 pos;
-    for (pos = bestSegment.begin; pos != bestSegment.end; ++pos) {
+    for (pos = bestSegment.begin; pos != bestSegment.end; ++pos)
+    {
       U32 freq = freqs[ctx->dmerAt[pos]];
-      if (freq != 0) {
+      if (freq != 0)
+      {
         newBegin = MIN(newBegin, pos);
         newEnd = pos + 1;
       }
@@ -447,7 +498,8 @@ static COVER_segment_t COVER_selectSegment(const COVER_ctx_t *ctx, U32 *freqs,
   {
     /* Zero out the frequency of each dmer covered by the chosen segment. */
     U32 pos;
-    for (pos = bestSegment.begin; pos != bestSegment.end; ++pos) {
+    for (pos = bestSegment.begin; pos != bestSegment.end; ++pos)
+    {
       freqs[ctx->dmerAt[pos]] = 0;
     }
   }
@@ -458,13 +510,16 @@ static COVER_segment_t COVER_selectSegment(const COVER_ctx_t *ctx, U32 *freqs,
  * Check the validity of the parameters.
  * Returns non-zero if the parameters are valid and 0 otherwise.
  */
-static int COVER_checkParameters(COVER_params_t parameters) {
+static int COVER_checkParameters(COVER_params_t parameters)
+{
   /* k and d are required parameters */
-  if (parameters.d == 0 || parameters.k == 0) {
+  if (parameters.d == 0 || parameters.k == 0)
+  {
     return 0;
   }
   /* d <= k */
-  if (parameters.d > parameters.k) {
+  if (parameters.d > parameters.k)
+  {
     return 0;
   }
   return 1;
@@ -473,23 +528,29 @@ static int COVER_checkParameters(COVER_params_t parameters) {
 /**
  * Clean up a context initialized with `COVER_ctx_init()`.
  */
-static void COVER_ctx_destroy(COVER_ctx_t *ctx) {
-  if (!ctx) {
+static void COVER_ctx_destroy(COVER_ctx_t *ctx)
+{
+  if (!ctx)
+  {
     return;
   }
-  if (ctx->suffix) {
+  if (ctx->suffix)
+  {
     free(ctx->suffix);
     ctx->suffix = NULL;
   }
-  if (ctx->freqs) {
+  if (ctx->freqs)
+  {
     free(ctx->freqs);
     ctx->freqs = NULL;
   }
-  if (ctx->dmerAt) {
+  if (ctx->dmerAt)
+  {
     free(ctx->dmerAt);
     ctx->dmerAt = NULL;
   }
-  if (ctx->offsets) {
+  if (ctx->offsets)
+  {
     free(ctx->offsets);
     ctx->offsets = NULL;
   }
@@ -504,12 +565,14 @@ static void COVER_ctx_destroy(COVER_ctx_t *ctx) {
  */
 static int COVER_ctx_init(COVER_ctx_t *ctx, const void *samplesBuffer,
                           const size_t *samplesSizes, unsigned nbSamples,
-                          unsigned d) {
+                          unsigned d)
+{
   const BYTE *const samples = (const BYTE *)samplesBuffer;
   const size_t totalSamplesSize = COVER_sum(samplesSizes, nbSamples);
   /* Checks */
   if (totalSamplesSize < d ||
-      totalSamplesSize >= (size_t)COVER_MAX_SAMPLES_SIZE) {
+      totalSamplesSize >= (size_t)COVER_MAX_SAMPLES_SIZE)
+  {
     DISPLAYLEVEL(1, "Total samples size is too large, maximum size is %u MB\n",
                  (COVER_MAX_SAMPLES_SIZE >> 20));
     return 0;
@@ -528,7 +591,8 @@ static int COVER_ctx_init(COVER_ctx_t *ctx, const void *samplesBuffer,
   ctx->dmerAt = (U32 *)malloc(ctx->suffixSize * sizeof(U32));
   /* The offsets of each file */
   ctx->offsets = (size_t *)malloc((nbSamples + 1) * sizeof(size_t));
-  if (!ctx->suffix || !ctx->dmerAt || !ctx->offsets) {
+  if (!ctx->suffix || !ctx->dmerAt || !ctx->offsets)
+  {
     DISPLAYLEVEL(1, "Failed to allocate scratch buffers\n");
     COVER_ctx_destroy(ctx);
     return 0;
@@ -540,7 +604,8 @@ static int COVER_ctx_init(COVER_ctx_t *ctx, const void *samplesBuffer,
   {
     U32 i;
     ctx->offsets[0] = 0;
-    for (i = 1; i <= nbSamples; ++i) {
+    for (i = 1; i <= nbSamples; ++i)
+    {
       ctx->offsets[i] = ctx->offsets[i - 1] + samplesSizes[i - 1];
     }
   }
@@ -551,7 +616,8 @@ static int COVER_ctx_init(COVER_ctx_t *ctx, const void *samplesBuffer,
      * The sort is stable, so each dmer group is sorted by position in input.
      */
     U32 i;
-    for (i = 0; i < ctx->suffixSize; ++i) {
+    for (i = 0; i < ctx->suffixSize; ++i)
+    {
       ctx->suffix[i] = i;
     }
     /* qsort doesn't take an opaque pointer, so pass as a global */
@@ -579,7 +645,8 @@ static int COVER_ctx_init(COVER_ctx_t *ctx, const void *samplesBuffer,
 static size_t COVER_buildDictionary(const COVER_ctx_t *ctx, U32 *freqs,
                                     COVER_map_t *activeDmers, void *dictBuffer,
                                     size_t dictBufferCapacity,
-                                    COVER_params_t parameters) {
+                                    COVER_params_t parameters)
+{
   BYTE *const dict = (BYTE *)dictBuffer;
   size_t tail = dictBufferCapacity;
   /* Divide the data up into epochs of equal size.
@@ -593,7 +660,8 @@ static size_t COVER_buildDictionary(const COVER_ctx_t *ctx, U32 *freqs,
   /* Loop through the epochs until there are no more segments or the dictionary
    * is full.
    */
-  for (epoch = 0; tail > 0; epoch = (epoch + 1) % epochs) {
+  for (epoch = 0; tail > 0; epoch = (epoch + 1) % epochs)
+  {
     const U32 epochBegin = (U32)(epoch * epochSize);
     const U32 epochEnd = epochBegin + epochSize;
     size_t segmentSize;
@@ -602,7 +670,8 @@ static size_t COVER_buildDictionary(const COVER_ctx_t *ctx, U32 *freqs,
         ctx, freqs, activeDmers, epochBegin, epochEnd, parameters);
     /* Trim the segment if necessary and if it is empty then we are done */
     segmentSize = MIN(segment.end - segment.begin + parameters.d - 1, tail);
-    if (segmentSize == 0) {
+    if (segmentSize == 0)
+    {
       break;
     }
     /* We fill the dictionary from the back to allow the best segments to be
@@ -622,7 +691,8 @@ static size_t COVER_buildDictionary(const COVER_ctx_t *ctx, U32 *freqs,
  * Translate from COVER_params_t to ZDICT_params_t required for finalizing the
  * dictionary.
  */
-static ZDICT_params_t COVER_translateParams(COVER_params_t parameters) {
+static ZDICT_params_t COVER_translateParams(COVER_params_t parameters)
+{
   ZDICT_params_t zdictParams;
   memset(&zdictParams, 0, sizeof(zdictParams));
   zdictParams.notificationLevel = 1;
@@ -633,20 +703,24 @@ static ZDICT_params_t COVER_translateParams(COVER_params_t parameters) {
 
 ZDICTLIB_API size_t COVER_trainFromBuffer(
     void *dictBuffer, size_t dictBufferCapacity, const void *samplesBuffer,
-    const size_t *samplesSizes, unsigned nbSamples, COVER_params_t parameters) {
+    const size_t *samplesSizes, unsigned nbSamples, COVER_params_t parameters)
+{
   BYTE *const dict = (BYTE *)dictBuffer;
   COVER_ctx_t ctx;
   COVER_map_t activeDmers;
   /* Checks */
-  if (!COVER_checkParameters(parameters)) {
+  if (!COVER_checkParameters(parameters))
+  {
     DISPLAYLEVEL(1, "Cover parameters incorrect\n");
     return ERROR(GENERIC);
   }
-  if (nbSamples == 0) {
+  if (nbSamples == 0)
+  {
     DISPLAYLEVEL(1, "Cover must have at least one input file\n");
     return ERROR(GENERIC);
   }
-  if (dictBufferCapacity < ZDICT_DICTSIZE_MIN) {
+  if (dictBufferCapacity < ZDICT_DICTSIZE_MIN)
+  {
     DISPLAYLEVEL(1, "dictBufferCapacity must be at least %u\n",
                  ZDICT_DICTSIZE_MIN);
     return ERROR(dstSize_tooSmall);
@@ -655,10 +729,12 @@ ZDICTLIB_API size_t COVER_trainFromBuffer(
   g_displayLevel = parameters.notificationLevel;
   /* Initialize context and activeDmers */
   if (!COVER_ctx_init(&ctx, samplesBuffer, samplesSizes, nbSamples,
-                      parameters.d)) {
+                      parameters.d))
+  {
     return ERROR(GENERIC);
   }
-  if (!COVER_map_init(&activeDmers, parameters.k - parameters.d + 1)) {
+  if (!COVER_map_init(&activeDmers, parameters.k - parameters.d + 1))
+  {
     DISPLAYLEVEL(1, "Failed to allocate dmer map: out of memory\n");
     COVER_ctx_destroy(&ctx);
     return ERROR(GENERIC);
@@ -673,7 +749,8 @@ ZDICTLIB_API size_t COVER_trainFromBuffer(
     const size_t dictionarySize = ZDICT_finalizeDictionary(
         dict, dictBufferCapacity, dict + tail, dictBufferCapacity - tail,
         samplesBuffer, samplesSizes, nbSamples, zdictParams);
-    if (!ZSTD_isError(dictionarySize)) {
+    if (!ZSTD_isError(dictionarySize))
+    {
       DISPLAYLEVEL(2, "Constructed dictionary of size %u\n",
                    (U32)dictionarySize);
     }
@@ -691,7 +768,8 @@ ZDICTLIB_API size_t COVER_trainFromBuffer(
  * All of the methods except COVER_best_init() are thread safe if zstd is
  * compiled with multithreaded support.
  */
-typedef struct COVER_best_s {
+typedef struct COVER_best_s
+{
   pthread_mutex_t mutex;
   pthread_cond_t cond;
   size_t liveJobs;
@@ -704,8 +782,10 @@ typedef struct COVER_best_s {
 /**
  * Initialize the `COVER_best_t`.
  */
-static void COVER_best_init(COVER_best_t *best) {
-  if (!best) {
+static void COVER_best_init(COVER_best_t *best)
+{
+  if (!best)
+  {
     return;
   }
   pthread_mutex_init(&best->mutex, NULL);
@@ -720,12 +800,15 @@ static void COVER_best_init(COVER_best_t *best) {
 /**
  * Wait until liveJobs == 0.
  */
-static void COVER_best_wait(COVER_best_t *best) {
-  if (!best) {
+static void COVER_best_wait(COVER_best_t *best)
+{
+  if (!best)
+  {
     return;
   }
   pthread_mutex_lock(&best->mutex);
-  while (best->liveJobs != 0) {
+  while (best->liveJobs != 0)
+  {
     pthread_cond_wait(&best->cond, &best->mutex);
   }
   pthread_mutex_unlock(&best->mutex);
@@ -734,12 +817,15 @@ static void COVER_best_wait(COVER_best_t *best) {
 /**
  * Call COVER_best_wait() and then destroy the COVER_best_t.
  */
-static void COVER_best_destroy(COVER_best_t *best) {
-  if (!best) {
+static void COVER_best_destroy(COVER_best_t *best)
+{
+  if (!best)
+  {
     return;
   }
   COVER_best_wait(best);
-  if (best->dict) {
+  if (best->dict)
+  {
     free(best->dict);
   }
   pthread_mutex_destroy(&best->mutex);
@@ -750,8 +836,10 @@ static void COVER_best_destroy(COVER_best_t *best) {
  * Called when a thread is about to be launched.
  * Increments liveJobs.
  */
-static void COVER_best_start(COVER_best_t *best) {
-  if (!best) {
+static void COVER_best_start(COVER_best_t *best)
+{
+  if (!best)
+  {
     return;
   }
   pthread_mutex_lock(&best->mutex);
@@ -766,8 +854,10 @@ static void COVER_best_start(COVER_best_t *best) {
  */
 static void COVER_best_finish(COVER_best_t *best, size_t compressedSize,
                               COVER_params_t parameters, void *dict,
-                              size_t dictSize) {
-  if (!best) {
+                              size_t dictSize)
+{
+  if (!best)
+  {
     return;
   }
   {
@@ -776,14 +866,18 @@ static void COVER_best_finish(COVER_best_t *best, size_t compressedSize,
     --best->liveJobs;
     liveJobs = best->liveJobs;
     /* If the new dictionary is better */
-    if (compressedSize < best->compressedSize) {
+    if (compressedSize < best->compressedSize)
+    {
       /* Allocate space if necessary */
-      if (!best->dict || best->dictSize < dictSize) {
-        if (best->dict) {
+      if (!best->dict || best->dictSize < dictSize)
+      {
+        if (best->dict)
+        {
           free(best->dict);
         }
         best->dict = malloc(dictSize);
-        if (!best->dict) {
+        if (!best->dict)
+        {
           best->compressedSize = ERROR(GENERIC);
           best->dictSize = 0;
           return;
@@ -796,7 +890,8 @@ static void COVER_best_finish(COVER_best_t *best, size_t compressedSize,
       best->compressedSize = compressedSize;
     }
     pthread_mutex_unlock(&best->mutex);
-    if (liveJobs == 0) {
+    if (liveJobs == 0)
+    {
       pthread_cond_broadcast(&best->cond);
     }
   }
@@ -805,7 +900,8 @@ static void COVER_best_finish(COVER_best_t *best, size_t compressedSize,
 /**
  * Parameters for COVER_tryParameters().
  */
-typedef struct COVER_tryParameters_data_s {
+typedef struct COVER_tryParameters_data_s
+{
   const COVER_ctx_t *ctx;
   COVER_best_t *best;
   size_t dictBufferCapacity;
@@ -817,7 +913,8 @@ typedef struct COVER_tryParameters_data_s {
  * This function is thread safe if zstd is compiled with multithreaded support.
  * It takes its parameters as an *OWNING* opaque pointer to support threading.
  */
-static void COVER_tryParameters(void *opaque) {
+static void COVER_tryParameters(void *opaque)
+{
   /* Save parameters as local variables */
   COVER_tryParameters_data_t *const data = (COVER_tryParameters_data_t *)opaque;
   const COVER_ctx_t *const ctx = data->ctx;
@@ -826,13 +923,15 @@ static void COVER_tryParameters(void *opaque) {
   size_t totalCompressedSize = ERROR(GENERIC);
   /* Allocate space for hash table, dict, and freqs */
   COVER_map_t activeDmers;
-  BYTE *const dict = (BYTE * const)malloc(dictBufferCapacity);
+  BYTE *const dict = (BYTE *const)malloc(dictBufferCapacity);
   U32 *freqs = (U32 *)malloc(ctx->suffixSize * sizeof(U32));
-  if (!COVER_map_init(&activeDmers, parameters.k - parameters.d + 1)) {
+  if (!COVER_map_init(&activeDmers, parameters.k - parameters.d + 1))
+  {
     DISPLAYLEVEL(1, "Failed to allocate dmer map: out of memory\n");
     goto _cleanup;
   }
-  if (!dict || !freqs) {
+  if (!dict || !freqs)
+  {
     DISPLAYLEVEL(1, "Failed to allocate buffers: out of memory\n");
     goto _cleanup;
   }
@@ -846,7 +945,8 @@ static void COVER_tryParameters(void *opaque) {
     dictBufferCapacity = ZDICT_finalizeDictionary(
         dict, dictBufferCapacity, dict + tail, dictBufferCapacity - tail,
         ctx->samples, ctx->samplesSizes, (unsigned)ctx->nbSamples, zdictParams);
-    if (ZDICT_isError(dictBufferCapacity)) {
+    if (ZDICT_isError(dictBufferCapacity))
+    {
       DISPLAYLEVEL(1, "Failed to finalize dictionary\n");
       goto _cleanup;
     }
@@ -863,7 +963,8 @@ static void COVER_tryParameters(void *opaque) {
     /* Allocate dst with enough space to compress the maximum sized sample */
     {
       size_t maxSampleSize = 0;
-      for (i = 0; i < ctx->nbSamples; ++i) {
+      for (i = 0; i < ctx->nbSamples; ++i)
+      {
         maxSampleSize = MAX(ctx->samplesSizes[i], maxSampleSize);
       }
       dstCapacity = ZSTD_compressBound(maxSampleSize);
@@ -873,16 +974,19 @@ static void COVER_tryParameters(void *opaque) {
     cctx = ZSTD_createCCtx();
     cdict =
         ZSTD_createCDict(dict, dictBufferCapacity, parameters.compressionLevel);
-    if (!dst || !cctx || !cdict) {
+    if (!dst || !cctx || !cdict)
+    {
       goto _compressCleanup;
     }
     /* Compress each sample and sum their sizes (or error) */
     totalCompressedSize = 0;
-    for (i = 0; i < ctx->nbSamples; ++i) {
+    for (i = 0; i < ctx->nbSamples; ++i)
+    {
       const size_t size = ZSTD_compress_usingCDict(
           cctx, dst, dstCapacity, ctx->samples + ctx->offsets[i],
           ctx->samplesSizes[i], cdict);
-      if (ZSTD_isError(size)) {
+      if (ZSTD_isError(size))
+      {
         totalCompressedSize = ERROR(GENERIC);
         goto _compressCleanup;
       }
@@ -891,7 +995,8 @@ static void COVER_tryParameters(void *opaque) {
   _compressCleanup:
     ZSTD_freeCCtx(cctx);
     ZSTD_freeCDict(cdict);
-    if (dst) {
+    if (dst)
+    {
       free(dst);
     }
   }
@@ -901,10 +1006,12 @@ _cleanup:
                     dictBufferCapacity);
   free(data);
   COVER_map_destroy(&activeDmers);
-  if (dict) {
+  if (dict)
+  {
     free(dict);
   }
-  if (freqs) {
+  if (freqs)
+  {
     free(freqs);
   }
 }
@@ -914,7 +1021,8 @@ ZDICTLIB_API size_t COVER_optimizeTrainFromBuffer(void *dictBuffer,
                                                   const void *samplesBuffer,
                                                   const size_t *samplesSizes,
                                                   unsigned nbSamples,
-                                                  COVER_params_t *parameters) {
+                                                  COVER_params_t *parameters)
+{
   /* constants */
   const unsigned nbThreads = parameters->nbThreads;
   const unsigned kMinD = parameters->d == 0 ? 6 : parameters->d;
@@ -933,22 +1041,27 @@ ZDICTLIB_API size_t COVER_optimizeTrainFromBuffer(void *dictBuffer,
   COVER_best_t best;
   POOL_ctx *pool = NULL;
   /* Checks */
-  if (kMinK < kMaxD || kMaxK < kMinK) {
+  if (kMinK < kMaxD || kMaxK < kMinK)
+  {
     LOCALDISPLAYLEVEL(displayLevel, 1, "Incorrect parameters\n");
     return ERROR(GENERIC);
   }
-  if (nbSamples == 0) {
+  if (nbSamples == 0)
+  {
     DISPLAYLEVEL(1, "Cover must have at least one input file\n");
     return ERROR(GENERIC);
   }
-  if (dictBufferCapacity < ZDICT_DICTSIZE_MIN) {
+  if (dictBufferCapacity < ZDICT_DICTSIZE_MIN)
+  {
     DISPLAYLEVEL(1, "dictBufferCapacity must be at least %u\n",
                  ZDICT_DICTSIZE_MIN);
     return ERROR(dstSize_tooSmall);
   }
-  if (nbThreads > 1) {
+  if (nbThreads > 1)
+  {
     pool = POOL_create(nbThreads, 1);
-    if (!pool) {
+    if (!pool)
+    {
       return ERROR(memory_allocation);
     }
   }
@@ -959,23 +1072,27 @@ ZDICTLIB_API size_t COVER_optimizeTrainFromBuffer(void *dictBuffer,
   /* Loop through d first because each new value needs a new context */
   LOCALDISPLAYLEVEL(displayLevel, 2, "Trying %u different sets of parameters\n",
                     kIterations);
-  for (d = kMinD; d <= kMaxD; d += 2) {
+  for (d = kMinD; d <= kMaxD; d += 2)
+  {
     /* Initialize the context for this value of d */
     COVER_ctx_t ctx;
     LOCALDISPLAYLEVEL(displayLevel, 3, "d=%u\n", d);
-    if (!COVER_ctx_init(&ctx, samplesBuffer, samplesSizes, nbSamples, d)) {
+    if (!COVER_ctx_init(&ctx, samplesBuffer, samplesSizes, nbSamples, d))
+    {
       LOCALDISPLAYLEVEL(displayLevel, 1, "Failed to initialize context\n");
       COVER_best_destroy(&best);
       POOL_free(pool);
       return ERROR(GENERIC);
     }
     /* Loop through k reusing the same context */
-    for (k = kMinK; k <= kMaxK; k += kStepSize) {
+    for (k = kMinK; k <= kMaxK; k += kStepSize)
+    {
       /* Prepare the arguments */
       COVER_tryParameters_data_t *data = (COVER_tryParameters_data_t *)malloc(
           sizeof(COVER_tryParameters_data_t));
       LOCALDISPLAYLEVEL(displayLevel, 3, "k=%u\n", k);
-      if (!data) {
+      if (!data)
+      {
         LOCALDISPLAYLEVEL(displayLevel, 1, "Failed to allocate parameters\n");
         COVER_best_destroy(&best);
         COVER_ctx_destroy(&ctx);
@@ -990,16 +1107,20 @@ ZDICTLIB_API size_t COVER_optimizeTrainFromBuffer(void *dictBuffer,
       data->parameters.d = d;
       data->parameters.steps = kSteps;
       /* Check the parameters */
-      if (!COVER_checkParameters(data->parameters)) {
+      if (!COVER_checkParameters(data->parameters))
+      {
         DISPLAYLEVEL(1, "Cover parameters incorrect\n");
         free(data);
         continue;
       }
       /* Call the function and pass ownership of data to it */
       COVER_best_start(&best);
-      if (pool) {
+      if (pool)
+      {
         POOL_add(pool, &COVER_tryParameters, data);
-      } else {
+      }
+      else
+      {
         COVER_tryParameters(data);
       }
       /* Print status */
@@ -1014,7 +1135,8 @@ ZDICTLIB_API size_t COVER_optimizeTrainFromBuffer(void *dictBuffer,
   /* Fill the output buffer and parameters with output of the best parameters */
   {
     const size_t dictSize = best.dictSize;
-    if (ZSTD_isError(best.compressedSize)) {
+    if (ZSTD_isError(best.compressedSize))
+    {
       const size_t compressedSize = best.compressedSize;
       COVER_best_destroy(&best);
       POOL_free(pool);
