@@ -4,11 +4,10 @@
 #include <cstring>
 #include <mutex>
 
-
 namespace rir
 {
 
-	static void log_function(int level, const char* text)
+	static void log_function(int level, const char *text)
 	{
 		if (level == LOG_INFO_LEVEL)
 			printf("INFO: %s\n", text);
@@ -18,12 +17,11 @@ namespace rir
 			printf("ERROR: %s\n", text);
 	}
 
-	static void null_log_function(int, const char*)
-	{}
+	static void null_log_function(int, const char *)
+	{
+	}
 
 	static log_print_function _log = log_function;
-
-
 
 	void set_log_function(log_print_function function)
 	{
@@ -45,13 +43,13 @@ namespace rir
 		_log = log_function;
 	}
 
-	void logInfo(const char* text)
+	void logInfo(const char *text)
 	{
 		if (_log)
 			_log(LOG_INFO_LEVEL, text);
 	}
 
-	void logWarning(const char* text)
+	void logWarning(const char *text)
 	{
 		if (_log)
 			_log(LOG_WARNING_LEVEL, text);
@@ -60,7 +58,7 @@ namespace rir
 	static std::string _last_log_error;
 	static std::mutex _last_log_mutex;
 
-	void logError(const char* text)
+	void logError(const char *text)
 	{
 		if (_log)
 			_log(LOG_ERROR_LEVEL, text);
@@ -69,7 +67,7 @@ namespace rir
 		_last_log_error = std::string(text);
 	}
 
-	int getLastErrorLog(char* text, int* len)
+	int getLastErrorLog(char *text, int *len)
 	{
 		if (*len < (int)_last_log_error.size())
 		{
@@ -83,6 +81,5 @@ namespace rir
 		memcpy(text, _last_log_error.data(), _last_log_error.size());
 		return 0;
 	}
-
 
 }
