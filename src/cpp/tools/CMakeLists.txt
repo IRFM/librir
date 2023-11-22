@@ -15,11 +15,11 @@ if(NOT zstd_FOUND)
 		)
 		FetchContent_MakeAvailable(zstd)
 	if(zstd_POPULATED)
+		add_subdirectory(${zstd_SOURCE_DIR}/build/cmake ${zstd_BINARY_DIR})
 		find_package(zstd)
 		
 		# set(ZSTD_INCLUDE_DIR ${zstd_SOURCE_DIR}/../../lib)
 
-		# add_subdirectory(${zstd_SOURCE_DIR}/build/cmake ${zstd_BINARY_DIR})
 		# include_directories(${zstd_SOURCE_DIR}/../../lib)
 		# link_directories(${libzstd_BINARY_DIR}/${CMAKE_BUILD_TYPE_INIT})
 		# include_directories(${zstd_SOURCE_DIR}/lib)
