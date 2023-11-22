@@ -8,23 +8,36 @@ message(STATUS "fetching ZSTD")
 find_package(zstd)
 
 
-if(NOT zstd_FOUND)
+if(NOT ZSTD_FOUND)
+	set(ZSTD_BUILD_STATIC ON)
+	set(ZSTD_BUILD_SHARED OFF)
+
+	# FetchContent_Declare(
+	# 	zstd
+	# 	GIT_REPOSITORY	https://github.com/facebook/zstd.git
+	# 	)
+
 	FetchContent_Declare(
 		zstd
-		GIT_REPOSITORY	https://github.com/facebook/zstd.git
-		)
-		FetchContent_MakeAvailable(zstd)
-	if(zstd_POPULATED)
-		add_subdirectory(${zstd_SOURCE_DIR}/build/cmake ${zstd_BINARY_DIR})
-		find_package(zstd)
+		URL "https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.5.5.tar.gz"
+		DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+		SOURCE_SUBDIR build/cmake
+	)
+
+	FetchContent_MakeAvailable(zstd)
+
+	# if(zstd_POPULATED)
+	# 	add_subdirectory(${zstd_SOURCE_DIR}/build/cmake ${zstd_BINARY_DIR})
+	# 	set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${zstd_SOURCE_DIR}/build/cmake)
 		
-		# set(ZSTD_INCLUDE_DIR ${zstd_SOURCE_DIR}/../../lib)
+	# 	# set(ZSTD_INCLUDE_DIR ${zstd_SOURCE_DIR}/../../lib)
 
-		# include_directories(${zstd_SOURCE_DIR}/../../lib)
-		# link_directories(${libzstd_BINARY_DIR}/${CMAKE_BUILD_TYPE_INIT})
-		# include_directories(${zstd_SOURCE_DIR}/lib)
+	# 	# include_directories(${zstd_SOURCE_DIR}/../../lib)
+	# 	# link_directories(${libzstd_BINARY_DIR}/${CMAKE_BUILD_TYPE_INIT})
+	# 	# include_directories(${zstd_SOURCE_DIR}/lib)
 
-	endif()	
+	# endif()	
+	# find_package(zstd)
 
 endif()
 
@@ -57,22 +70,17 @@ set(TOOLS_HEADERS
 )
 
 add_library(tools ${LIBRIR_TOOLS_SRC})
-if (NOT WIN32)
-	target_link_libraries(tools pthread)
-# else()
-# 	target_link_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/blosc/win32)
-# 	target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/blosc/win32)
 
+set(TOOLS_DEP_LIBS libzstd_static)
+if (NOT WIN32)
+	set(TOOLS_DEP_LIBS ${TOOLS_DEP_LIBS} pthread)
 endif()
 # MESSAGE(STATUS "EXTRAS_INCLUDE_DIRECTORY : " ${EXTRAS_INCLUDE_DIRECTORY})
-target_link_libraries(tools zstd::libzstd_shared)
-get_target_property(ZSTD_INCLUDE_DIRECTORIES zstd::libzstd_shared 
-  INTERFACE_INCLUDE_DIRECTORIES 
-)
-target_include_directories(tools INTERFACE zstd::libzstd_shared::INTERFACE_INCLUDE_DIRECTORIES)
+	
+target_link_libraries(tools PRIVATE ${TOOLS_DEP_LIBS})
 
-target_include_directories(tools PUBLIC ${zstd_SOURCE_DIR}/lib)
-
+target_include_directories(tools PRIVATE ${zstd_SOURCE_DIR}/lib)
+MESSAGE(STATUS ${zstd_SOURCE_DIR}/lib)
 target_include_directories(tools PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY})
 target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/blosc)
