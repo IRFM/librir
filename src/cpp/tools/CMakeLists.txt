@@ -5,9 +5,10 @@ include(FetchContent)
 # SET(ZSTD_SRC ${ZSTD_DIR}/extra/zstd)
 message(STATUS "fetching ZSTD")
 
-option(CHECKOUT_ZSTD "Retrieve ZSTD from git" ON)
+find_package(zstd)
 
-if(CHECKOUT_ZSTD)
+
+if(NOT zstd_FOUND)
 	FetchContent_Declare(
 		zstd
 		GIT_REPOSITORY	https://github.com/facebook/zstd.git
@@ -23,8 +24,6 @@ if(CHECKOUT_ZSTD)
 		# include_directories(${zstd_SOURCE_DIR}/lib)
 
 	endif()	
-else()
-	find_package(zstd)
 
 endif()
 
@@ -65,7 +64,12 @@ if (NOT WIN32)
 
 endif()
 # MESSAGE(STATUS "EXTRAS_INCLUDE_DIRECTORY : " ${EXTRAS_INCLUDE_DIRECTORY})
-target_link_libraries(tools libzstd_shared)
+target_link_libraries(tools zstd::libzstd_shared)
+get_target_property(ZSTD_INCLUDE_DIRECTORIES zstd::libzstd_shared 
+  INTERFACE_INCLUDE_DIRECTORIES 
+)
+target_include_directories(tools INTERFACE zstd::libzstd_shared::INTERFACE_INCLUDE_DIRECTORIES)
+
 target_include_directories(tools PUBLIC ${zstd_SOURCE_DIR}/lib)
 
 target_include_directories(tools PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
