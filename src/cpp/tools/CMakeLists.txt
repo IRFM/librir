@@ -1,3 +1,27 @@
+include(FetchContent)
+
+find_package(zstd)
+
+# SET(ZSTD_DIR ${CMAKE_SOURCE_DIR}/extra/zstd)
+# SET(ZSTD_SRC ${ZSTD_DIR}/extra/zstd)
+message(STATUS "fetching ZSTD")
+
+FetchContent_Declare(
+	zstd
+	GIT_REPOSITORY	https://github.com/facebook/zstd.git
+	)
+	FetchContent_MakeAvailable(zstd)
+if(zstd_POPULATED)
+	
+	set(ZSTD_INCLUDE_DIR ${zstd_SOURCE_DIR}/../../lib)
+
+	add_subdirectory(${zstd_SOURCE_DIR}/build/cmake ${zstd_BINARY_DIR})
+	# include_directories(${zstd_SOURCE_DIR}/../../lib)
+	# link_directories(${libzstd_BINARY_DIR}/${CMAKE_BUILD_TYPE_INIT})
+	# include_directories(${zstd_SOURCE_DIR}/lib)
+
+endif()	
+
 
 add_definitions("-DBUILD_TOOLS_LIB")
 SET(LIBRIR_TOOLS_SRC
@@ -8,7 +32,7 @@ SET(LIBRIR_TOOLS_SRC
 	${CMAKE_CURRENT_SOURCE_DIR}/ReadFileChunk.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/SIMD.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/tools.cpp
-	${ZSTD_SRC}
+	# ${ZSTD_SRC}
 	${BLOSC_SRC}
 	${MINIZIP_SRC}
 	)
@@ -36,12 +60,14 @@ if (NOT WIN32)
 
 endif()
 # MESSAGE(STATUS "EXTRAS_INCLUDE_DIRECTORY : " ${EXTRAS_INCLUDE_DIRECTORY})
-
+target_link_libraries(tools libzstd_shared)
+target_include_directories(tools PUBLIC ${zstd_SOURCE_DIR}/lib)
 
 target_include_directories(tools PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY})
 target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/blosc)
-target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/zstd)
+# target_include_directories(tools PRIVATE ${ZSTD_INCLUDE_DIR})
+
 target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/minizip)
 
 # target_link_directories(tools PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -60,3 +86,4 @@ set_target_properties(tools PROPERTIES
 	# RUNTIME_OUTPUT_DIRECTORY ${DESTINATION_DIR}
 )
 
+set(ZSTD_INCLUDE_DIR ${ZSTD_INCLUDE_DIR} PARENT_SCOPE)
