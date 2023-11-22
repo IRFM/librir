@@ -1,27 +1,32 @@
 include(FetchContent)
 
-find_package(zstd)
 
 # SET(ZSTD_DIR ${CMAKE_SOURCE_DIR}/extra/zstd)
 # SET(ZSTD_SRC ${ZSTD_DIR}/extra/zstd)
 message(STATUS "fetching ZSTD")
 
-FetchContent_Declare(
-	zstd
-	GIT_REPOSITORY	https://github.com/facebook/zstd.git
-	)
-	FetchContent_MakeAvailable(zstd)
-if(zstd_POPULATED)
-	
-	set(ZSTD_INCLUDE_DIR ${zstd_SOURCE_DIR}/../../lib)
+option(CHECKOUT_ZSTD "Retrieve ZSTD from git" ON)
 
-	add_subdirectory(${zstd_SOURCE_DIR}/build/cmake ${zstd_BINARY_DIR})
-	# include_directories(${zstd_SOURCE_DIR}/../../lib)
-	# link_directories(${libzstd_BINARY_DIR}/${CMAKE_BUILD_TYPE_INIT})
-	# include_directories(${zstd_SOURCE_DIR}/lib)
+if(CHECKOUT_ZSTD)
+	FetchContent_Declare(
+		zstd
+		GIT_REPOSITORY	https://github.com/facebook/zstd.git
+		)
+		FetchContent_MakeAvailable(zstd)
+	if(zstd_POPULATED)
+		
+		set(ZSTD_INCLUDE_DIR ${zstd_SOURCE_DIR}/../../lib)
 
-endif()	
+		add_subdirectory(${zstd_SOURCE_DIR}/build/cmake ${zstd_BINARY_DIR})
+		# include_directories(${zstd_SOURCE_DIR}/../../lib)
+		# link_directories(${libzstd_BINARY_DIR}/${CMAKE_BUILD_TYPE_INIT})
+		# include_directories(${zstd_SOURCE_DIR}/lib)
 
+	endif()	
+else()
+	find_package(zstd)
+
+endif()
 
 add_definitions("-DBUILD_TOOLS_LIB")
 SET(LIBRIR_TOOLS_SRC
