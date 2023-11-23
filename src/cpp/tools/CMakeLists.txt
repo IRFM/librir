@@ -11,8 +11,11 @@ if(NOT ZSTD_FOUND)
 	FetchContent_MakeAvailable(ZSTD)
 	find_package(ZSTD QUIET)
 	set(ZSTD_INCLUDE_DIR ${ZSTD_SOURCE_DIR}/lib)
+	get_target_property(ZSTD_INCLUDE_DIR libzstd_static INTERFACE_INCLUDE_DIRECTORIES)
+else()
+	get_target_property(ZSTD_INCLUDE_DIR zstd::libzstd_static INTERFACE_INCLUDE_DIRECTORIES)
+
 endif()
-get_target_property(ZSTD_INCLUDE_DIR zstd::libzstd_static INTERFACE_INCLUDE_DIRECTORIES)
 
 
 add_definitions("-DBUILD_TOOLS_LIB")
