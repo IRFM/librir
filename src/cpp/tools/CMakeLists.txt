@@ -12,7 +12,9 @@ if(NOT ZSTD_FOUND)
 	find_package(ZSTD QUIET)
 	set(ZSTD_INCLUDE_DIR ${ZSTD_SOURCE_DIR}/lib)
 	get_target_property(ZSTD_INCLUDE_DIR libzstd_static INTERFACE_INCLUDE_DIRECTORIES)
+	set(TOOLS_DEP_LIBS libzstd_static)
 else()
+	set(TOOLS_DEP_LIBS zstd::libzstd_static)
 	get_target_property(ZSTD_INCLUDE_DIR zstd::libzstd_static INTERFACE_INCLUDE_DIRECTORIES)
 
 endif()
@@ -48,7 +50,7 @@ set(TOOLS_HEADERS
 
 add_library(tools ${LIBRIR_TOOLS_SRC})
 
-set(TOOLS_DEP_LIBS zstd::libzstd_static)
+
 if (NOT WIN32)
 	set(TOOLS_DEP_LIBS ${TOOLS_DEP_LIBS} pthread)
 endif()
