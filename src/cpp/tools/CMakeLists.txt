@@ -20,7 +20,6 @@ if(NOT ZSTD_FOUND)
 	FetchContent_Declare(
 		zstd
 		URL "https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.5.5.tar.gz"
-		DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 		SOURCE_SUBDIR build/cmake
 	)
 
