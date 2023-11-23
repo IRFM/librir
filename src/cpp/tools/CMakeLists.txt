@@ -3,19 +3,13 @@ include(FetchContent)
 
 # SET(ZSTD_DIR ${CMAKE_SOURCE_DIR}/extra/zstd)
 # SET(ZSTD_SRC ${ZSTD_DIR}/extra/zstd)
-message(STATUS "fetching ZSTD")
 
 find_package(zstd)
 set(ZSTD_BUILD_STATIC ON)
 set(ZSTD_BUILD_SHARED OFF)
 
 if(NOT ZSTD_FOUND)
-
-
-	# FetchContent_Declare(
-	# 	zstd
-	# 	GIT_REPOSITORY	https://github.com/facebook/zstd.git
-	# 	)
+	message(STATUS "fetching ZSTD")
 
 	FetchContent_Declare(
 		zstd
@@ -26,18 +20,23 @@ if(NOT ZSTD_FOUND)
 
 	FetchContent_MakeAvailable(zstd)
 
-	# if(zstd_POPULATED)
-	# 	add_subdirectory(${zstd_SOURCE_DIR}/build/cmake ${zstd_BINARY_DIR})
-	# 	set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${zstd_SOURCE_DIR}/build/cmake)
-		
-	# 	# set(ZSTD_INCLUDE_DIR ${zstd_SOURCE_DIR}/../../lib)
 
-	# 	# include_directories(${zstd_SOURCE_DIR}/../../lib)
-	# 	# link_directories(${libzstd_BINARY_DIR}/${CMAKE_BUILD_TYPE_INIT})
-	# 	# include_directories(${zstd_SOURCE_DIR}/lib)
+endif()
 
-	# endif()	
-	# find_package(zstd)
+
+
+find_package(blosc)
+
+if(NOT blosc_FOUND)
+	message(STATUS "fetching blosc")
+
+	FetchContent_Declare(
+	blosc
+	URL "https://github.com/Blosc/c-blosc/archive/refs/tags/v1.21.5.tar.gz"
+	DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+	)
+
+	FetchContent_MakeAvailable(blosc)
 
 endif()
 
@@ -71,7 +70,7 @@ set(TOOLS_HEADERS
 
 add_library(tools ${LIBRIR_TOOLS_SRC})
 
-set(TOOLS_DEP_LIBS libzstd_static)
+set(TOOLS_DEP_LIBS libzstd_static blosc_static)
 if (NOT WIN32)
 	set(TOOLS_DEP_LIBS ${TOOLS_DEP_LIBS} pthread)
 endif()
@@ -83,7 +82,12 @@ target_include_directories(tools PRIVATE ${zstd_SOURCE_DIR}/lib)
 MESSAGE(STATUS ${zstd_SOURCE_DIR}/lib)
 target_include_directories(tools PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY})
-target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/blosc)
+
+
+
+get_target_property(BLOSC_HEADERS_DIR blosc_static INCLUDE_DIRECTORIES)
+
+target_include_directories(tools PRIVATE ${BLOSC_HEADERS_DIR})
 # target_include_directories(tools PRIVATE ${ZSTD_INCLUDE_DIR})
 
 target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/minizip)
