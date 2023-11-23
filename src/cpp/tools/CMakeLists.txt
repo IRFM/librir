@@ -1,42 +1,15 @@
 include(FetchContent)
-
-
-# SET(ZSTD_DIR ${CMAKE_SOURCE_DIR}/extra/zstd)
-# SET(ZSTD_SRC ${ZSTD_DIR}/extra/zstd)
-message(STATUS "fetching ZSTD")
-
-find_package(zstd)
-set(ZSTD_BUILD_STATIC ON)
-set(ZSTD_BUILD_SHARED OFF)
-
+find_package(ZSTD QUIET)
 if(NOT ZSTD_FOUND)
-
-
-	# FetchContent_Declare(
-	# 	zstd
-	# 	GIT_REPOSITORY	https://github.com/facebook/zstd.git
-	# 	)
+	message(STATUS "fetching ZSTD")
 
 	FetchContent_Declare(
-		zstd
+		ZSTD
 		URL "https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.5.5.tar.gz"
 		SOURCE_SUBDIR build/cmake
 	)
 
-	FetchContent_MakeAvailable(zstd)
-
-	# if(zstd_POPULATED)
-	# 	add_subdirectory(${zstd_SOURCE_DIR}/build/cmake ${zstd_BINARY_DIR})
-	# 	set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${zstd_SOURCE_DIR}/build/cmake)
-		
-	# 	# set(ZSTD_INCLUDE_DIR ${zstd_SOURCE_DIR}/../../lib)
-
-	# 	# include_directories(${zstd_SOURCE_DIR}/../../lib)
-	# 	# link_directories(${libzstd_BINARY_DIR}/${CMAKE_BUILD_TYPE_INIT})
-	# 	# include_directories(${zstd_SOURCE_DIR}/lib)
-
-	# endif()	
-	# find_package(zstd)
+	FetchContent_MakeAvailable(ZSTD)
 
 endif()
 
