@@ -1,0 +1,47 @@
+
+SET(ZSTD_SRC
+		${CMAKE_CURRENT_SOURCE_DIR}/fse_decompress.c
+		${CMAKE_CURRENT_SOURCE_DIR}/zstd_common.c
+		${CMAKE_CURRENT_SOURCE_DIR}/zstd_v01.c
+		${CMAKE_CURRENT_SOURCE_DIR}/zstd_v06.c
+		${CMAKE_CURRENT_SOURCE_DIR}/entropy_common.c
+		${CMAKE_CURRENT_SOURCE_DIR}/zdict.c 
+		${CMAKE_CURRENT_SOURCE_DIR}/zstd_compress.c
+		${CMAKE_CURRENT_SOURCE_DIR}/zstd_v04.c
+		${CMAKE_CURRENT_SOURCE_DIR}/error_private.c
+		${CMAKE_CURRENT_SOURCE_DIR}/hash.c
+		${CMAKE_CURRENT_SOURCE_DIR}/pool.c
+		${CMAKE_CURRENT_SOURCE_DIR}/zbuff_common.c
+		${CMAKE_CURRENT_SOURCE_DIR}/zstd_decompress.c
+		${CMAKE_CURRENT_SOURCE_DIR}/zstdmt_compress.c
+		${CMAKE_CURRENT_SOURCE_DIR}/zstd_v02.c
+		${CMAKE_CURRENT_SOURCE_DIR}/zstd_v07.c
+		${CMAKE_CURRENT_SOURCE_DIR}/cover.c
+		${CMAKE_CURRENT_SOURCE_DIR}/huf_compress.c
+		${CMAKE_CURRENT_SOURCE_DIR}/zbuff_compress.c
+		${CMAKE_CURRENT_SOURCE_DIR}/zstd_v05.c
+		${CMAKE_CURRENT_SOURCE_DIR}/divsufsort.c
+		${CMAKE_CURRENT_SOURCE_DIR}/fse_compress.c
+		${CMAKE_CURRENT_SOURCE_DIR}/huf_decompress.c
+		${CMAKE_CURRENT_SOURCE_DIR}/threading.c
+		${CMAKE_CURRENT_SOURCE_DIR}/zbuff_decompress.c
+		${CMAKE_CURRENT_SOURCE_DIR}/zstd_v03.c
+)
+
+SET(ZSTD_SRC
+		${ZSTD_SRC}
+        PARENT_SCOPE
+)
+
+SET(ZSTD_INCLUDE_DIR
+		${CMAKE_CURRENT_SOURCE_DIR}
+        
+)
+
+SET(ZSTD_INCLUDE_DIR
+		${ZSTD_INCLUDE_DIR}
+        PARENT_SCOPE
+)
+
+
+add_library(libzstd ${ZSTD_SRC})

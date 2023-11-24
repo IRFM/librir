@@ -1,3 +1,4 @@
+
 include(FetchContent)
 find_package(ZSTD QUIET)
 if(NOT ZSTD_FOUND)
@@ -20,6 +21,7 @@ else()
 endif()
 
 
+
 add_definitions("-DBUILD_TOOLS_LIB")
 SET(LIBRIR_TOOLS_SRC
 	${CMAKE_CURRENT_SOURCE_DIR}/FileAttributes.cpp
@@ -29,7 +31,7 @@ SET(LIBRIR_TOOLS_SRC
 	${CMAKE_CURRENT_SOURCE_DIR}/ReadFileChunk.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/SIMD.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/tools.cpp
-	# ${ZSTD_SRC}
+	${ZSTD_SRC}
 	${BLOSC_SRC}
 	${MINIZIP_SRC}
 	)
@@ -50,20 +52,23 @@ set(TOOLS_HEADERS
 
 add_library(tools ${LIBRIR_TOOLS_SRC})
 
-
 if (NOT WIN32)
-	set(TOOLS_DEP_LIBS ${TOOLS_DEP_LIBS} pthread)
+	target_link_libraries(tools pthread)
+# else()
+# 	target_link_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/blosc/win32)
+# 	target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/blosc/win32)
+
 endif()
 	
 target_link_libraries(tools PRIVATE ${TOOLS_DEP_LIBS})
 
 target_include_directories(tools PRIVATE ${ZSTD_INCLUDE_DIR})
 
+
 target_include_directories(tools PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY})
 target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/blosc)
-# target_include_directories(tools PRIVATE ${ZSTD_INCLUDE_DIR})
-
+target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/zstd)
 target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/minizip)
 
 # target_link_directories(tools PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -87,4 +92,3 @@ get_target_property(TOOLS_INCLUDE_DIRS tools INCLUDE_DIRECTORIES)
 
 
 
-set(ZSTD_INCLUDE_DIR ${ZSTD_INCLUDE_DIR} PARENT_SCOPE)
