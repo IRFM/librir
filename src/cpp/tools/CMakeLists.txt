@@ -57,7 +57,7 @@ endif()
 	
 target_link_libraries(tools PRIVATE ${TOOLS_DEP_LIBS})
 
-target_include_directories(tools PRIVATE ZSTD_INCLUDE_DIR)
+target_include_directories(tools PRIVATE ${ZSTD_INCLUDE_DIR})
 
 target_include_directories(tools PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY})
