@@ -177,8 +177,10 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/librirConfig.cmake
 
 
 
+
 # Generate librir.pc
 list(TRANSFORM PLUGINS_LIBS PREPEND "-l")
 configure_file(librir.pc.in librir.pc @ONLY)
+configure_file(librir.pc.in ${CMAKE_INSTALL_LIBDIR}/pkgconfig/librir.pc @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/librir.pc DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
 
