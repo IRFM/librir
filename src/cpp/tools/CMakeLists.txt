@@ -11,7 +11,9 @@ if(NOT zstd_FOUND)
 		SOURCE_SUBDIR build/cmake
 		)
 		
-	FetchContent_MakeAvailable(zstd)
+	FetchContent_Populate(zstd)
+	add_subdirectory(${zstd_SOURCE_DIR}/build/cmake ${zstd_BINARY_DIR} EXCLUDE_FROM_ALL)
+
 	# add_subdirectory(${zstd_SOURCE_DIR}/build/cmake ${CMAKE_CURRENT_BINARY_DIR}/zstd)
 	# find_package(zstd QUIET)
 
