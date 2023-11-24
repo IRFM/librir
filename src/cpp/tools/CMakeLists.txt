@@ -1,26 +1,32 @@
 
 include(FetchContent)
-find_package(ZSTD QUIET)
-if(NOT ZSTD_FOUND)
+
+set(TOOLS_DEP_LIBS)
+# find_package(zstd QUIET)
+if(NOT zstd_FOUND)
 	message(STATUS "fetching ZSTD")
 	FetchContent_Declare(
-		ZSTD
+		zstd
 		URL "https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.5.5.tar.gz"
 		SOURCE_SUBDIR build/cmake
 		)
 		
-	FetchContent_MakeAvailable(ZSTD)
-	find_package(ZSTD QUIET)
-	set(ZSTD_INCLUDE_DIR ${ZSTD_SOURCE_DIR}/lib)
-	get_target_property(ZSTD_INCLUDE_DIR libzstd_static INTERFACE_INCLUDE_DIRECTORIES)
-	set(TOOLS_DEP_LIBS libzstd_static)
+	FetchContent_MakeAvailable(zstd)
+	# add_subdirectory(${zstd_SOURCE_DIR}/build/cmake ${CMAKE_CURRENT_BINARY_DIR}/zstd)
+	# find_package(zstd QUIET)
+
+	# set(CMAKE_PREFIX_PATH ${zstd_SOURCE_DIR} ${CMAKE_PREFIX_PATH} )
+	# set(ZSTD_INCLUDE_DIR ${zstd_SOURCE_DIR}/lib)
+	
+	set(ZSTD_INCLUDE_DIR ${zstd_SOURCE_DIR}/lib)
+	list(APPEND TOOLS_DEP_LIBS libzstd_static)
 else()
-	set(TOOLS_DEP_LIBS zstd::libzstd_static)
+	list(APPEND TOOLS_DEP_LIBS zstd::libzstd_static)
 	get_target_property(ZSTD_INCLUDE_DIR zstd::libzstd_static INTERFACE_INCLUDE_DIRECTORIES)
 
 endif()
 
-
+ 
 
 add_definitions("-DBUILD_TOOLS_LIB")
 SET(LIBRIR_TOOLS_SRC
@@ -31,7 +37,7 @@ SET(LIBRIR_TOOLS_SRC
 	${CMAKE_CURRENT_SOURCE_DIR}/ReadFileChunk.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/SIMD.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/tools.cpp
-	${ZSTD_SRC}
+	# ${ZSTD_SRC}
 	${BLOSC_SRC}
 	${MINIZIP_SRC}
 	)
@@ -53,7 +59,7 @@ set(TOOLS_HEADERS
 add_library(tools ${LIBRIR_TOOLS_SRC})
 
 if (NOT WIN32)
-	target_link_libraries(tools pthread)
+	list(APPEND TOOLS_DEP_LIBS pthread)
 # else()
 # 	target_link_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/blosc/win32)
 # 	target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/blosc/win32)
@@ -68,7 +74,7 @@ target_include_directories(tools PRIVATE ${ZSTD_INCLUDE_DIR})
 target_include_directories(tools PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY})
 target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/blosc)
-target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/zstd)
+# target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/zstd)
 target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/minizip)
 
 # target_link_directories(tools PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
