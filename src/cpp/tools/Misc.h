@@ -16,13 +16,8 @@ truncate function already available on all unix systems
 */
 extern "C"
 {
-	/**
-	truncate function already available on all unix systems
-	*/
-	extern "C"
-	{
-#include <unistd.h>
-	}
+	#include <unistd.h>
+}
 #endif
 
 #undef close
