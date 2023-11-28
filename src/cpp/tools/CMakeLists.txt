@@ -2,34 +2,25 @@
 include(FetchContent)
 
 set(TOOLS_DEP_LIBS)
-# find_package(zstd QUIET)
-if(NOT zstd_FOUND)
-	message(STATUS "fetching ZSTD")
-	FetchContent_Declare(
-		zstd
-		URL "https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.5.5.tar.gz"
-		SOURCE_SUBDIR build/cmake
-		)
-		
-	FetchContent_Populate(zstd)
-	add_subdirectory(${zstd_SOURCE_DIR}/build/cmake ${zstd_BINARY_DIR} EXCLUDE_FROM_ALL)
+message(STATUS "fetching ZSTD")
+FetchContent_Declare(
+	ZSTD
+	GIT_REPOSITORY 	"https://github.com/facebook/zstd.git"
+	GIT_TAG			v1.5.5
+	# URL "https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.5.5.tar.gz"
+	SOURCE_SUBDIR build/cmake
+	# OVERRIDE_FIND_PACKAGE
+	)
 
-	# add_subdirectory(${zstd_SOURCE_DIR}/build/cmake ${CMAKE_CURRENT_BINARY_DIR}/zstd)
-	# find_package(zstd QUIET)
+FetchContent_Populate(zstd)
+add_subdirectory(${zstd_SOURCE_DIR}/build/cmake ${zstd_BINARY_DIR} EXCLUDE_FROM_ALL)
+add_library(zstd::libzstd_shared ALIAS libzstd_shared)
+add_library(zstd::libzstd_static ALIAS libzstd_static)
 
-	# set(CMAKE_PREFIX_PATH ${zstd_SOURCE_DIR} ${CMAKE_PREFIX_PATH} )
-	# set(ZSTD_INCLUDE_DIR ${zstd_SOURCE_DIR}/lib)
-	
-	set(ZSTD_INCLUDE_DIR ${zstd_SOURCE_DIR}/lib)
-	list(APPEND TOOLS_DEP_LIBS libzstd_static)
-else()
-	list(APPEND TOOLS_DEP_LIBS zstd::libzstd_static)
-	get_target_property(ZSTD_INCLUDE_DIR zstd::libzstd_static INTERFACE_INCLUDE_DIRECTORIES)
+set(ZSTD_INCLUDE_DIR ${zstd_SOURCE_DIR}/lib)
 
-endif()
-
+list(APPEND TOOLS_DEP_LIBS zstd::libzstd_static)
  
-
 add_definitions("-DBUILD_TOOLS_LIB")
 SET(LIBRIR_TOOLS_SRC
 	${CMAKE_CURRENT_SOURCE_DIR}/FileAttributes.cpp
@@ -43,8 +34,6 @@ SET(LIBRIR_TOOLS_SRC
 	${BLOSC_SRC}
 	${MINIZIP_SRC}
 	)
-
-#~ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 SET(LIBRIR_TOOLS_SRC ${LIBRIR_TOOLS_SRC} PARENT_SCOPE)
 
@@ -62,10 +51,6 @@ add_library(tools ${LIBRIR_TOOLS_SRC})
 
 if (NOT WIN32)
 	list(APPEND TOOLS_DEP_LIBS pthread)
-# else()
-# 	target_link_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/blosc/win32)
-# 	target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/blosc/win32)
-
 endif()
 	
 target_link_libraries(tools PRIVATE ${TOOLS_DEP_LIBS})
@@ -76,14 +61,7 @@ target_include_directories(tools PRIVATE ${ZSTD_INCLUDE_DIR})
 target_include_directories(tools PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY})
 target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/blosc)
-# target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/zstd)
 target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/minizip)
-
-# target_link_directories(tools PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-# target_link_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY})
-# target_link_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/blosc)
-# target_link_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/zstd)
-# target_link_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/minizip)
 
 MESSAGE(STATUS ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 set_target_properties(tools PROPERTIES
