@@ -916,13 +916,14 @@ namespace rir
 #define PIXEL_ADDRESS_TEMPERATURE_FPGA 71
 #define PIXEL_ADDRESS_VOLTAGE_FPGA 72
 
+#define PIXEL_ADDRESS_CAMSTATUS 82
 #define PIXEL_ADDRESS_FRAME_PERIOD 83
 #define PIXEL_ADDRESS_CHRONO_TIME 84
 #define PIXEL_ADDRESS_BOARD_TIME 85
 #define PIXEL_ADDRESS_DMA_TIME 86
+#define PIXEL_ADDRESS_FIRMWARE_DATE 127
 #define PIXEL_ADDRESS_ABSOLUTE_TIME 89
 
-#define PIXEL_ADDRESS_CAMSTATUS 82
 #define PIXEL_ADDRESS_THR_POSITION 91
 
 	union U_CAMSTATUS
@@ -976,6 +977,8 @@ namespace rir
 
 			// alarms
 			unsigned int alarm32ROIs, globalAlarm;
+			int firmware_date, day, month, year;
+
 			memcpy(&alarm32ROIs, line0 + PIXEL_ADDRESS_ALARM_32_ROIS, 4);
 			memcpy(&globalAlarm, line0 + PIXEL_ADDRESS_GLOBAL_ALARMS, 4);
 
@@ -1000,6 +1003,7 @@ namespace rir
 			memcpy(&board_time, line0 + PIXEL_ADDRESS_BOARD_TIME, 4);
 			memcpy(&dma_time, line0 + PIXEL_ADDRESS_DMA_TIME, 4);
 			memcpy(&absolute_time, line0 + PIXEL_ADDRESS_ABSOLUTE_TIME, 8);
+			memcpy(&firmware_date, line0 + PIXEL_ADDRESS_FIRMWARE_DATE, 4);
 
 			std::chrono::system_clock::time_point tp{std::chrono::milliseconds{absolute_time}};
 
@@ -1014,6 +1018,12 @@ namespace rir
 			attrs["Time (DMA)"] = toString(dma_time);
 			attrs["Time (absolute in ms)"] = toString(absolute_time);
 			attrs["Datetime"] = serializeTimePoint(tp, "%FT%TZ");
+
+			day = (firmware_date >> 24) & 0xFF;
+			month = (firmware_date >> 16) & 0xFF;
+			year = (firmware_date) & 0xFFFF;
+
+			attrs["Firmware Date"] = toString(day) + "-" + toString(month) + "-" + toString(year);
 
 			attrs["Camera T (C)"] = "0";
 			attrs["IR Filter T (C)"] = "0";

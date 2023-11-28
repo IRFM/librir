@@ -96,9 +96,16 @@ class IRMovie(object):
         return IRMovie(handle)
 
     @classmethod
-    def from_bytes(cls, data: bytes):
-        # _hash_string = hashlib.md5(data).hexdigest()
-        # _hash_string = hash(data)
+    def from_bytes(cls, data: bytes, times: List[float] = None, cthreads: int = 8):
+        """_summary_
+
+        Args:
+            data (bytes): _description_
+            times (List[float], optional): timestamps in seconds. Defaults to None.
+
+        Returns:
+            _type_: _description_
+        """
         with tempfile.NamedTemporaryFile("wb", delete=False) as f:
             filename = Path(f.name)
             f.write(data)
@@ -106,13 +113,13 @@ class IRMovie(object):
         with cls.from_filename(filename) as _instance:
             _instance.__tempfile__ = filename
             dst = Path(filename).parent / (f"{filename.stem}.h264")
-            _instance.to_h264(dst)
+            _instance.to_h264(dst, times=times, cthreads=cthreads)
 
         instance = cls.from_filename(dst)
         return instance
 
     @classmethod
-    def from_numpy_array(cls, arr, attrs=None):
+    def from_numpy_array(cls, arr, attrs=None, times=None, cthreads: int = 8):
         """
         Create a IRMovie object via numpy arrays. It creates non-pulse indexed IRMovie
         object.
@@ -129,10 +136,12 @@ class IRMovie(object):
         else:
             raise ValueError("mismatch array shape. Must be 2D or 3D")
         data = header.astype(np.uint32).tobytes() + arr.astype(np.uint16).tobytes()
-        instance = cls.from_bytes(data)
+        instance = cls.from_bytes(data, times=times, cthreads=cthreads)
+
         if attrs is not None:
             instance.attributes = attrs
             instance._file_attributes.flush()
+
         return instance
 
     def __init__(self, handle):
@@ -375,7 +384,8 @@ class IRMovie(object):
         return self.image_size[0]
 
     @property
-    def data(self) -> np.array:
+    @functools.lru_cache(maxsize=None)
+    def data(self) -> np.ndarray:
         """
         Accessor to data contained in movie file.
         There are two strategies for getting the data.
@@ -505,6 +515,16 @@ class IRMovie(object):
                 dtype=np.float64,
             )
         return self._timestamps
+
+    @timestamps.setter
+    def timestamps(self, value: List[float]):
+        """_summary_
+
+        Args:
+            value (List[float]): in nanoseconds
+        """
+        value = np.array(value) * 1e-9
+        self._timestamps = value
 
     @property
     def frame_period(self) -> float:
@@ -636,7 +656,7 @@ class IRMovie(object):
 
     @property
     def last_line_index(self):
-        return self._roi_result_line.get(self.camera_type, -1)
+        return self._roi_result_line.get(self.camera_type, -3)
 
     @property
     def payload(self):
@@ -689,13 +709,13 @@ class IRMovie(object):
         return df
 
     def _frame_attribute_getter(self, key) -> np.ndarray:
-        l = []
+        values = []
         try:
-            l = self.frames_attributes[key]
+            values = self.frames_attributes[key]
         except KeyError:
             logger.warning(f"attribute '{key}' not found in movie !")
         finally:
-            return np.array(l, dtype=float)
+            return np.array(values, dtype=float)
 
     # @cached_property
     @property

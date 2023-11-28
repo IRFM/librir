@@ -10,7 +10,7 @@ from librir.video_io.IRSaver import IRSaver
 def add_noise(image, mean=0, var=0.5):
     """Add gaussian noise to input image"""
     row, col = image.shape
-    sigma = var ** 0.5
+    sigma = var**0.5
     gauss = np.random.normal(mean, sigma, (row, col))
     gauss = gauss.reshape(row, col)
     noisy = image + gauss

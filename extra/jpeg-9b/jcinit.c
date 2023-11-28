@@ -20,7 +20,6 @@
 #include "jinclude.h"
 #include "jpeglib.h"
 
-
 /*
  * Master selection of compression modules.
  * This is done once at the start of processing an image.  We determine
@@ -28,7 +27,7 @@
  */
 
 GLOBAL(void)
-jinit_compress_master (j_compress_ptr cinfo)
+jinit_compress_master(j_compress_ptr cinfo)
 {
   long samplesperrow;
   JDIMENSION jd_samplesperrow;
@@ -43,16 +42,17 @@ jinit_compress_master (j_compress_ptr cinfo)
     ERREXIT(cinfo, JERR_EMPTY_IMAGE);
 
   /* Width of an input scanline must be representable as JDIMENSION. */
-  samplesperrow = (long) cinfo->image_width * (long) cinfo->input_components;
-  jd_samplesperrow = (JDIMENSION) samplesperrow;
-  if ((long) jd_samplesperrow != samplesperrow)
+  samplesperrow = (long)cinfo->image_width * (long)cinfo->input_components;
+  jd_samplesperrow = (JDIMENSION)samplesperrow;
+  if ((long)jd_samplesperrow != samplesperrow)
     ERREXIT(cinfo, JERR_WIDTH_OVERFLOW);
 
   /* Initialize master control (includes parameter checking/processing) */
   jinit_c_master_control(cinfo, FALSE /* full compression */);
 
   /* Preprocessing */
-  if (! cinfo->raw_data_in) {
+  if (!cinfo->raw_data_in)
+  {
     jinit_color_converter(cinfo);
     jinit_downsampler(cinfo);
     jinit_c_prep_controller(cinfo, FALSE /* never need full buffer here */);
@@ -62,23 +62,24 @@ jinit_compress_master (j_compress_ptr cinfo)
   /* Entropy encoding: either Huffman or arithmetic coding. */
   if (cinfo->arith_code)
     jinit_arith_encoder(cinfo);
-  else {
+  else
+  {
     jinit_huff_encoder(cinfo);
   }
 
   /* Need a full-image coefficient buffer in any multi-pass mode. */
   jinit_c_coef_controller(cinfo,
-		(boolean) (cinfo->num_scans > 1 || cinfo->optimize_coding));
+                          (boolean)(cinfo->num_scans > 1 || cinfo->optimize_coding));
   jinit_c_main_controller(cinfo, FALSE /* never need full buffer here */);
 
   jinit_marker_writer(cinfo);
 
   /* We can now tell the memory manager to allocate virtual arrays. */
-  (*cinfo->mem->realize_virt_arrays) ((j_common_ptr) cinfo);
+  (*cinfo->mem->realize_virt_arrays)((j_common_ptr)cinfo);
 
   /* Write the datastream header (SOI) immediately.
    * Frame and scan headers are postponed till later.
    * This lets application insert special markers after the SOI.
    */
-  (*cinfo->marker->write_file_header) (cinfo);
+  (*cinfo->marker->write_file_header)(cinfo);
 }

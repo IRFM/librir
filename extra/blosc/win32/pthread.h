@@ -42,7 +42,7 @@
  */
 #define pthread_mutex_t CRITICAL_SECTION
 
-#define pthread_mutex_init(a,b) InitializeCriticalSection((a))
+#define pthread_mutex_init(a, b) InitializeCriticalSection((a))
 #define pthread_mutex_destroy(a) DeleteCriticalSection((a))
 #define pthread_mutex_lock EnterCriticalSection
 #define pthread_mutex_unlock LeaveCriticalSection
@@ -55,7 +55,8 @@
  * ACE homepage: http://www.cse.wustl.edu/~schmidt/ACE.html
  * See also: http://www.cse.wustl.edu/~schmidt/win32-cv-1.html
  */
-typedef struct {
+typedef struct
+{
 	LONG waiters;
 	int was_broadcast;
 	CRITICAL_SECTION waiters_lock;
@@ -72,14 +73,15 @@ extern int pthread_cond_broadcast(pthread_cond_t *cond);
 /*
  * Simple thread creation implementation using pthread API
  */
-typedef struct {
+typedef struct
+{
 	HANDLE handle;
-	void *(*start_routine)(void*);
+	void *(*start_routine)(void *);
 	void *arg;
 } pthread_t;
 
 extern int pthread_create(pthread_t *thread, const void *unused,
-			  void *(*start_routine)(void*), void *arg);
+						  void *(*start_routine)(void *), void *arg);
 
 /*
  * To avoid the need of copying a struct, we use small macro wrapper to pass
@@ -97,16 +99,18 @@ extern int win32_pthread_join(pthread_t *thread, void **value_ptr);
 typedef INIT_ONCE pthread_once_t;
 #define PTHREAD_ONCE_INIT INIT_ONCE_STATIC_INIT
 #define pthread_once blosc_internal_pthread_once /* Avoid symbol conflicts */
-static int blosc_internal_pthread_once(pthread_once_t* once_control,
-																			 void (*init_routine)(void)) {
-  BOOL pending;
-  InitOnceBeginInitialize(once_control, /*dwFlags=*/0, /*fPending=*/&pending,
-                          NULL);
-  if (pending == TRUE) {
-    init_routine();
-    InitOnceComplete(once_control, /*dwFlags=*/0, /*lpContext=*/NULL);
-  }
-  return 0;
+static int blosc_internal_pthread_once(pthread_once_t *once_control,
+									   void (*init_routine)(void))
+{
+	BOOL pending;
+	InitOnceBeginInitialize(once_control, /*dwFlags=*/0, /*fPending=*/&pending,
+							NULL);
+	if (pending == TRUE)
+	{
+		init_routine();
+		InitOnceComplete(once_control, /*dwFlags=*/0, /*lpContext=*/NULL);
+	}
+	return 0;
 }
 
 #endif /* PTHREAD_H */

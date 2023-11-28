@@ -8,23 +8,24 @@
 
 #include <cstdint>
 
-namespace charls {
+namespace charls
+{
 
 	// Optimized trait classes for lossless compression of 8 bit color and 8/16 bit monochrome images.
 	// This class assumes MaximumSampleValue correspond to a whole number of bits, and no custom ResetValue is set when encoding.
 	// The point of this is to have the most optimized code for the most common and most demanding scenario.
-	template<typename SampleType, int32_t BitsPerPixel>
+	template <typename SampleType, int32_t BitsPerPixel>
 	struct lossless_traits_impl
 	{
 		using sample_type = SampleType;
 
-		static const int32_t maximum_sample_value{ (1U << BitsPerPixel) - 1 };
+		static const int32_t maximum_sample_value{(1U << BitsPerPixel) - 1};
 		static const int32_t near_lossless{};
-		static const int32_t quantized_bits_per_pixel{ BitsPerPixel };
-		static const int32_t range{ compute_range_parameter(maximum_sample_value, near_lossless) };
-		static const int32_t bits_per_pixel{ BitsPerPixel };
-		static constexpr int32_t limit{ compute_limit_parameter(BitsPerPixel) };
-		static const int32_t reset_threshold{ default_reset_value };
+		static const int32_t quantized_bits_per_pixel{BitsPerPixel};
+		static const int32_t range{compute_range_parameter(maximum_sample_value, near_lossless)};
+		static const int32_t bits_per_pixel{BitsPerPixel};
+		static constexpr int32_t limit{compute_limit_parameter(BitsPerPixel)};
+		static const int32_t reset_threshold{default_reset_value};
 
 		FORCE_INLINE static int32_t compute_error_value(const int32_t d) noexcept
 		{
@@ -40,10 +41,10 @@ namespace charls {
 #if defined(__clang__)
 		__attribute__((no_sanitize("shift")))
 #endif
-			FORCE_INLINE constexpr static int32_t
-			modulo_range(const int32_t error_value) noexcept
+		FORCE_INLINE constexpr static int32_t
+		modulo_range(const int32_t error_value) noexcept
 		{
-			return static_cast<int32_t>(error_value << (int32_t_bit_count - bits_per_pixel)) >> (int32_t_bit_count - bits_per_pixel); //NOLINT
+			return static_cast<int32_t>(error_value << (int32_t_bit_count - bits_per_pixel)) >> (int32_t_bit_count - bits_per_pixel); // NOLINT
 		}
 
 		FORCE_INLINE static SampleType compute_reconstructed_sample(const int32_t predicted_value, const int32_t error_value) noexcept
@@ -60,15 +61,13 @@ namespace charls {
 		}
 	};
 
-
-	template<typename PixelType, int32_t BitsPerPixel>
+	template <typename PixelType, int32_t BitsPerPixel>
 	struct lossless_traits final : lossless_traits_impl<PixelType, BitsPerPixel>
 	{
 		using pixel_type = PixelType;
 	};
 
-
-	template<>
+	template <>
 	struct lossless_traits<uint8_t, 8> final : lossless_traits_impl<uint8_t, 8>
 	{
 		using pixel_type = sample_type;
@@ -89,8 +88,7 @@ namespace charls {
 		}
 	};
 
-
-	template<>
+	template <>
 	struct lossless_traits<uint16_t, 16> final : lossless_traits_impl<uint16_t, 16>
 	{
 		using pixel_type = sample_type;
@@ -111,8 +109,7 @@ namespace charls {
 		}
 	};
 
-
-	template<typename PixelType, int32_t BitsPerPixel>
+	template <typename PixelType, int32_t BitsPerPixel>
 	struct lossless_traits<triplet<PixelType>, BitsPerPixel> final : lossless_traits_impl<PixelType, BitsPerPixel>
 	{
 		using pixel_type = triplet<PixelType>;
@@ -133,8 +130,7 @@ namespace charls {
 		}
 	};
 
-
-	template<typename PixelType, int32_t BitsPerPixel>
+	template <typename PixelType, int32_t BitsPerPixel>
 	struct lossless_traits<quad<PixelType>, BitsPerPixel> final : lossless_traits_impl<PixelType, BitsPerPixel>
 	{
 		using pixel_type = quad<PixelType>;

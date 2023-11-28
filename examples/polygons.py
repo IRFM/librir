@@ -25,6 +25,7 @@ print(polygon_interpolate(poly1, poly2, 0.5))
 from librir.geometry import rdp_simplify_polygon2
 import math
 
+
 # This function gets just one pair of coordinates based on the angle theta
 def get_circle_coord(theta, x_center, y_center, radius):
     x = radius * math.cos(theta) + x_center

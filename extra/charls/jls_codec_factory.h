@@ -7,23 +7,23 @@
 
 #include <memory>
 
-
-namespace charls {
-
-class decoder_strategy;
-class encoder_strategy;
-
-template<typename Strategy>
-class jls_codec_factory final
+namespace charls
 {
-public:
-    std::unique_ptr<Strategy> create_codec(const frame_info& frame, const coding_parameters& parameters, const jpegls_pc_parameters& preset_coding_parameters);
 
-private:
-    std::unique_ptr<Strategy> create_optimized_codec(const frame_info& frame, const coding_parameters& parameters);
-};
+    class decoder_strategy;
+    class encoder_strategy;
 
-extern template class jls_codec_factory<decoder_strategy>;
-extern template class jls_codec_factory<encoder_strategy>;
+    template <typename Strategy>
+    class jls_codec_factory final
+    {
+    public:
+        std::unique_ptr<Strategy> create_codec(const frame_info &frame, const coding_parameters &parameters, const jpegls_pc_parameters &preset_coding_parameters);
+
+    private:
+        std::unique_ptr<Strategy> create_optimized_codec(const frame_info &frame, const coding_parameters &parameters);
+    };
+
+    extern template class jls_codec_factory<decoder_strategy>;
+    extern template class jls_codec_factory<encoder_strategy>;
 
 } // namespace charls

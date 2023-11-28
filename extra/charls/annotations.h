@@ -11,11 +11,11 @@
 //       and long macro's would make the code harder to read.
 #define IN_ _In_
 #undef _In_opt_
-#define  _In_opt_
+#define _In_opt_
 #define IN_Z_ _In_z_
 #define IN_READS_BYTES_(size) _In_reads_bytes_(size)
 #undef _Out_
-#define  _Out_
+#define _Out_
 #define OUT_OPT_ _Out_opt_
 #define OUT_WRITES_BYTES_(size) _Out_writes_bytes_(size)
 #define OUT_WRITES_Z_(size_in_bytes) _Out_writes_z_(size_in_bytes)
@@ -34,7 +34,6 @@
 #define RETURN_TYPE_SUCCESS_(expr)
 
 #endif
-
 
 #if defined(__clang__) || defined(__GNUC__)
 

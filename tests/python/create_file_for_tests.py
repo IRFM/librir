@@ -165,7 +165,6 @@ VALID_MASKS = [generate_constant_mask_array(*shape) for shape in VALID_3D_SHAPES
 
 class TestFilesContext(object):
     def __init__(self):
-
         self.uniform_movies = [
             IRMovie.from_numpy_array(arr) for arr in VALID_UNIFORM_NUMPY_ARRAYS
         ]

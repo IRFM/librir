@@ -1,33 +1,4 @@
 
-SET(ZSTD_SRC
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/fse_decompress.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/zstd_common.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/zstd_v01.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/zstd_v06.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/entropy_common.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/zdict.c 
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/zstd_compress.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/zstd_v04.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/error_private.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/hash.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/pool.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/zbuff_common.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/zstd_decompress.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/zstdmt_compress.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/zstd_v02.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/zstd_v07.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/cover.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/huf_compress.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/zbuff_compress.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/zstd_v05.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/divsufsort.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/fse_compress.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/huf_decompress.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/threading.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/zbuff_decompress.c
-		${CMAKE_CURRENT_SOURCE_DIR}/zstd/zstd_v03.c
-        PARENT_SCOPE
-)
 
 IF(MSVC)
 SET(MINIZIP_SRC
@@ -113,11 +84,10 @@ SET(MINIZIP_SRC
 )
 ENDIF()
 
+# SET(ZSTD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/zstd PARENT_SCOPE)
 
-SET(ZSTD_INCLUDE_DIR
-		${CMAKE_CURRENT_SOURCE_DIR}
-        PARENT_SCOPE
-)
+# add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/zstd)
+
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/blosc)
 SET(BLOSC_SRC ${BLOSC_SRC} PARENT_SCOPE)
@@ -133,3 +103,12 @@ SET(CHARLS_SRC ${CHARLS_SRC} PARENT_SCOPE)
 
 
 SET(EXTRAS_INCLUDE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PARENT_SCOPE)
+
+# SET(ZSTD_INCLUDE_DIR
+# 		${ZSTD_INCLUDE_DIR}
+#         PARENT_SCOPE
+# )
+# SET(ZSTD_SRC
+# 		${ZSTD_SRC}
+#         PARENT_SCOPE
+# )

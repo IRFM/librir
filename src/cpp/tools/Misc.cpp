@@ -152,7 +152,7 @@ namespace rir
 	static bool compare_case_insensitive(const char *str1, const char *str2, size_t size)
 	{
 		for (size_t i = 0; i < size; ++i)
-			if (std::tolower(str1[i]) != std::tolower(str2[i]))
+			if (tolower(str1[i]) != tolower(str2[i]))
 				return false;
 		return true;
 	}
@@ -162,7 +162,7 @@ namespace rir
 			return std::string::npos;
 		for (size_t i = start; i < size; ++i)
 		{
-			if (std::tolower(str[i]) == std::tolower(sub_str[0]))
+			if (tolower(str[i]) == tolower(sub_str[0]))
 			{
 				// compare remaining
 				if (size - i < sub_size)

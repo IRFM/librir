@@ -62,8 +62,6 @@ def test_file_attributes():
     print(attrs.frame_attributes(10))
 
 
-
-
 polygon = [[0, 0], [1, 0], [1.2, 0.2], [1.8, 0.1], [5, 5], [3.2, 5], [0, 9]]
 polygon2 = np.array(polygon, dtype=np.float64) * 1.5
 
@@ -99,9 +97,6 @@ def test_rdp_simplify_polygon2():
 def test_minimum_area_bbox():
     print(ge.minimum_area_bbox(polygon))
     assert ge.minimum_area_bbox(polygon) != ([np.nan, np.nan], 0.0, 0.0, np.nan, np.nan)
-
-
-
 
 
 def test_translate():
@@ -171,9 +166,6 @@ def test_label_image():
     print(sp.keep_largest_area(img))
 
 
-
-
-
 def test_ir_saver_movie():
     img0 = np.zeros((20, 20), dtype=np.int32)
     img1 = np.ones((20, 20), dtype=np.int32)
@@ -191,9 +183,6 @@ def test_ir_saver_movie():
     print(m.calibration_files)
     print(m[0])
     print(m[1])
-
-
-
 
 
 def test_pulse_infos():

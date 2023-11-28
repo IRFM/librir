@@ -476,15 +476,15 @@ def h264_set_global_attributes(saver, attributes):
         if type(k) == bytes:
             ks = k
         elif type(k) == str:
-            ks = k.encode("ascii")
+            ks = k.encode("utf8")
         else:
-            ks = str(k).encode("ascii")
+            ks = str(k).encode("utf8")
         if type(v) == bytes:
             vs = v
         elif type(v) == str:
-            vs = v.encode("ascii")
+            vs = v.encode("utf8")
         else:
-            vs = str(v).encode("ascii")
+            vs = str(v).encode("utf8")
         klens.append(len(ks))
         vlens.append(len(vs))
         keys += ks

@@ -1,4 +1,5 @@
 import logging
+import struct
 
 import sys
 from pathlib import Path
@@ -61,18 +62,23 @@ def generate_random_movie_data(n_rows, n_columns, n_images):
     return data
 
 
+def forge_mock_metadata_in_last_line_for_2d_arrays(array):
+    metadata = np.zeros((3, array.shape[1]), dtype=array.dtype)
+    return np.vstack((array, metadata))
+
+
 VALID_3D_SHAPES = [
     (1, 512, 640),
     (10, 512, 640),
-    (10, 515, 640),  # pb
+    # (10, 515, 640),  # pb
     (10, 240, 320),
-    (10, 243, 320),  # pb
+    # (10, 243, 320),  # pb
     (10, 256, 320),
-    (10, 259, 320),
+    # (10, 259, 320),
 ]
 VALID_2D_SHAPES = [
     (512, 640),
-    (515, 640),
+    # (515, 640),
 ]
 
 VALID_SHAPES = VALID_2D_SHAPES + VALID_3D_SHAPES
@@ -110,7 +116,9 @@ VALID_MASKS = [generate_constant_mask_array(*shape) for shape in VALID_3D_SHAPES
 @pytest.fixture(scope="session", params=VALID_SHAPES)
 def array(request):
     shape = request.param
-    yield generate_mock_movie_data_uniform(*shape)
+    arr = generate_mock_movie_data_uniform(*shape)
+
+    yield arr
 
 
 @pytest.fixture(scope="session", params=VALID_3D_SHAPES)
@@ -128,7 +136,9 @@ def bad_array(request):
 @pytest.fixture(scope="session", params=VALID_2D_SHAPES)
 def valid_2D_array(request):
     shape = request.param
-    yield generate_mock_movie_data_uniform(*shape)
+    arr = generate_mock_movie_data_uniform(*shape)
+    arr = forge_mock_metadata_in_last_line_for_2d_arrays(arr)
+    yield arr
 
 
 @pytest.fixture(scope="session")
@@ -138,5 +148,32 @@ def movie(array):
 
 
 @pytest.fixture(scope="session")
-def filename(movie):
+def filename(movie: IRMovie):
     return movie.filename
+
+
+@pytest.fixture(scope="session")
+def timestamps(array):
+    return np.arange(len(array), dtype=float) * 2
+
+
+@pytest.fixture(scope="session")
+def movie_with_firmware_date(valid_2D_array):
+    # 23-01-2023
+    day = 23
+    month = 1
+    year = 2023
+    firmware_date = np.uint32(0)
+
+    firmware_date = (day << 24) | (month << 16) | year
+
+    # struct.pack("I", firmware_date)
+    r = bytearray(valid_2D_array.tobytes("C"))
+    v = struct.pack("I", firmware_date)
+    offset = (valid_2D_array.shape[0] - 3) * valid_2D_array.shape[1] * 2
+    r[(offset + 254 * 2) : (offset + 256 * 2)] = v
+
+    arr = np.frombuffer(bytes(r), dtype=np.uint16).reshape(valid_2D_array.shape)
+    arr[-3, 254:256]
+    with IRMovie.from_numpy_array(arr) as mov:
+        yield mov

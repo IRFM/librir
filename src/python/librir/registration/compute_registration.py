@@ -6,6 +6,7 @@ des pixels par l'algorithme masked_registrator_ecc.
 ###########################
 
 import os
+from librir.video_io import IRMovie
 import numpy as np
 import pandas as pd
 import cv2
@@ -17,7 +18,7 @@ from .masked_registration_ecc import MaskedRegistratorECC
 ###########################
 
 
-def manage_computation_and_tries(img, regis_obj):
+def manage_computation_and_tries(img, regis_obj: MaskedRegistratorECC):
     """
     Fonction qui calcule les deplacements en x, en y et le niveau de
     confiance. Si l'algorithme ne parvient pas a converger pour une image,
@@ -36,7 +37,7 @@ def manage_computation_and_tries(img, regis_obj):
             if regis_obj.check_median_value(1):
                 regis_obj.define_median_value(1)
         except cv2.error:
-            regis_obj.decrease_median_value(0.01)
+            regis_obj.decrease_median(0.01)
             nb_try += 1
         if nb_try > 0:
             print("try number : {}".format(nb_try))
@@ -49,7 +50,7 @@ def manage_computation_and_tries(img, regis_obj):
 
 
 def compute_confidence_and_x_y_trajectories(
-    pulse_obj, view, lower_bound, upper_bound, calibration, *args
+    ir_movie: IRMovie, view, lower_bound, upper_bound, calibration, *args
 ):
     """
     Fonction qui permet d'estimer les deplacements (x,y) des pixels
@@ -61,10 +62,9 @@ def compute_confidence_and_x_y_trajectories(
         is_div = False
 
     for img_number in range(lower_bound, upper_bound + 1):
-
         if img_number % 50 == 0:
             print(img_number)
-        img = pulse_obj.load_pos(img_number, calibration)
+        img = ir_movie.load_pos(img_number, calibration)
 
         if is_div:
             regis_obj_up = manage_computation_and_tries(img, args[0])
@@ -310,7 +310,6 @@ def compute_registration_ir(view_name, pulse_or_filename, outfile):
 
 
 if __name__ == "__main__":
-
     # Arguments: view_name pulse_or_file out_file
     import sys
 

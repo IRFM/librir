@@ -161,7 +161,7 @@ install(FILES ${CMAKE_BINARY_DIR}/requirements.txt DESTINATION ${CMAKE_INSTALL_P
 include(CMakePackageConfigHelpers)
 configure_package_config_file(cmake/librirConfig.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/librirConfig.cmake
-  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/librir
+  INSTALL_DESTINATION ${CMAKE_INSTALL_PREFIX}/cmake
   PATH_VARS 
   PLUGINS_LIBS)
   #INCLUDE_DIR LIB_DIR LIBRARIES PLUGINS_LIBS)
@@ -173,11 +173,14 @@ write_basic_package_version_file(
   
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/librirConfig.cmake
               ${CMAKE_CURRENT_BINARY_DIR}/librirConfigVersion.cmake
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/librir )
-		
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/cmake/librir )
+
+
+
 
 # Generate librir.pc
 list(TRANSFORM PLUGINS_LIBS PREPEND "-l")
 configure_file(librir.pc.in librir.pc @ONLY)
+configure_file(librir.pc.in ${CMAKE_INSTALL_LIBDIR}/pkgconfig/librir.pc @ONLY)
 install(FILES ${CMAKE_BINARY_DIR}/librir.pc DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
 

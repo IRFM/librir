@@ -10,12 +10,12 @@
 // Turn A into a string literal after macro-expanding it.
 #define TO_STRING(A) TO_STRING_NX(A) // NOLINT(cppcoreguidelines-macro-usage)
 
-const char* CHARLS_API_CALLING_CONVENTION charls_get_version_string() noexcept
+const char *CHARLS_API_CALLING_CONVENTION charls_get_version_string() noexcept
 {
     return TO_STRING(CHARLS_VERSION_MAJOR) "." TO_STRING(CHARLS_VERSION_MINOR) "." TO_STRING(CHARLS_VERSION_PATCH);
 }
 
-void CHARLS_API_CALLING_CONVENTION charls_get_version_number(OUT_OPT_ int32_t* major, OUT_OPT_ int32_t* minor, OUT_OPT_ int32_t* patch) noexcept
+void CHARLS_API_CALLING_CONVENTION charls_get_version_number(OUT_OPT_ int32_t *major, OUT_OPT_ int32_t *minor, OUT_OPT_ int32_t *patch) noexcept
 {
     if (major)
     {
