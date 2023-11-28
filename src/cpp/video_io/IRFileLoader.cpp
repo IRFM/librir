@@ -858,8 +858,9 @@ StringList IRFileLoader::supportedCalibration() const
 {
 	StringList res;
 	res.push_back("Digital Level");
-	if (m_data->calib)
+	if (m_data->calib) {
 		res.push_back("Apparent T(C)");
+	}
 	return res;
 }
 
@@ -1134,6 +1135,7 @@ bool IRFileLoader::calibrateInplace(unsigned short * img, int size, int calibrat
 	}
 	return false;
 }
+
 
 
 bool IRFileLoader::readImage(int pos, int calibration, unsigned short * pixels)

@@ -306,7 +306,17 @@ IO_EXPORT int h264_get_low_errors(int file, unsigned short* errors, int * size);
 IO_EXPORT int h264_get_high_errors(int file, unsigned short* errors, int * size);
 
 
-
+/**
+* Returns the list of floating point tables given camera provides.
+* The table names are written to dst with a '\n' separator.
+* Returns 0 on success, -1 on error, -2 if dst_size is too small.
+*/
+IO_EXPORT int get_table_names(int cam, char* dst, int* dst_size);
+/**
+* Returns table for given camera and table name.
+* Returns 0 on success, -1 on error, -2 if dst_size is too small.
+*/
+IO_EXPORT int get_table(int cam, const char* name, float* dst, int* dst_size);
 
 
 /**
@@ -320,7 +330,7 @@ method == 2 means blosc+ZSTD standard compression (clevel goes from 1 to 10),
 method == 3 means blosc+ZSTD advanced compression (clevel goes from 1 to 10).
 Returns the video writer identifier on success, -1 on error.
 */
-IO_EXPORT int open_video_write(const char* filename, int width, int height, int rate, int method, int clevel);
+IO_EXPORT int open_video_write(const char* filename, int width, int height, int rate, int method, int clevel); 
 /**
 Write an image to given writter.
 Returns 0 on success, -1 on error.

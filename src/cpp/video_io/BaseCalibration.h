@@ -67,6 +67,12 @@ namespace rir
 		virtual void setSTEFITemperature(unsigned short) = 0;
 
 		/**
+		* Returns the names of internal used tables (floating point matrices) used for calibration
+		*/
+		virtual StringList tableNames() const { return StringList(); }
+		virtual std::pair<const float*, size_t> getTable(const char* name) const { return { nullptr,0 }; }
+
+		/**
 		Apply inverted calibration (from T°C to DL).
 		IT is the image of integration time (can be NULL for some implementations)
 		*/

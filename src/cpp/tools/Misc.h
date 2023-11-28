@@ -76,6 +76,8 @@ namespace rir
 	TOOLS_EXPORT StringList split(const char* in, const char* match, bool keep_empty_strings = false);
 	/**Join list of string with \a str separator*/
 	TOOLS_EXPORT std::string join(const StringList& lst, const char* str);
+	/** Find substring using case insensitive comparison. Returns std::string::npos if not found. */
+	TOOLS_EXPORT size_t find_case_insensitive(size_t start , const char * str, size_t size, const char* sub_str, size_t sub_size);
 
 	/**Returns file size (0 if it does not exist)*/
 	TOOLS_EXPORT size_t file_size(const char* filename);

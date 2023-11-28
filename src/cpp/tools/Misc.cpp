@@ -150,6 +150,28 @@ namespace rir
 		return res;
 	}
 
+	static bool compare_case_insensitive(const char* str1, const char* str2, size_t size)
+	{
+		for (size_t i = 0; i < size; ++i)
+			if (std::tolower(str1[i]) != std::tolower(str2[i]))
+				return false;
+		return true;
+	}
+	size_t find_case_insensitive(size_t start, const char* str, size_t size, const char* sub_str, size_t sub_size)
+	{
+		if (sub_size == 0)
+			return std::string::npos;
+		for (size_t i = start; i < size; ++i) {
+			if (std::tolower(str[i]) == std::tolower(sub_str[0])) {
+				//compare remaining
+				if (size - i < sub_size)
+					return std::string::npos;
+				if (compare_case_insensitive(str + i + 1, sub_str + 1, sub_size - 1))
+					return i;
+			}
+		}
+		return std::string::npos;
+	}
 
 
 
