@@ -8,8 +8,7 @@
 #define TABLE_TRAILER "H264ATTRIBUTES"
 
 /** @file
-*/
-
+ */
 
 namespace rir
 {
@@ -37,11 +36,11 @@ namespace rir
 		/// @brief Open file attribute object in read-only mode using a file descriptor as returned by createFileReader()
 		/// @param file_access file descriptor
 		/// @return true on success, false otherwise
-		bool openReadOnly(void* file_access);
+		bool openReadOnly(void *file_access);
 		/// @brief Open file attribute object using a file path
 		/// @param filename local file name
 		/// @return true on success, false otherwise
-		bool open(const char* filename);
+		bool open(const char *filename);
 		/// @brief Write attributes to the file and close the file attribuyte object.
 		void close();
 		/// @brief Close the file attribute object without writting attributes to the file
@@ -49,7 +48,7 @@ namespace rir
 		/// @brief Write any new attribute to the output file
 		void flush();
 		/// @brief Returns true if the file attribute object is open and pointing to a valid file
-		bool isOpen()const;
+		bool isOpen() const;
 		/// @brief Returns the full trailer size in bytes
 		size_t tableSize() const;
 		/// @brief Returns the number of frames in this attribute object
@@ -58,11 +57,11 @@ namespace rir
 		void resize(size_t new_size);
 
 		/// @brief Returns the file global attributes
-		const std::map<std::string, std::string>& globalAttributes() const;
+		const std::map<std::string, std::string> &globalAttributes() const;
 		/// @brief Set the file global attributes
-		void setGlobalAttributes(const std::map<std::string, std::string>& attributes);
+		void setGlobalAttributes(const std::map<std::string, std::string> &attributes);
 		/// @brief Add a global attribute
-		void addGlobalAttribute(const std::string& key, const std::string& value);
+		void addGlobalAttribute(const std::string &key, const std::string &value);
 
 		/// @brief Returns the timestamp for given frame. Note that resize() must have been called before.
 		int64_t timestamp(size_t index) const;
@@ -70,16 +69,16 @@ namespace rir
 		void setTimestamp(size_t index, int64_t time);
 
 		/// @brief Returns the frame attributes for given image position
-		const std::map<std::string, std::string>& attributes(size_t index) const;
+		const std::map<std::string, std::string> &attributes(size_t index) const;
 		/// @brief Set the frame attributes for given image position
-		void setAttributes(size_t index, const std::map<std::string, std::string>& attributes);
+		void setAttributes(size_t index, const std::map<std::string, std::string> &attributes);
 		/// @brief Add a frame attribute for given image position
-		void addAttribute(size_t index, const std::string& key, const std::string& value);
+		void addAttribute(size_t index, const std::string &key, const std::string &value);
 
 	private:
 		void writeIfDirty();
 		class PrivateData;
-		PrivateData* m_data;
+		PrivateData *m_data;
 	};
 
 }
