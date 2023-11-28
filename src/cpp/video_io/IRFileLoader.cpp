@@ -870,7 +870,9 @@ namespace rir
 		StringList res;
 		res.push_back("Digital Level");
 		if (m_data->calib)
+		{
 			res.push_back("Apparent T(C)");
+		}
 		return res;
 	}
 

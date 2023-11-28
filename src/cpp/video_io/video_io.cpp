@@ -860,6 +860,57 @@ int h264_get_high_errors(int file, unsigned short *errors, int *size)
 	return 0;
 }
 
+int get_table_names(int cam, char *dst, int *dst_size)
+{
+	IRVideoLoader *loader = (IRVideoLoader *)get_void_ptr(cam);
+	if (!loader)
+	{
+		logError("get_table_names: NULL identifier");
+		return -1;
+	}
+
+	StringList lst = loader->tableNames();
+	std::string out;
+	for (const auto &s : lst)
+	{
+		out += s;
+		out += '\n';
+	}
+	if ((int)out.size() > *dst_size)
+	{
+		*dst_size = (int)out.size();
+		return -2;
+	}
+
+	memcpy(dst, out.c_str(), out.size());
+	*dst_size = (int)out.size();
+	return 0;
+}
+
+int get_table(int cam, const char *name, float *dst, int *dst_size)
+{
+	IRVideoLoader *loader = (IRVideoLoader *)get_void_ptr(cam);
+	if (!loader)
+	{
+		logError("get_table_names: NULL identifier");
+		return -1;
+	}
+
+	std::vector<float> table = loader->getTable(name);
+	if (table.size() == 0)
+		return -1;
+
+	if ((int)table.size() > *dst_size)
+	{
+		*dst_size = (int)table.size();
+		return -2;
+	}
+
+	std::copy(table.begin(), table.end(), dst);
+	*dst_size = (int)table.size();
+	return 0;
+}
+
 int open_video_write(const char *filename, int width, int height, int rate, int method, int clevel)
 {
 	return set_void_ptr(z_open_file_write(filename, width, height, rate, method, clevel));

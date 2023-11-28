@@ -50,6 +50,27 @@ namespace rir
 		_mutex.unlock();
 	}
 
+	StringList IRVideoLoader::tableNames() const
+	{
+		if (auto *c = calibration())
+			return c->tableNames();
+		return StringList();
+	}
+	std::vector<float> IRVideoLoader::getTable(const char *name) const
+	{
+		if (auto *c = calibration())
+		{
+			auto p = c->getTable(name);
+			if (!p.first)
+				return std::vector<float>();
+
+			std::vector<float> res(p.second);
+			std::copy(p.first, p.first + p.second, res.begin());
+			return res;
+		}
+		return std::vector<float>();
+	}
+
 	static std::vector<std::shared_ptr<IRVideoLoaderBuilder>> _builders;
 
 	void registerIRVideoLoaderBuilder(IRVideoLoaderBuilder *builder)

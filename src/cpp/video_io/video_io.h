@@ -294,6 +294,18 @@ extern "C"
 	IO_EXPORT int h264_get_high_errors(int file, unsigned short *errors, int *size);
 
 	/**
+	 * Returns the list of floating point tables given camera provides.
+	 * The table names are written to dst with a '\n' separator.
+	 * Returns 0 on success, -1 on error, -2 if dst_size is too small.
+	 */
+	IO_EXPORT int get_table_names(int cam, char *dst, int *dst_size);
+	/**
+	 * Returns table for given camera and table name.
+	 * Returns 0 on success, -1 on error, -2 if dst_size is too small.
+	 */
+	IO_EXPORT int get_table(int cam, const char *name, float *dst, int *dst_size);
+
+	/**
 	ZSTD compressed video file, mainly for tests
 	*/
 

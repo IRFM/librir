@@ -129,6 +129,13 @@ namespace rir
 		/**Retrieve the raw (DL) value at given position for the last read image*/
 		virtual bool getRawValue(int x, int y, unsigned short *value) const = 0;
 
+		/**
+		 * Returns the names of internal used tables (floating point matrices) used for calibration.
+		 * By default, returns table defined by the calibration object.
+		 */
+		virtual StringList tableNames() const;
+		virtual std::vector<float> getTable(const char *name) const;
+
 		/**Returns video global attributes (if any)*/
 		virtual const std::map<std::string, std::string> &globalAttributes() const
 		{
