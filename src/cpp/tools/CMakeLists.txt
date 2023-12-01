@@ -1,4 +1,4 @@
-
+# Find or fetch ZSTD
 include(FetchContent)
 
 set(TOOLS_DEP_LIBS)
@@ -9,11 +9,10 @@ FetchContent_Declare(
 	GIT_TAG			v1.5.5
 	# URL "https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.5.5.tar.gz"
 	SOURCE_SUBDIR build/cmake
-	# OVERRIDE_FIND_PACKAGE
+	OVERRIDE_FIND_PACKAGE
 	)
 
-FetchContent_Populate(zstd)
-add_subdirectory(${zstd_SOURCE_DIR}/build/cmake ${zstd_BINARY_DIR} EXCLUDE_FROM_ALL)
+find_package(zstd REQUIRED)
 add_library(zstd::libzstd_shared ALIAS libzstd_shared)
 add_library(zstd::libzstd_static ALIAS libzstd_static)
 
@@ -30,6 +29,7 @@ SET(LIBRIR_TOOLS_SRC
 	${CMAKE_CURRENT_SOURCE_DIR}/ReadFileChunk.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/SIMD.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/tools.cpp
+
 	# ${ZSTD_SRC}
 	${BLOSC_SRC}
 	${MINIZIP_SRC}
@@ -57,8 +57,13 @@ target_link_libraries(tools PRIVATE ${TOOLS_DEP_LIBS})
 
 target_include_directories(tools PRIVATE ${ZSTD_INCLUDE_DIR})
 
+# target_include_directories(tools PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(	tools 
+							INTERFACE 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+										$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
 
-target_include_directories(tools PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
 target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY})
 target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/blosc)
 target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/minizip)

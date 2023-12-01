@@ -1,5 +1,5 @@
 SET(TARGETS tools geometry signal_processing video_io)
-# MESSAGE(STATUS "TARGETS : " ${TARGETS})
+
 add_subdirectory(tools)
 add_subdirectory(geometry)
 add_subdirectory(signal_processing)
@@ -10,16 +10,21 @@ IF (NOT MSVC)
     add_dependencies(video_io dummy)
 ENDIF()
 
-install (TARGETS ${TARGETS} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} )
-install (TARGETS ${TARGETS} LIBRARY DESTINATION ${CMAKE_INSTALL_BINDIR} )
 install(
     TARGETS ${TARGETS} 
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    PUBLIC_HEADER
+    ARCHIVE
+    RUNTIME
+    )
+install(
+    TARGETS ${TARGETS} 
+    EXPORT LibrirTargets
+    )
+install(EXPORT LibrirTargets
+        FILE LibrirTargets.cmake 
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/cmake/librir
+        NAMESPACE librir::
 )
-
-
-# message(STATUS ${EXCLUDED_TARGETS})
+set(LIBRIR_TARGETS ${TARGETS} PARENT_SCOPE)
 
 

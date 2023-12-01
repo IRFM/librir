@@ -1,6 +1,6 @@
 add_definitions("-DBUILD_GEOMETRY_LIB")
 
-
+# get previous target include folders
 get_target_property(TOOLS_HEADERS tools PUBLIC_HEADER)
 get_target_property(TOOLS_HEADERS_DIR tools INCLUDE_DIRECTORIES)
 
@@ -9,9 +9,6 @@ SET(LIBRIR_GEOMETRY_SRC
 	${CMAKE_CURRENT_SOURCE_DIR}/Polygon.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/DrawPolygon.cpp
 )
-
-#~ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-#~ include_directories(${TOOLS_HEADERS_DIR})
 
 SET(LIBRIR_GEOMETRY_SRC ${LIBRIR_GEOMETRY_SRC} PARENT_SCOPE)
 
@@ -25,19 +22,15 @@ set(GEOMETRY_HEADERS
 	${CMAKE_CURRENT_SOURCE_DIR}/geometry.h
 )
 
-target_include_directories(geometry PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(geometry tools)
+set(GEOMETRY_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 
-# install(TARGETS geometry
-         # ARCHIVE DESTINATION lib
-         # LIBRARY DESTINATION lib
-         # RUNTIME DESTINATION bin
-		 # )
+target_include_directories(	geometry 
+							INTERFACE 	$<BUILD_INTERFACE:${GEOMETRY_INCLUDE_DIRS}>
+										$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+target_link_libraries(geometry tools)
 
 set_target_properties(geometry PROPERTIES
 	PUBLIC_HEADER "${GEOMETRY_HEADERS}"
-	#~ LIBRARY_OUTPUT_DIRECTORY ${LIB_DESTINATION_DIR}
-	#~ RUNTIME_OUTPUT_DIRECTORY ${BIN_DESTINATION_DIR}
 )
 
-# set(GEOMETRY_HEADERS ${GEOMETRY_HEADERS} PARENT_SCOPE)

@@ -39,7 +39,7 @@ jobs:
             run: |
               python -m pip install --upgrade pip
               pip install ruff pytest pytest-cov
-              pip install -e build/install
+              pip install -e build/install/python
     
           - name: Test with pytest
             continue-on-error: false
