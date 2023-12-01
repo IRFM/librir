@@ -105,7 +105,7 @@ make install
 # Build wheel if necessary
 if [ "$WHEEL" -eq "1" ]; then
     echo "Build wheel"
-    cd install
+    cd install/python
     python -c "import librir;print('librir is importable !')"
     python setup.py bdist_wheel
     cd ..

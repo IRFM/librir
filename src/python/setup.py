@@ -77,7 +77,6 @@ def package_files(directory):
 
 licenses_files = package_files("librir/LICENSES")
 libs_files = package_files("librir/libs")
-masks_files = package_files("librir/masks")
 print(licenses_files)
 
 
@@ -87,17 +86,14 @@ EXCLUDED_PACKAGES = []
 PACKAGES = find_packages(exclude=EXCLUDED_PACKAGES)
 
 LIB_GLOBPATH = f"libs/*.{DYNAMIC_LIBRARY_SUFFIX}*"
-# add masks
-MASK_GLOBPATH = "masks/*.txt*"
 
 setup(
     name="librir",
     version=find_version(),
     packages=PACKAGES,
-    package_data={"librir": [LIB_GLOBPATH, MASK_GLOBPATH]},
+    package_data={"librir": [LIB_GLOBPATH]},
     data_files=[
         ("librir-core/LICENSES", licenses_files),
-        ("librir-core/masks", masks_files),
         ("librir-core", ["./librir/LICENSE"]),
     ],
     include_package_data=True,
@@ -114,9 +110,8 @@ setup(
     author="VM213788, LD243615, EG264877",
     author_email="victor.moncada@cea.fr, leo.dubus@cea.fr, erwan.grelier@cea.fr",
     description=(
-        "Librir is a C/C++/Python library to manipulate infrared video from the"
-        "WEST tokamak, accessing WEST diagnostic signals and building "
-        "Cognitive Vision/Machine Learning applications."
+        "Librir is a C/C++/Python library to manipulate infrared video "
+        "and building Cognitive Vision/Machine Learning applications."
     ),
     long_description=open("README.md", "rt").read(),
     long_description_content_type="text/markdown",
