@@ -85,13 +85,30 @@ add_subdirectory(tests)
 configure_file(requirements.txt.in requirements.txt @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/requirements.txt DESTINATION ${CMAKE_INSTALL_PREFIX})
 
+
+install(
+	TARGETS ${LIBRIR_TARGETS} 
+	PUBLIC_HEADER
+	ARCHIVE
+	RUNTIME
+	)
+install(
+	TARGETS ${LIBRIR_TARGETS} 
+	EXPORT LibrirTargets
+	)
+install(EXPORT LibrirTargets
+		FILE LibrirTargets.cmake 
+		DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/librir
+		NAMESPACE librir::
+)
+		
+
 # Configure and install PackageConfig files
 include(CMakePackageConfigHelpers)
 configure_package_config_file(cmake/librirConfig.cmake.in
   ${CMAKE_CURRENT_BINARY_DIR}/librirConfig.cmake
-  INSTALL_DESTINATION ${CMAKE_INSTALL_PREFIX}/cmake
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake
 )
-  #INCLUDE_DIR LIB_DIR LIBRARIES PLUGINS_LIBS)
   
 write_basic_package_version_file(
   ${CMAKE_CURRENT_BINARY_DIR}/librirConfigVersion.cmake
@@ -100,7 +117,7 @@ write_basic_package_version_file(
   
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/librirConfig.cmake
               ${CMAKE_CURRENT_BINARY_DIR}/librirConfigVersion.cmake
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/cmake/librir )
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/librir )
 
 
 
