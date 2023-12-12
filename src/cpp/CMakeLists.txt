@@ -10,21 +10,7 @@ IF (NOT MSVC)
     add_dependencies(video_io dummy)
 ENDIF()
 
-install(
-    TARGETS ${TARGETS} 
-    PUBLIC_HEADER
-    ARCHIVE
-    RUNTIME
-    )
-install(
-    TARGETS ${TARGETS} 
-    EXPORT LibrirTargets
-    )
-install(EXPORT LibrirTargets
-        FILE LibrirTargets.cmake 
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/cmake/librir
-        NAMESPACE librir::
-)
-set(LIBRIR_TARGETS ${TARGETS} PARENT_SCOPE)
+
+set(LIBRIR_TARGETS ${TARGETS} CACHE INTERNAL "")
 
 
