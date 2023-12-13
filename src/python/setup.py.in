@@ -1,26 +1,7 @@
 import os
-import re
 import sys
 
 from setuptools import setup, find_packages
-
-
-def find_version():
-    filename = "CMakeLists.txt"
-    with open(filename, "r") as f:
-        txt = f.read()
-
-    start = txt.find("project(")
-    end = txt[start:].find(")")
-    sub = txt[start : start + end + 1]
-    m = re.search(r"VERSION.*(?P<version>\d+\.\d+\.\d+).*", sub)
-    if m:
-        d = m.groupdict()
-        return d["version"]
-    return ""
-    # mm = re.search(r"(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)", d['version'])
-    # if mm:
-    # mm.groupdict()
 
 
 def get_requires(path):
@@ -89,7 +70,8 @@ LIB_GLOBPATH = f"libs/*.{DYNAMIC_LIBRARY_SUFFIX}*"
 
 setup(
     name="librir",
-    version=find_version(),
+    version="@PROJECT_VERSION_MAJOR@.@PROJECT_VERSION_MINOR@.@PROJECT_VERSION_PATCH@",
+
     packages=PACKAGES,
     package_data={"librir": [LIB_GLOBPATH]},
     data_files=[
@@ -113,6 +95,6 @@ setup(
         "Librir is a C/C++/Python library to manipulate infrared video "
         "and building Cognitive Vision/Machine Learning applications."
     ),
-    long_description=open("README.md", "rt").read(),
+    long_description="""@README_CONTENT@""",
     long_description_content_type="text/markdown",
 )
