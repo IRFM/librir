@@ -183,3 +183,5 @@ plugins/*
 
 .vscode/*
 
+src/python/setup.py
+src/python/librir/libs
