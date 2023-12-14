@@ -15,28 +15,6 @@ from librir.video_io.rir_video_io import (
 )
 
 
-def add_noise(image, mean=0, var=0.5):
-    """Add gaussian noise to input image"""
-    row, col = image.shape
-    sigma = var**0.5
-    gauss = np.random.normal(mean, sigma, (row, col))
-    gauss = gauss.reshape(row, col)
-    noisy = image + gauss
-    return np.array(noisy, dtype=np.uint16)
-
-
-@pytest.fixture
-def images() -> List[np.ndarray]:
-    # generate 100 noisy images with an average background value going from 10 to 110 by step of 1
-    images = []
-    background = np.random.rand(512, 640) * 1000
-    for i in range(10, 110, 1):
-        img = background + np.ones((512, 640)) * i
-        img = add_noise(img, 0, 0.5)
-        images.append(img)
-    return images
-
-
 @pytest.mark.slow
 def test_record_movie_with_lossless_compression(images):
     temp_folder = Path(tempfile.gettempdir())
