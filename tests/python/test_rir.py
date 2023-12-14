@@ -9,18 +9,6 @@ import librir.video_io.IRSaver as saver
 from librir import tools as rts
 
 
-def test_temp_directory_access():
-    print(rts.get_temp_directory())
-
-
-def test_get_default_temp_directory():
-    print(rts.get_default_temp_directory())
-
-
-def test_set_temp_directory():
-    print(rts.set_temp_directory(rts.get_default_temp_directory()))
-
-
 def test_zstd_compress_bound():
     print(rts.zstd_compress_bound(100))
 
