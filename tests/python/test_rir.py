@@ -1,10 +1,9 @@
+from librir.video_io import IRMovie, IRSaver
 import numpy as np
 
 import librir.geometry as ge
 import librir.signal_processing as sp
 import librir.signal_processing.BadPixels as bp
-import librir.video_io.IRMovie as movie
-import librir.video_io.IRSaver as saver
 
 from librir import tools as rts
 
@@ -156,12 +155,12 @@ def test_label_image():
 def test_ir_saver_movie():
     img0 = np.zeros((20, 20), dtype=np.int32)
     img1 = np.ones((20, 20), dtype=np.int32)
-    s = saver.IRSaver("test.h264", 20, 20, 20, 8)
+    s = IRSaver("test.h264", 20, 20, 20, 8)
     s.add_image(img0, 0)
     s.add_image(img1, 1)
     s.close()
 
-    m = movie.IRMovie.from_filename("test.h264")
+    m = IRMovie.from_filename("test.h264")
     print(m.images)
     print(m.image_size)
     print(m.timestamps)
