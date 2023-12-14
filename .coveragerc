@@ -1,0 +1,2 @@
+[run]
+omit = src/python/librir/tools/_thermavip.py
