@@ -15,7 +15,8 @@ FILE_FORMAT_H264 = 5
 def open_camera_file(filename):
     """
     Open a video file.
-    Returns an integer value representing the camera. This value can be used by the functions:
+    Returns an integer value representing the camera. This value can be used by the
+    functions:
     - close_camera
     - get_camera_identifier
     - get_camera_pulse
@@ -208,7 +209,18 @@ def set_emissivity(camera, emissivity_array):
 
 
 def get_emissivity(camera):
-    """Returns the emissivity map for given camera"""
+    """
+    Returns the emissivity map for given camera.
+
+    Args:
+        camera (_type_): _description_
+
+    Raises:
+        RuntimeError: _description_
+
+    Returns:
+        _type_: _description_
+    """
     size = get_image_size(camera)
     pixels = np.zeros(size, dtype=np.float32)
     _video_io.get_emissivity.argtypes = [ct.c_int, ct.POINTER(ct.c_float), ct.c_int]
@@ -221,32 +233,55 @@ def get_emissivity(camera):
 
 
 def support_emissivity(camera):
-    """Returns True if given camera supports setting a custom emissivity value, False otherwise"""
+    """
+    Returns True if given camera supports setting a custom emissivity value, False
+    otherwise
+
+    Args:
+        camera (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     res = _video_io.support_emissivity(int(camera))
     if res == 1:
         return True
     return False
 
 
-def camera_saturate(camera):
+def camera_saturate(movie_handle):
     """
-    Returns true if setting the emissivity saturates the temperature calibration for the last call
-    to load_image, False otherwise.
+    Returns true if setting the emissivity saturates the temperature
+    calibration for the last call to load_image, False otherwise.
+
+    Args:
+        movie_handle (int): movie handle
+
+    Returns:
+        bool: is the image saturated ?
     """
-    res = _video_io.camera_saturate(int(camera))
+    res = _video_io.camera_saturate(int(movie_handle))
     if res == 1:
         return True
     return False
 
 
-def set_optical_temperature(camera, temperature):
+def set_optical_temperature(movie_handle: int, temperature):
     """
     Set the optical temperature for given camera in degree Celsius.
     This should be the temperature of the B30.
-    Not all cameras supoort this feature. Use support_optical_temperature() function to test it.
+    Not all cameras support this feature.
+    Use support_optical_temperature() function to test it.
+
+    Args:
+        movie_handle (int): movie handle
+        temperature (_type_): _description_
+
+    Raises:
+        RuntimeError: _description_
     """
     _video_io.set_optical_temperature.argtypes = [ct.c_int, ct.c_uint16]
-    res = _video_io.set_optical_temperature(int(camera), np.ushort(temperature))
+    res = _video_io.set_optical_temperature(int(movie_handle), np.ushort(temperature))
     if res < 0:
         raise RuntimeError("An error occured while calling 'set_optical_temperature'")
 
@@ -316,7 +351,7 @@ def flip_camera_calibration(camera, flip_rl, flip_ud):
         raise RuntimeError("An error occured while calling 'flip_camera_calibration'")
 
 
-def calibration_files(camera):
+def calibration_files(movie_handle):
     """
     Returns the calibration file names for given camera.
     """
@@ -324,14 +359,14 @@ def calibration_files(camera):
     dstSize = np.zeros((1), dtype="i")
     dstSize[0] = 100
     ret = _video_io.calibration_files(
-        camera,
+        movie_handle,
         dst.ctypes.data_as(ct.POINTER(ct.c_char)),
         dstSize.ctypes.data_as(ct.POINTER(ct.c_int)),
     )
     if ret == -2:
         dst = np.zeros((dstSize[0]), dtype="c")
         ret = _video_io.calibration_files(
-            camera,
+            movie_handle,
             dst.ctypes.data_as(ct.POINTER(ct.c_char)),
             dstSize.ctypes.data_as(ct.POINTER(ct.c_int)),
         )
@@ -623,12 +658,12 @@ def h264_add_loss(saver, image):
     return image
 
 
-def h264_get_low_errors(saver):
+def h264_get_low_errors(saver: int):
     """
     Returns the low error vector for last saved movie
 
     """
-    _video_io.h264_get_low_erros.argtypes = [
+    _video_io.h264_get_low_errors.argtypes = [
         ct.c_int,
         ct.POINTER(ct.c_uint16),
         ct.POINTER(ct.c_int),
@@ -658,7 +693,7 @@ def h264_get_high_errors(saver):
     Returns the high error vector for last saved movie
 
     """
-    _video_io.h264_get_high_erros.argtypes = [
+    _video_io.h264_get_high_errors.argtypes = [
         ct.c_int,
         ct.POINTER(ct.c_uint16),
         ct.POINTER(ct.c_int),

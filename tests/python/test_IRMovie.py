@@ -1,4 +1,5 @@
 import random
+from librir.video_io.utils import is_ir_file_corrupted, split_rush
 
 import numpy as np
 import numpy.testing as npt
@@ -129,6 +130,9 @@ def test_from_bytes_with_timestamps(movie_as_bytes, timestamps):
 def test_close(array):
     mov = IRMovie.from_numpy_array(array)
     del mov
+    mov = IRMovie.from_numpy_array(array, attrs={"name": "toto"})
+    assert mov.attributes["name"]
+    del mov
 
 
 def test_payload_generator(movie: IRMovie):
@@ -152,3 +156,18 @@ def test_firmware_date_pixel(movie_with_firmware_date: IRMovie):
     # assert month == 1
     # year = (firmware_date) & 0xFFFF
     # assert year == 2023
+
+
+def test_split_rush(movie: IRMovie):
+    total = movie.images
+    steps = 2
+    filenames = split_rush(movie.filename, step=steps)
+    assert len(filenames) == (total // steps)
+
+    for f in filenames:
+        assert not is_ir_file_corrupted(f)
+
+
+def test_is_ir_file_corrupted(filename):
+    assert not is_ir_file_corrupted(filename)
+    assert is_ir_file_corrupted("inexistent_filename")

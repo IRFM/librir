@@ -1,8 +1,3 @@
-import os
-import sys
-
-sys.path.insert(1, os.path.realpath(os.path.pardir))
-
 # import useful functions from rir_tools
 from .rir_tools import (
     zstd_compress_bound,
