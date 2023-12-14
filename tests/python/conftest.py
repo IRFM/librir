@@ -3,6 +3,7 @@ import struct
 
 import sys
 from pathlib import Path
+from typing import List
 
 import numpy as np
 import pytest
@@ -19,6 +20,16 @@ base = Path(thismodule.__file__).parent
 IMAGES = 10
 N_TIS = 7
 DL_MAX_VALUE = 8192
+
+
+def add_noise(image, mean=0, var=0.5):
+    """Add gaussian noise to input image"""
+    row, col = image.shape
+    sigma = var**0.5
+    gauss = np.random.normal(mean, sigma, (row, col))
+    gauss = gauss.reshape(row, col)
+    noisy = image + gauss
+    return np.array(noisy, dtype=np.uint16)
 
 
 def generate_mock_movie_data_uniform(*shape):
@@ -177,3 +188,15 @@ def movie_with_firmware_date(valid_2D_array):
     arr[-3, 254:256]
     with IRMovie.from_numpy_array(arr) as mov:
         yield mov
+
+
+@pytest.fixture
+def images() -> List[np.ndarray]:
+    # generate 100 noisy images with an average background value going from 10 to 110 by step of 1
+    images = []
+    background = np.random.rand(512, 640) * 1000
+    for i in range(10, 110, 1):
+        img = background + np.ones((512, 640)) * i
+        img = add_noise(img, 0, 0.5)
+        images.append(img)
+    return images
