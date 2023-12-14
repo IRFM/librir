@@ -82,6 +82,7 @@ setup(
     install_requires=[
         "numpy",
         "pandas",
+        "opencv-python==4.5.5.64",
         "joblib",
         "future-annotations;python_version<'3.7'",
     ]
