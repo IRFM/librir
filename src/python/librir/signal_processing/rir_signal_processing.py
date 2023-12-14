@@ -487,7 +487,7 @@ def jpegls_decode(buff, width, height):
     return image
 
 
-def label_image(image, background_value=0):
+def label_image(image: np.ndarray, background_value=0):
     """
     Closed Component Labelling algorithm
     Returns a tuple (image,areas, first_points), each index of the list corresponding
