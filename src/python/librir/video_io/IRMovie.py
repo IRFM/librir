@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 from librir.tools.FileAttributes import FileAttributes
-from librir.tools.utils import init_thermavip, unbind_thermavip_shared_mem
+from librir.tools._thermavip import init_thermavip, unbind_thermavip_shared_mem
 from librir.video_io.rir_video_io import (
     FILE_FORMAT_H264,
     enable_motion_correction,

@@ -45,7 +45,7 @@ def split_rush(filename, index=None, step=30, dest_folder=None) -> List[Path]:
 
 
 def check_ir_file(filename):
-    with IRMovie.from_filename(filename) as cam:
+    with IRMovie.from_filename(filename) as mov:
         pass
 
 
