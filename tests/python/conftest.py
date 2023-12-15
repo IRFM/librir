@@ -195,7 +195,7 @@ def movie_with_firmware_date(valid_2D_array):
         yield mov
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def images() -> List[np.ndarray]:
     # generate 100 noisy images with an average background value going from 10 to 110 by step of 1
     images = []

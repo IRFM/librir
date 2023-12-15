@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from librir.video_io import IRMovie, IRSaver
 from librir.video_io.rir_video_io import (
+    FILE_FORMAT_H264,
     FILE_FORMAT_PCR,
     correct_PCR_file,
     h264_get_high_errors,
@@ -119,7 +120,8 @@ def test_calibration_files(movie: IRMovie):
     cfiles = movie.calibration_files
 
 
-def test_correct_PCR_file(images):
+@pytest.fixture(scope="session")
+def pcr_filename(images):
     temp_folder = Path(tempfile.gettempdir())
     filename = temp_folder / "tmp.pcr"
     header = np.zeros((256,), dtype=np.uint32)
@@ -128,5 +130,20 @@ def test_correct_PCR_file(images):
         f.write(header)
         f.write(data)
     correct_PCR_file(filename, data.shape[0], data.shape[1], 50)
-    with IRMovie.from_filename(filename) as mov:
+    yield filename
+    os.unlink(filename)
+
+
+def test_correct_PCR_file(pcr_filename, images):
+    data = np.array(images, dtype=np.uint16)
+    correct_PCR_file(pcr_filename, data.shape[0], data.shape[1], 50)
+    with IRMovie.from_filename(pcr_filename) as mov:
         assert mov.video_file_format == FILE_FORMAT_PCR
+
+
+def test_pcr2h264(pcr_filename):
+    with IRMovie.from_filename(pcr_filename) as mov:
+        res = mov.pcr2h264()
+
+    with IRMovie.from_filename(res) as mov:
+        assert mov.video_file_format == FILE_FORMAT_H264

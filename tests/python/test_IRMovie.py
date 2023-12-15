@@ -9,7 +9,7 @@ from librir.video_io.IRMovie import CalibrationNotFound
 from librir.video_io.rir_video_io import FILE_FORMAT_H264
 
 
-@pytest.mark.instanstiation
+@pytest.mark.instantiation
 def test_IRMovie_with_filename_as_input(filename):
     mov = IRMovie.from_filename(filename)
     assert type(mov) is IRMovie
@@ -18,20 +18,20 @@ def test_IRMovie_with_filename_as_input(filename):
     assert mov.filename == filename
 
 
-@pytest.mark.instanstiation
+@pytest.mark.instantiation
 def test_IRMovie_instantiation_with_2D_numpy_array(valid_2D_array):
     mov = IRMovie.from_numpy_array(valid_2D_array)
     expected = valid_2D_array[np.newaxis, :]
     npt.assert_array_equal(mov.data, expected)
 
 
-@pytest.mark.instanstiation
+@pytest.mark.instantiation
 def test_IRMovie_instantiation_with_3D_numpy_array(valid_3d_array):
     mov = IRMovie.from_numpy_array(valid_3d_array)
     npt.assert_array_equal(mov.data, valid_3d_array)
 
 
-@pytest.mark.instanstiation
+@pytest.mark.instantiation
 def test_IRMovie_instantiation_with_bad_numpy_array(bad_array):
     with pytest.raises(ValueError) as e:
         mov = IRMovie.from_numpy_array(bad_array)
@@ -117,7 +117,7 @@ def movie_as_bytes(filename) -> bytes:
     return data
 
 
-@pytest.mark.instanstiation
+@pytest.mark.instantiation
 def test_from_filename(filename):
     mov = IRMovie.from_filename(filename)
     assert mov.filename == filename
@@ -174,3 +174,7 @@ def test_split_rush(movie: IRMovie):
 def test_is_ir_file_corrupted(filename):
     assert not is_ir_file_corrupted(filename)
     assert is_ir_file_corrupted("inexistent_filename")
+
+
+def test_movie_getitem(movie: IRMovie):
+    img = movie[0]
