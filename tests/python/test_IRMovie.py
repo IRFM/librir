@@ -13,6 +13,9 @@ from librir.video_io.rir_video_io import FILE_FORMAT_H264
 def test_IRMovie_with_filename_as_input(filename):
     mov = IRMovie.from_filename(filename)
     assert type(mov) is IRMovie
+    with pytest.raises(RuntimeError):
+        IRMovie.from_filename("")
+    assert mov.filename == filename
 
 
 @pytest.mark.instanstiation

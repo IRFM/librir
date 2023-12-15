@@ -164,6 +164,11 @@ def filename(movie: IRMovie):
 
 
 @pytest.fixture(scope="session")
+def wrong_filename():
+    return "not_existing_filename"
+
+
+@pytest.fixture(scope="session")
 def timestamps(array):
     return np.arange(len(array), dtype=float) * 2
 

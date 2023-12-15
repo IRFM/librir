@@ -3,7 +3,7 @@ from librir.registration.masked_registration_ecc import MaskedRegistratorECC
 import numpy as np
 import pytest
 from librir.signal_processing import translate
-
+from librir.geometry import extract_convex_hull
 from .conftest import add_noise
 
 
@@ -17,6 +17,10 @@ def background():
 @pytest.fixture
 def polygon():
     return [[42, 42], [100, 42], [200, 200], [80, 300]]
+
+
+def test_extract_convex_hull(polygon):
+    extract_convex_hull(polygon)
 
 
 # polygon_img = np.zeros((512, 640))
@@ -65,3 +69,6 @@ def test_mask_registrator(translated_images_t):
     # y = y.round()
     # assert all(x.astype(int) == range(100))
     # assert reg.y == range(100)
+
+
+# def test_motion_correction()
