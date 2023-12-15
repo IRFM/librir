@@ -4,37 +4,49 @@ import numpy as np
 import librir.geometry as ge
 import librir.signal_processing as sp
 import librir.signal_processing.BadPixels as bp
-
+from librir.video_io import video_file_format, get_filename
+import librir.tools.FileAttributes as fa
 from librir import tools as rts
+import pytest
 
 
 def test_zstd_compress_bound():
     print(rts.zstd_compress_bound(100))
 
 
-def test_zstd_compress():
-    global c
-    c = rts.zstd_compress(b"toto")
+@pytest.fixture
+def data_bytes():
+    return b"toto"
+
+
+@pytest.fixture
+def c(data_bytes):
+    return rts.zstd_compress(data_bytes)
+
+
+def test_zstd_compress(data_bytes):
+    c = rts.zstd_compress(data_bytes)
     print(len(c))
 
 
-def test_zstd_decompress():
-    print(rts.zstd_decompress(c))
+def test_zstd_decompress(c, data_bytes):
+    rts.zstd_decompress(c) == data_bytes
 
 
-def test_blosc_compress_zstd():
-    global c
-    c = rts.blosc_compress_zstd(b"toto", 2, rts.BLOSC_SHUFFLE, 1)
-    print(len(c))
+def test_blosc_compress_zstd(data_bytes):
+    rts.blosc_compress_zstd(data_bytes, 2, rts.BLOSC_SHUFFLE, 1)
 
 
-def test_blosc_decompress_zstd():
-    print(rts.blosc_decompress_zstd(c))
+@pytest.fixture
+def compressed_blosc(data_bytes):
+    return rts.blosc_compress_zstd(data_bytes, 2, rts.BLOSC_SHUFFLE, 1)
+
+
+def test_blosc_decompress_zstd(compressed_blosc):
+    print(rts.blosc_decompress_zstd(compressed_blosc))
 
 
 def test_file_attributes():
-    import librir.tools.FileAttributes as fa
-
     attrs = fa.FileAttributes("attrs.test")
     attrs.attributes = {"toto": 2, "tutu": "tata"}
     attrs.timestamps = range(11)
@@ -56,15 +68,15 @@ def test_polygon_interpolate():
     print(ge.polygon_interpolate(polygon, polygon2, 0.5))
 
 
-img = np.zeros((10, 10), dtype=np.int32)
+# img = np.zeros((10, 10), dtype=np.int32)
 
 
-def test_draw_polygon():
+def test_draw_polygon(img):
     im = ge.draw_polygon(img, polygon, 1)
     print(im)
 
 
-def test_extract_polygon():
+def test_extract_polygon(img):
     print(ge.extract_polygon(img, 1))
 
 
@@ -90,6 +102,9 @@ def test_translate():
     img = np.ones((12, 12), dtype=np.float64)
     img = sp.translate(img, 1.2, 1.3, "constant", 0)
     print(img)
+    with pytest.raises(RuntimeError):
+        _img = np.ones((12, 12, 12), dtype=np.float64)
+        _img = sp.translate(_img, 1.2, 1.3, "constant", 0)
 
 
 def test_gaussian_filter():
@@ -121,16 +136,25 @@ def test_resample_time_serie():
     print(sp.resample_time_serie(x, y, times, None, False))
 
 
-def test_jpegls_encode():
-    global c
+@pytest.fixture
+def img():
     img = np.ones((20, 12), dtype=np.uint16)
+    return img
+
+
+@pytest.fixture
+def jpegls_encoded(img):
+    return sp.jpegls_encode(img)
+
+
+def test_jpegls_encode(img):
     c = sp.jpegls_encode(img)
     print(len(c))
 
 
-def test_jpegls_decode():
-    global c
-    img = sp.jpegls_decode(c, 12, 20)
+def test_jpegls_decode(img, jpegls_encoded):
+    _img = sp.jpegls_decode(jpegls_encoded, 12, 20)
+    assert (_img == img).all()
     print(img)
 
 
@@ -169,3 +193,13 @@ def test_ir_saver_movie():
     print(m.calibration_files)
     print(m[0])
     print(m[1])
+
+
+def test_wrong_filename_video_file_format(wrong_filename):
+    with pytest.raises(RuntimeError):
+        get_filename(0)
+        video_file_format(wrong_filename)
+
+
+def test_set_global_emissivity(movie: IRMovie):
+    movie.emissivity
