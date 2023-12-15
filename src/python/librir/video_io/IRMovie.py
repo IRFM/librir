@@ -766,14 +766,6 @@ class IRMovie(object):
     def roi_line(self):
         return self.metadata[:, 0]
 
-    @property
-    def survir_data(self):
-        if self._survir_data is None:
-            df = self._extract_survir_data()
-            df = df.swaplevel(0, 1, axis=1).sort_index(axis=1)
-            self._survir_data = df
-        return self._survir_data
-
     def to_thermavip(self, th_instance="Thermavip-1", player_id=0):
         th = init_thermavip(th_instance)
         if th:
