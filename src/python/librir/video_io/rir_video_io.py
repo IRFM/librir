@@ -266,49 +266,6 @@ def camera_saturate(movie_handle):
     return False
 
 
-def set_optical_temperature(movie_handle: int, temperature):
-    """
-    Set the optical temperature for given camera in degree Celsius.
-    This should be the temperature of the B30.
-    Not all cameras support this feature.
-    Use support_optical_temperature() function to test it.
-
-    Args:
-        movie_handle (int): movie handle
-        temperature (_type_): _description_
-
-    Raises:
-        RuntimeError: _description_
-    """
-    _video_io.set_optical_temperature.argtypes = [ct.c_int, ct.c_uint16]
-    res = _video_io.set_optical_temperature(int(movie_handle), np.ushort(temperature))
-    if res < 0:
-        raise RuntimeError("An error occured while calling 'set_optical_temperature'")
-
-
-def get_optical_temperature(camera):
-    """Returns the optical temperature degree Celsius for given camera"""
-    res = _video_io.get_optical_temperature(camera)
-    return res
-
-
-def set_STEFI_temperature(camera, temperature):
-    """
-    Set the STEFI temperature for given camera in degree Celsius.
-    Not all cameras supoort this feature. Use support_optical_temperature() function to test it.
-    """
-    _video_io.set_STEFI_temperature.argtypes = [ct.c_int, ct.c_uint16]
-    res = _video_io.set_STEFI_temperature(int(camera), np.ushort(temperature))
-    if res < 0:
-        raise RuntimeError("An error occured while calling 'set_STEFI_temperature'")
-
-
-def get_STEFI_temperature(camera):
-    """Returns the STEFI temperature degree Celsius for given camera"""
-    res = _video_io.get_STEFI_temperature(camera)
-    return res
-
-
 def support_optical_temperature(camera):
     """Returns True if given camera supports custom optical temperature; False otherwise"""
     res = _video_io.support_optical_temperature(camera)
