@@ -235,6 +235,7 @@ class IRMovie(object):
             raise FileNotFoundError(f"{value} doesn't exist")
         self._registration_file = value
         load_motion_correction_file(self.handle, self._registration_file)
+        self.registration = True
 
     @property
     def registration(self) -> bool:
