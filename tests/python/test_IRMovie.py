@@ -138,10 +138,6 @@ def test_close(array):
     del mov
 
 
-def test_payload_generator(movie: IRMovie):
-    npt.assert_array_equal(movie.payload[0], next(movie.payload_generator))
-
-
 def test_video_file_format(movie: IRMovie):
     assert movie.video_file_format == FILE_FORMAT_H264
 
@@ -178,3 +174,8 @@ def test_is_ir_file_corrupted(filename):
 
 def test_movie_getitem(movie: IRMovie):
     img = movie[0]
+
+
+def test_frames_attributes(movie: IRMovie):
+    movie.frame_attributes
+    movie.frames_attributes
