@@ -5,8 +5,7 @@ Created on Mon Jan 13 17:53:46 2020
 @author: VM213788
 """
 
-from .. import low_level
-from ..low_level.misc import *
+import numpy as np
 from .rir_video_io import (
     h264_open_file,
     h264_close_file,
@@ -154,7 +153,7 @@ class IRSaver(object):
 
         h264_add_image_lossless(self.handle, image, timestamp, attributes)
 
-    def add_image_lossy(self, image_DL, timestamp, attributes=dict()):
+    def add_image_lossy(self, image_DL: np.ndarray, timestamp, attributes=dict()):
         """
         Add an image compressed in a lossy way.
         """
@@ -169,7 +168,7 @@ class IRSaver(object):
 
         h264_add_image_lossy(self.handle, image_DL, timestamp, attributes)
 
-    def add_loss(self, image):
+    def add_loss(self, image: np.ndarray):
         """
         Add loss to image (without writing it) and returns the result
         """
