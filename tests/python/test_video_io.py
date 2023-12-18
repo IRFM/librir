@@ -10,6 +10,7 @@ from librir.video_io.rir_video_io import (
     FILE_FORMAT_H264,
     FILE_FORMAT_PCR,
     correct_PCR_file,
+    get_emissivity,
     h264_get_high_errors,
     h264_get_low_errors,
 )
@@ -147,3 +148,7 @@ def test_pcr2h264(pcr_filename):
 
     with IRMovie.from_filename(res) as mov:
         assert mov.video_file_format == FILE_FORMAT_H264
+
+
+def test_get_emissivity(movie: IRMovie):
+    get_emissivity(movie.handle)
