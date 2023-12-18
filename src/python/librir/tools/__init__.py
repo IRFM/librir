@@ -10,6 +10,8 @@ from .rir_tools import (
     BLOSC_BITSHUFFLE,
 )
 
+from . import _thermavip
+
 __all__ = [
     "zstd_compress_bound",
     "zstd_compress",
@@ -19,4 +21,5 @@ __all__ = [
     "BLOSC_NOSHUFFLE",
     "BLOSC_SHUFFLE",
     "BLOSC_BITSHUFFLE",
+    "_thermavip",
 ]

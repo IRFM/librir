@@ -12,6 +12,7 @@ from librir.signal_processing.rir_signal_processing import (
 )
 import numpy as np
 import cv2
+import pandas as pd
 
 ########################
 
@@ -189,20 +190,6 @@ class MaskedRegistratorECC:
 
         return shift
 
-    def decrease_median(self, value_of_decrease):
-        self.median -= value_of_decrease
-        return self.median
-
-    def check_median_value(self, upper_value):
-        if self.median < upper_value:
-            return True
-        else:
-            return False
-
-    def define_median_value(self, defined_value):
-        self.median = defined_value
-        return self.median
-
     def append_last_coordinates_and_confidence(self):
         self.x.append(self.x[-1])
         self.y.append(self.y[-1])
@@ -210,3 +197,49 @@ class MaskedRegistratorECC:
 
     def return_coordinates_and_confidence_values(self):
         return np.array([self.x, self.y, self.confidences]).T
+
+    @property
+    def stabilisation_data(self):
+        arr = self.return_coordinates_and_confidence_values()
+        stab_data = pd.DataFrame(
+            data=arr,
+            columns=[
+                "x-axis translations",
+                "y-axis translations",
+                "Confidence level",
+            ],
+        )
+        return stab_data
+
+    def to_reg_file(self, dest_file):
+        self.stabilisation_data.to_csv(dest_file, sep="\t")
+
+
+def manage_computation_and_tries(img, regis_obj: MaskedRegistratorECC):
+    """
+    Fonction qui calcule les deplacements en x, en y et le niveau de
+    confiance. Si l'algorithme ne parvient pas a converger pour une image,
+    il essaie 4 autres fois en baissant la mediane a chaque essai de 0.01.
+    Si au bout de 5 essais, il n'a toujours pas reussit a converger, il prend
+    le deplacement en x, en y et le niveau de confiance de l'image precedente.
+    """
+    nb_try = 0
+    max_try = 5
+    compute = False
+
+    while nb_try < max_try and not compute:
+        try:
+            regis_obj.compute(img)
+            compute = True
+            regis_obj.median = 1 if regis_obj.median < 1 else regis_obj.median
+        except cv2.error:
+            regis_obj.median -= 0.01
+            nb_try += 1
+        if nb_try > 0:
+            print("try number : {}".format(nb_try))
+
+    if nb_try >= max_try:
+        regis_obj.append_last_coordinates_and_confidence()
+        print("took previous estimates.")
+
+    return regis_obj

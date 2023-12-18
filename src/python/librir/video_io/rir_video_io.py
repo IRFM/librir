@@ -265,15 +265,6 @@ def camera_saturate(movie_handle):
         return True
     return False
 
-
-def support_optical_temperature(camera):
-    """Returns True if given camera supports custom optical temperature; False otherwise"""
-    res = _video_io.support_optical_temperature(camera)
-    if res == 0:
-        return False
-    return True
-
-
 def enable_bad_pixels(camera, enable=True):
     """
     Returns 0 if given camera supports bad pixels treatement
