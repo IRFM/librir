@@ -34,12 +34,10 @@ from .rir_video_io import (
     get_image_count,
     get_image_size,
     get_image_time,
-    get_optical_temperature,
     load_image,
     open_camera_file,
     set_emissivity,
     set_global_emissivity,
-    set_optical_temperature,
     support_emissivity,
     supported_calibrations,
 )
@@ -383,20 +381,6 @@ class IRMovie(object):
             return np.reshape(data, (self.images,) + self.image_size)
         else:
             return self[:]
-
-    @property
-    def optical_temperature(self):
-        return get_optical_temperature(self.handle)
-
-    @optical_temperature.setter
-    def optical_temperature(self, temperature):
-        """
-        Set the optical temperature for given handle in degree Celsius.
-        This should be the temperature of the B30.
-        Not all cameras support this feature. Use support_optical_temperature() function
-        to test it.
-        """
-        set_optical_temperature(self.handle, temperature)
 
     @property
     def support_emissivity(self):
