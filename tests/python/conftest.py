@@ -4,6 +4,7 @@ import struct
 import sys
 from pathlib import Path
 from typing import List
+from librir.tools import FileAttributes
 
 import numpy as np
 import pytest
@@ -191,6 +192,7 @@ def movie_with_firmware_date(valid_2D_array):
 
     arr = np.frombuffer(bytes(r), dtype=np.uint16).reshape(valid_2D_array.shape)
     arr[-3, 254:256]
+
     with IRMovie.from_numpy_array(arr) as mov:
         yield mov
 
