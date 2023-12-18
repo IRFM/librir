@@ -9,10 +9,12 @@ from librir.video_io import IRMovie, IRSaver
 from librir.video_io.rir_video_io import (
     FILE_FORMAT_H264,
     FILE_FORMAT_PCR,
+    camera_saturate,
     correct_PCR_file,
     get_emissivity,
     h264_get_high_errors,
     h264_get_low_errors,
+    support_emissivity,
 )
 
 
@@ -152,3 +154,15 @@ def test_pcr2h264(pcr_filename):
 
 def test_get_emissivity(movie: IRMovie):
     get_emissivity(movie.handle)
+
+
+def test_support_emissivity(movie: IRMovie):
+    support_emissivity(movie.handle)
+
+
+def test_enable_bad_pixels(movie: IRMovie):
+    movie.enable_bad_pixels = True
+
+
+def test_camera_saturate(movie: IRMovie):
+    camera_saturate(movie.handle)
