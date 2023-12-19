@@ -706,57 +706,6 @@ def correct_PCR_file(filename, width, height, frequency):
     #     raise RuntimeError("'correct_PCR_file': unknown error")
 
 
-def bzstd_open_file(filename, width, height, rate, method, clevel):
-    """
-    Open output video file compressed using zstd and blosc, with given image width and height, frame rate, comrpession method and compression level.
-        method == 1 means ZSTD standard compression (clevel goes from 0 to 22),
-        method == 2 means blosc+ZSTD standard compression (clevel goes from 1 to 10),
-        method == 3 means blosc+ZSTD advanced compression (clevel goes from 1 to 10).
-    Returns file identifier on success.
-    The bzstd format is provided for tests only and should not be used (prefer the h264 format instead)
-    """
-    _video_io.open_video_write.argtypes = [
-        ct.c_char_p,
-        ct.c_int,
-        ct.c_int,
-        ct.c_int,
-        ct.c_int,
-        ct.c_int,
-    ]
-    tmp = _video_io.open_video_write(
-        str(filename).encode("ascii"),
-        int(width),
-        int(height),
-        int(rate),
-        int(method),
-        int(clevel),
-    )
-    if tmp < 0:
-        raise RuntimeError("An error occured while calling 'open_video_write'")
-    return tmp
-
-
-def bzstd_close_file(saver):
-    """
-    Close video saver
-    """
-    _video_io.close_video(saver)
-
-
-def bzstd_add_image(saver, image, timestamp):
-    """
-    Add and compress (lossless) an image to the bzstd file.
-    """
-    _video_io.image_write.argtypes = [ct.c_int, ct.POINTER(ct.c_uint16), ct.c_longlong]
-    timestamp = np.int64(timestamp)
-    image = np.array(image, dtype="H")
-    tmp = _video_io.image_write(
-        saver, image.ctypes.data_as(ct.POINTER(ct.c_uint16)), timestamp
-    )
-    if tmp < 0:
-        raise RuntimeError("An error occured while calling 'h264_add_image_lossless'")
-
-
 def load_motion_correction_file(cam, filename):
     """
     Load registration file for given camera
