@@ -161,7 +161,11 @@ def test_support_emissivity(movie: IRMovie):
 
 
 def test_enable_bad_pixels(movie: IRMovie):
-    movie.enable_bad_pixels = True
+    assert not movie.bad_pixels_correction
+    movie.bad_pixels_correction = True
+    assert movie.bad_pixels_correction
+    movie.bad_pixels_correction = False
+    assert not movie.bad_pixels_correction
 
 
 def test_camera_saturate(movie: IRMovie):
