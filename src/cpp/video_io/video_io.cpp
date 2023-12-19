@@ -7,7 +7,6 @@ extern "C"
 #include "Log.h"
 #include "IRFileLoader.h"
 #include "h264.h"
-#include "ZFile.h"
 
 using namespace rir;
 
@@ -830,28 +829,6 @@ int get_table(int cam, const char *name, float *dst, int *dst_size)
 
 	std::copy(table.begin(), table.end(), dst);
 	*dst_size = (int)table.size();
-	return 0;
-}
-
-int open_video_write(const char *filename, int width, int height, int rate, int method, int clevel)
-{
-	return set_void_ptr(z_open_file_write(filename, width, height, rate, method, clevel));
-}
-int image_write(int writter, unsigned short *img, int64_t time)
-{
-	void *w = get_void_ptr(writter);
-	if (w)
-		return z_write_image(w, img, time);
-	return -1;
-}
-int64_t close_video(int writter)
-{
-	void *w = get_void_ptr(writter);
-	if (w)
-	{
-		return z_close_file(w);
-		rm_void_ptr(writter);
-	}
 	return 0;
 }
 
