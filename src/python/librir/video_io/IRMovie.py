@@ -135,7 +135,7 @@ class IRMovie(object):
 
         self.handle = handle
         self.times = None
-        self._enable_bad_pixels = False
+        self._bad_pixels_correction = False
         self._last_lines = None
 
         self.__tempfile__ = ""
@@ -305,13 +305,13 @@ class IRMovie(object):
         return res
 
     @property
-    def enable_bad_pixels(self):
-        return self._enable_bad_pixels
+    def bad_pixels_correction(self):
+        return self._bad_pixels_correction
 
-    @enable_bad_pixels.setter
-    def enable_bad_pixels(self, value):
-        self._enable_bad_pixels = bool(value)
-        enable_bad_pixels(self.handle, self._enable_bad_pixels)
+    @bad_pixels_correction.setter
+    def bad_pixels_correction(self, value):
+        self._bad_pixels_correction = bool(value)
+        enable_bad_pixels(self.handle, self._bad_pixels_correction)
 
     @property
     def filename(self):
