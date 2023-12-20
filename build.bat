@@ -1,6 +1,5 @@
 @echo off
 
-SET USE_WEST=0
 SET CMAKE_OPTIONS=-DLOCAL_INSTALL=ON
 SET CMAKE_BUILD=Release
 SET WHEEL=0
@@ -16,12 +15,6 @@ IF NOT "%1"=="" (
         SET CMAKE_BUILD=Debug
 	) ELSE IF "%1"=="-d" (
         SET CMAKE_BUILD=Debug
-    ) ELSE IF "%1"=="--with" (
-        SET URL=%2
-		SHIFT
-		cd plugins
-		CALL :clone_pull %URL%
-		cd ..
     ) ELSE IF "%1"=="--build-wheel" (
         SET WHEEL=1
     ) ELSE IF "%1"=="--global" (
@@ -47,7 +40,7 @@ REM Build wheel if necessary
 IF "%WHEEL%" == "1" (
 cd install
 python -c "import librir;print('librir is importable !')"
-python setup.py bdist_wheel
+pip wheel --no-deps .
 cd ..
 )
 cd ..
@@ -59,7 +52,6 @@ echo "Build script for librir"
 echo
 echo "Usage:"
 echo "--help		display help"
-echo "--with	download and compile the given plugin using its git url"
 echo "--debug	debug build only (default is release only)"
 echo "--build-wheel	build Python wheel package"
 echo "--global	global installation instead of local one"
