@@ -32,7 +32,12 @@ install(SCRIPT ../cpp/video_io/InstallFfmpeg.cmake)
 
 install(IMPORTED_RUNTIME_ARTIFACTS ${LIBRIR_TARGETS} DESTINATION ${CMAKE_INSTALL_PREFIX}/python/${PROJECT_NAME}/libs)
 
+if(MSVC OR WIN32)
+set(SHARED_LIBRARY_SUFFIX_PATTERN "*.dll")
+else()
+set(SHARED_LIBRARY_SUFFIX_PATTERN "*.so*")
 
+endif()
 configure_file(pyproject.toml.in pyproject.toml @ONLY)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pyproject.toml ${PROJECT_SOURCE_DIR}/README.md

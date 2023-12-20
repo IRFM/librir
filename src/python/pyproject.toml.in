@@ -28,3 +28,6 @@ version = "@PROJECT_VERSION_MAJOR@.@PROJECT_VERSION_MINOR@.@PROJECT_VERSION_PATC
 
 [tool.setuptools.dynamic]
 readme = {file = ["README.md"]}
+
+[tool.setuptools.package-data]
+"@PROJECT_NAME@.libs" = ["@SHARED_LIBRARY_SUFFIX_PATTERN@"]
