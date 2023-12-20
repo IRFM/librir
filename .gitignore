@@ -184,4 +184,5 @@ plugins/*
 .vscode/*
 
 src/python/setup.py
+src/python/pyproject.toml
 src/python/librir/libs
