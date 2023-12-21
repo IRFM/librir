@@ -36,13 +36,30 @@ if(MSVC OR WIN32)
 set(SHARED_LIBRARY_SUFFIX_PATTERN "*.dll")
 else()
 set(SHARED_LIBRARY_SUFFIX_PATTERN "*.so*")
-
 endif()
 configure_file(pyproject.toml.in pyproject.toml @ONLY)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pyproject.toml ${PROJECT_SOURCE_DIR}/README.md
 		DESTINATION ${CMAKE_INSTALL_PREFIX}/python
 )
+
+# setting version in __init__.py
+
+function(cat IN_FILE OUT_FILE)
+  file(READ ${IN_FILE} CONTENTS)
+  file(APPEND ${OUT_FILE} "${CONTENTS}")
+endfunction()
+
+set(INIT_PY_FILES)
+file(REMOVE __init__.py.in)
+file(WRITE __init__.py.in "")
+
+cat( ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}/__init__.py __init__.py.in)
+file(APPEND __init__.py.in "\n__version__ = \"@PROJECT_VERSION_MAJOR@.@PROJECT_VERSION_MINOR@.@PROJECT_VERSION_PATCH@\"")
+
+configure_file(__init__.py.in __init__.py @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/__init__.py DESTINATION ${CMAKE_INSTALL_PREFIX}/python/${PROJECT_NAME}/)
+FILE(REMOVE __init__.py.in)
 
 # for development purposes
 install(IMPORTED_RUNTIME_ARTIFACTS ${LIBRIR_TARGETS} 
@@ -52,4 +69,4 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pyproject.toml ${PROJECT_SOURCE_DIR}/R
 		DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
 )
 install(CODE "set(FFMPEG_INSTALL_DIR \"${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}/libs\")")
-install(SCRIPT ../cpp/video_io/InstallFfmpeg.cmake)
+install(SCRIPT ../cpp/video_io/InstallFfmpeg.cmake) 
