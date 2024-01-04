@@ -518,13 +518,9 @@ namespace rir
 		int initSTEFITemperature;
 		Polygon bad_pixels;
 		BaseCalibration *calib;
-		std::map<std::string, std::string> attributes;
-
-		std::vector<PointF> upper; // upper divertor or full view
-		std::vector<PointF> lower; // lower divertor
 
 		PrivateData()
-			: file(NULL), type(0), min_T(0), min_T_height(0), store_it(false), motionCorrectionEnabled(false), saturate(false), bp_enabled(false), median_value(-1), initOpticalTemperature(-1), initSTEFITemperature(-1), calib(NULL)
+			: file(NULL), type(0), min_T(0), min_T_height(0), store_it(false), motionCorrectionEnabled(false), saturate(false), bp_enabled(false), median_value(-1), calib(NULL)
 		{
 		}
 	};
@@ -619,62 +615,13 @@ namespace rir
 
 	void IRFileLoader::removeMotion(unsigned short *img, int w, int h, int pos)
 	{
-		if (!m_data->motionCorrectionEnabled)
-			return;
-
-		if (m_data->upper.size() && !m_data->lower.size())
-		{
-
-			// Apply on the full image
-			std::vector<float> tmp(w * h);
-			translate(img, tmp.data(), 0.f, w, h, -m_data->upper[pos].x(), -m_data->upper[pos].y(), rir::TranslateNearest);
-			std::copy(tmp.begin(), tmp.end(), img);
-		}
-		else if (m_data->upper.size() && m_data->lower.size())
-		{
-
-			// Apply upper part
-			std::vector<float> tmp(w * h / 2);
-			translate(img, tmp.data(), 0.f, w, h / 2, -m_data->upper[pos].x(), -m_data->upper[pos].y(), rir::TranslateNearest);
-			std::copy(tmp.begin(), tmp.end(), img);
-
-			// Apply lower part
-			translate(img + (h / 2) * w, tmp.data(), 0.f, w, h / 2, -m_data->lower[pos].x(), -m_data->lower[pos].y(), rir::TranslateNearest);
-			std::copy(tmp.begin(), tmp.end(), img + (h / 2) * w);
-		}
+		// TODO
 	}
 
 	bool IRFileLoader::loadTranslationFile(const char *filename)
 	{
 		// Load translation file (csv file with tabulation separator)
-		std::string err;
-		FileFloatStream str(filename);
-		str.readLine();
-		Array2D<float> ar = readFileFast<float>(str, &err);
-		if (err.size() || (ar.width != 4 && ar.width != 7))
-		{
-			logError(("error while loading motion correction file: " + err).c_str());
-			return false;
-		}
-		if (ar.height != this->size())
-		{
-			logError("wrong number of images in motion correction file");
-			return false;
-		}
-
-		m_data->upper.resize(ar.height);
-		if (ar.width == 7)
-			m_data->lower.resize(ar.height);
-
-		for (size_t i = 0; i < ar.height; ++i)
-		{
-			m_data->upper[i] = PointF(ar(i, 1), ar(i, 2));
-			if (ar.width == 7)
-			{
-				m_data->lower[i] = PointF(ar(i, 4), ar(i, 5));
-			}
-		}
-		return true;
+		return false;
 	}
 	void IRFileLoader::enableMotionCorrection(bool enable)
 	{
@@ -870,7 +817,7 @@ namespace rir
 		else if (m_data->type == BIN_FILE_OTHER)
 			res = m_data->file->other->extractAttributes(attrs);
 
-		for (std::map<std::string, std::string>::const_iterator it = m_data->attributes.begin(); it != m_data->attributes.end(); ++it)
+		for (std::map<std::string, std::string>::const_iterator it = attributes.begin(); it != attributes.end(); ++it)
 			attrs.insert(*it);
 
 		return res;
@@ -918,7 +865,7 @@ namespace rir
 
 	bool IRFileLoader::readImage(int pos, int calibration, unsigned short *pixels)
 	{
-		m_data->attributes.clear();
+		attributes.clear();
 
 		if (pos < 0 || pos >= size() || !m_data->file)
 			return false;
@@ -961,7 +908,6 @@ namespace rir
 		if ((int)m_data->img.size() != m_data->size.height * m_data->size.width)
 			m_data->img.resize(m_data->size.height * m_data->size.width);
 		memcpy(m_data->img.data(), pixels, m_data->img.size() * 2);
-
 
 		m_data->saturate = false;
 
