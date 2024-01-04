@@ -111,7 +111,7 @@ namespace rir
 		void removeMotion(unsigned short *img, int w, int h, int pos);
 
 	private:
-		std::map<std::string, std::string> extractInfos(const unsigned short *img);
+
 		class PrivateData;
 		PrivateData *m_data;
 	};
