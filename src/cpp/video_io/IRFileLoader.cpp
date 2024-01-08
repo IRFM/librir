@@ -509,6 +509,7 @@ namespace rir
 		int min_T_height;
 		bool store_it;
 		bool motionCorrectionEnabled;
+		std::vector<PointF> translation_points;
 		std::vector<unsigned short> img;
 		bool has_times;
 		bool saturate;
@@ -619,6 +620,29 @@ namespace rir
 	bool IRFileLoader::loadTranslationFile(const char *filename)
 	{
 		// Load translation file (csv file with tabulation separator)
+		std::string err;
+		FileFloatStream str(filename);
+		str.readLine();
+		Array2D<float> ar = readFileFast<float>(str, &err);
+		if (err.size() || (ar.width != 4 && ar.width != 7))
+		{
+			logError(("error while loading motion correction file: " + err).c_str());
+			return false;
+		}
+		if (ar.height != this->size())
+		{
+			logError("wrong number of images in motion correction file");
+			return false;
+		}
+
+		m_data->translation_points.resize(ar.height);
+
+		for (size_t i = 0; i < ar.height; ++i)
+		{
+			m_data->translation_points[i] = PointF(ar(i, 1), ar(i, 2));
+		}
+		return true;
+
 		return false;
 	}
 	void IRFileLoader::enableMotionCorrection(bool enable)
