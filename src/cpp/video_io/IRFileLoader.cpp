@@ -851,7 +851,6 @@ namespace rir
 
 	bool IRFileLoader::readImage(int pos, int calibration, unsigned short *pixels)
 	{
-		attributes.clear();
 
 		if (pos < 0 || pos >= size() || !m_data->file)
 			return false;
