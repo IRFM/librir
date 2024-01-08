@@ -26,8 +26,6 @@ namespace rir
 	class IO_EXPORT IRVideoLoader
 	{
 		std::vector<float> m_invEmissivities;
-		unsigned short m_opticalT;
-		unsigned short m_STEFIT;
 		float m_globalEmi;
 
 	public:
@@ -96,25 +94,6 @@ namespace rir
 			return m_invEmissivities;
 		}
 		float globalEmissivity() const { return m_globalEmi; }
-
-		/**Set optics temperature (B30 temperature)*/
-		void setOpticaltemperature(unsigned short temp_C)
-		{
-			m_opticalT = temp_C;
-		}
-		/**Returns B30 temperature*/
-		unsigned short opticalTemperature() const { return m_opticalT; }
-
-		/**Set STEFI temperature*/
-		void setSTEFItemperature(unsigned short temp_C)
-		{
-			m_STEFIT = temp_C;
-		}
-		/**Returns STEFI temperature*/
-		unsigned short STEFITemperature() const
-		{
-			return m_STEFIT;
-		}
 
 		/**Returns true if the last read image calibration saturated, false otherwise*/
 		virtual bool saturate() const { return false; }

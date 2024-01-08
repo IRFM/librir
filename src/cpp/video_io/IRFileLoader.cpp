@@ -514,8 +514,6 @@ namespace rir
 		bool saturate;
 		bool bp_enabled;
 		int median_value;
-		int initOpticalTemperature;
-		int initSTEFITemperature;
 		Polygon bad_pixels;
 		BaseCalibration *calib;
 
@@ -655,20 +653,6 @@ namespace rir
 		m_data->filename = filename;
 		replace(m_data->filename, "\\", "/");
 
-		if ((m_data->calib = buildCalibration(m_data->filename.c_str(), this)))
-		{
-			this->setOpticaltemperature(m_data->calib->opticalTemperature());
-			this->setSTEFItemperature(m_data->calib->STEFITemperature());
-		}
-		else if (m_data->file->other)
-		{
-			if ((m_data->calib = m_data->file->other->calibration()))
-			{
-				this->setOpticaltemperature(m_data->calib->opticalTemperature());
-				this->setSTEFItemperature(m_data->calib->STEFITemperature());
-			}
-		}
-
 		m_data->min_T = m_data->min_T_height = 0;
 		std::map<std::string, std::string>::const_iterator min_T = this->globalAttributes().find("MIN_T");
 		std::map<std::string, std::string>::const_iterator min_T_height = this->globalAttributes().find("MIN_T_HEIGHT");
@@ -709,20 +693,6 @@ namespace rir
 		bin_image_size(m_data->file, &w, &h);
 		m_data->size.width = w;
 		m_data->size.height = h;
-
-		if ((m_data->calib = buildCalibration(NULL, this)))
-		{
-			this->setOpticaltemperature(m_data->calib->opticalTemperature());
-			this->setSTEFItemperature(m_data->calib->STEFITemperature());
-		}
-		else if (m_data->file->other)
-		{
-			if ((m_data->calib = m_data->file->other->calibration()))
-			{
-				this->setOpticaltemperature(m_data->calib->opticalTemperature());
-				this->setSTEFItemperature(m_data->calib->STEFITemperature());
-			}
-		}
 
 		m_data->min_T = m_data->min_T_height = 0;
 		std::map<std::string, std::string>::const_iterator min_T = this->globalAttributes().find("MIN_T");
@@ -835,10 +805,6 @@ namespace rir
 		else if (calibration == 1)
 		{
 			// apply the calibration
-			if (m_data->calib->opticalTemperature() != this->opticalTemperature())
-				m_data->calib->setOpticalTemperature(this->opticalTemperature());
-			if (m_data->calib->STEFITemperature() != this->STEFITemperature())
-				m_data->calib->setSTEFITemperature(this->STEFITemperature());
 			if (!m_data->calib->applyF(img, this->invEmissivities(), size, out, &m_data->saturate))
 				return false;
 			return true;
@@ -852,10 +818,6 @@ namespace rir
 		else if (calibration == 1)
 		{
 			// apply the calibration
-			if (m_data->calib->opticalTemperature() != this->opticalTemperature())
-				m_data->calib->setOpticalTemperature(this->opticalTemperature());
-			if (m_data->calib->STEFITemperature() != this->STEFITemperature())
-				m_data->calib->setSTEFITemperature(this->STEFITemperature());
 			if (!m_data->calib->apply(img, this->invEmissivities(), size, img, &m_data->saturate))
 				return false;
 			return true;
@@ -885,11 +847,6 @@ namespace rir
 
 		if (bin_read_image(m_data->file, pos, pixels, &time) != 0)
 			return false;
-
-		if (m_data->initOpticalTemperature == -1 && m_data->calib)
-			m_data->initOpticalTemperature = m_data->calib->opticalTemperature();
-		if (m_data->initSTEFITemperature == -1 && m_data->calib)
-			m_data->initSTEFITemperature = m_data->calib->STEFITemperature();
 
 		bool is_in_T = m_data->store_it;
 
@@ -933,29 +890,6 @@ namespace rir
 			return false;
 		else
 		{
-			if (is_in_T)
-			{
-				if (m_data->initOpticalTemperature != this->opticalTemperature() || m_data->initSTEFITemperature != this->STEFITemperature() || this->globalEmissivity() != 1.f)
-				{
-					// switch back to DL without the last 3 lines
-					m_data->calib->applyInvert(pixels, m_data->file->h264.lastIt().data(), m_data->min_T_height * imageSize().width, pixels);
-					m_data->calib->setOpticalTemperature(this->opticalTemperature());
-					m_data->calib->setSTEFITemperature(this->STEFITemperature());
-					// back to T for the full image
-					if (!m_data->calib->apply(pixels, this->invEmissivities(), m_data->size.height * m_data->size.width, pixels, &m_data->saturate))
-						return false;
-				}
-			}
-			else
-			{
-				// apply the calibration
-				if (m_data->calib->opticalTemperature() != this->opticalTemperature())
-					m_data->calib->setOpticalTemperature(this->opticalTemperature());
-				if (m_data->calib->STEFITemperature() != this->STEFITemperature())
-					m_data->calib->setSTEFITemperature(this->STEFITemperature());
-				if (!m_data->calib->apply(pixels, this->invEmissivities(), m_data->size.height * m_data->size.width, pixels, &m_data->saturate))
-					return false;
-			}
 
 			// Remove motion if possible
 			removeMotion(pixels, imageSize().width, imageSize().height - 3, pos);

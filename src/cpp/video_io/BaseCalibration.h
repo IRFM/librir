@@ -23,8 +23,6 @@ namespace rir
 		{
 			SupportGlobalEmissivity = 0x01,
 			SupportPixelEmissivity = 0x02,
-			SupportOpticalTemperature = 0x04,
-			SupportSTEFITemperature = 0x08 // Only for WEST cameras
 		};
 
 		virtual ~BaseCalibration() {}
@@ -59,16 +57,6 @@ namespace rir
 		/**Convert temperature (�C) to Digital Level for given Integration time*/
 		virtual unsigned tempToRawDL(unsigned temp, int ti) const = 0;
 		virtual unsigned tempToRawDLF(float temp, int ti) const = 0;
-
-		/**Returns optics temperature*/
-		virtual unsigned short opticalTemperature() const = 0;
-		/**Set optics temperature (B30 temperature)*/
-		virtual void setOpticalTemperature(unsigned short) = 0;
-
-		/**Returns STEFI temperature*/
-		virtual unsigned short STEFITemperature() const = 0;
-		/**Set STEFI temperature */
-		virtual void setSTEFITemperature(unsigned short) = 0;
 
 		/**
 		 * Returns the names of internal used tables (floating point matrices) used for calibration
