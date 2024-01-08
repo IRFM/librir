@@ -50,11 +50,11 @@ namespace rir
 		/**Returns the list of calibration files required for this calibration*/
 		virtual StringList calibrationFiles() const = 0;
 
-		/**Convert Digital Level value and Integration time to temperature (�C) for given integration time*/
+		/**Convert Digital Level value and Integration time to temperature (°C) for given integration time*/
 		virtual unsigned rawDLToTemp(unsigned DL, int ti) const = 0;
-		/**Convert Digital Level value and Integration time to temperature (�C) for given integration time*/
+		/**Convert Digital Level value and Integration time to temperature (°C) for given integration time*/
 		virtual float rawDLToTempF(unsigned DL, int ti) const = 0;
-		/**Convert temperature (�C) to Digital Level for given Integration time*/
+		/**Convert temperature (°C) to Digital Level for given Integration time*/
 		virtual unsigned tempToRawDL(unsigned temp, int ti) const = 0;
 		virtual unsigned tempToRawDLF(float temp, int ti) const = 0;
 
@@ -65,7 +65,7 @@ namespace rir
 		virtual std::pair<const float *, size_t> getTable(const char *name) const { return {nullptr, 0}; }
 
 		/**
-		Apply inverted calibration (from T�C to DL).
+		Apply inverted calibration (from T°C to DL).
 		IT is the image of integration time (can be NULL for some implementations)
 		*/
 		virtual bool applyInvert(const unsigned short *T, const unsigned char *IT, unsigned int size, unsigned short *out) const = 0;
@@ -90,7 +90,7 @@ namespace rir
 		@param saturate if not NULL, set to true if the calibration saturated, false otherwise
 		Returns true on success, false otherwise.
 
-		This function performs a floating point calibration (precision < 1�C) and is slightly slower than #apply() function.
+		This function performs a floating point calibration (precision < 1°C) and is slightly slower than #apply() function.
 		*/
 		virtual bool applyF(const unsigned short *DL, const std::vector<float> &inv_emissivities, unsigned int size, float *out, bool *saturate = NULL) const = 0;
 	};

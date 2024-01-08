@@ -175,29 +175,6 @@ def timestamps(array):
 
 
 @pytest.fixture(scope="session")
-def movie_with_firmware_date(valid_2D_array):
-    # 23-01-2023
-    day = 23
-    month = 1
-    year = 2023
-    firmware_date = np.uint32(0)
-
-    firmware_date = (day << 24) | (month << 16) | year
-
-    # struct.pack("I", firmware_date)
-    r = bytearray(valid_2D_array.tobytes("C"))
-    v = struct.pack("I", firmware_date)
-    offset = (valid_2D_array.shape[0] - 3) * valid_2D_array.shape[1] * 2
-    r[(offset + 254 * 2) : (offset + 256 * 2)] = v
-
-    arr = np.frombuffer(bytes(r), dtype=np.uint16).reshape(valid_2D_array.shape)
-    arr[-3, 254:256]
-
-    with IRMovie.from_numpy_array(arr) as mov:
-        yield mov
-
-
-@pytest.fixture(scope="session")
 def images() -> List[np.ndarray]:
     # generate 100 noisy images with an average background value going from 10 to 110 by step of 1
     images = []
