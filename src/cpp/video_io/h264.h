@@ -186,6 +186,7 @@ namespace rir
 
 		/// @brief Reimplemented from IRVideoLoader
 		virtual BaseCalibration *calibration() const { return NULL; }
+		virtual bool setCalibration(BaseCalibration *calibration) { return false; }
 		/// @brief Reimplemented from IRVideoLoader
 		virtual bool getRawValue(int x, int y, unsigned short *value) const;
 		/// @brief Reimplemented from IRVideoLoader

@@ -132,6 +132,7 @@ namespace rir
 		virtual bool calibrate(unsigned short *img, float *out, int size, int calibration);
 		virtual bool calibrateInplace(unsigned short *img, int size, int calibration);
 		virtual BaseCalibration *calibration() const { return NULL; }
+		virtual bool setCalibration(BaseCalibration *calibration) { return false; }
 		virtual const std::map<std::string, std::string> &globalAttributes() const;
 		virtual bool extractAttributes(std::map<std::string, std::string> &) const;
 		virtual void close();

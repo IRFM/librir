@@ -127,6 +127,8 @@ namespace rir
 		/**Returns calibration object attached to this loader (if any) */
 		virtual BaseCalibration *calibration() const = 0;
 
+		virtual bool setCalibration(BaseCalibration *calibration) = 0;
+
 		/**Returns supported calibration for this video reader.
 		For IR videos, this function should return something like ("Raw Data","Temperature").*/
 		virtual StringList supportedCalibration() const = 0;
