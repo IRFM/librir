@@ -85,6 +85,7 @@ namespace rir
 		bool hasTimes() const;
 		bool hasCalibration() const;
 		virtual BaseCalibration *calibration() const;
+		virtual bool setCalibration(BaseCalibration *calibration);
 
 		virtual bool supportBadPixels() const { return true; }
 		virtual void setBadPixelsEnabled(bool enable);

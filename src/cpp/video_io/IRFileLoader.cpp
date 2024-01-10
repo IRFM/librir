@@ -544,6 +544,11 @@ namespace rir
 	bool IRFileLoader::hasTimes() const { return m_data->has_times; }
 	bool IRFileLoader::hasCalibration() const { return m_data->calib && m_data->calib->isValid(); }
 	BaseCalibration *IRFileLoader::calibration() const { return m_data->calib; }
+	bool IRFileLoader::setCalibration(BaseCalibration *calibration)
+	{
+		m_data->calib = calibration;
+		return true;
+	}
 
 	void IRFileLoader::setBadPixelsEnabled(bool enable)
 	{
