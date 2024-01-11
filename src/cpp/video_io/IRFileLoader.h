@@ -84,6 +84,7 @@ namespace rir
 		bool isHCC() const;
 		bool hasTimes() const;
 		bool hasCalibration() const;
+		bool is_in_T() const;
 		virtual BaseCalibration *calibration() const;
 		virtual bool setCalibration(BaseCalibration *calibration);
 
