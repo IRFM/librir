@@ -543,6 +543,8 @@ namespace rir
 	bool IRFileLoader::isHCC() const { return m_data->type == BIN_FILE_HCC; }
 	bool IRFileLoader::hasTimes() const { return m_data->has_times; }
 	bool IRFileLoader::hasCalibration() const { return m_data->calib && m_data->calib->isValid(); }
+	bool IRFileLoader::is_in_T() const { return m_data->store_it; }
+
 	BaseCalibration *IRFileLoader::calibration() const { return m_data->calib; }
 	bool IRFileLoader::setCalibration(BaseCalibration *calibration)
 	{
