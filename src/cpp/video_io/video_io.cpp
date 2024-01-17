@@ -224,7 +224,7 @@ int flip_camera_calibration(int camera, int flip_rl, int flip_ud)
 	IRVideoLoader *cam = (IRVideoLoader *)c;
 	BaseCalibration *full = cam->calibration();
 	if (!full)
-		return -1;
+		return -2;
 	Size s = cam->imageSize();
 	if (s.width == 640)
 	{

@@ -1,8 +1,13 @@
 import ctypes as ct
+import logging
 
 import numpy as np
 
-from ..low_level.misc import _video_io, toString, toArray, toBytes
+from ..low_level.misc import _video_io, toArray, toBytes, toString
+
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 FILE_FORMAT_PCR = 1
@@ -265,6 +270,7 @@ def camera_saturate(movie_handle):
         return True
     return False
 
+
 def enable_bad_pixels(camera, enable=True):
     """
     Returns 0 if given camera supports bad pixels treatement
@@ -295,8 +301,12 @@ def flip_camera_calibration(camera, flip_rl, flip_ud):
     For given camera, flip the calibration files
     """
     ret = _video_io.flip_camera_calibration(int(camera), int(flip_rl), int(flip_ud))
-    if ret < 0:
-        raise RuntimeError("An error occured while calling 'flip_camera_calibration'")
+    if ret == -1:
+        raise RuntimeError("camera is a NULL pointer")
+    if ret == -2:
+        logger.warning("There is no calibration in movie")
+
+        # raise RuntimeError("An error occured while calling 'flip_camera_calibration'")
 
 
 def calibration_files(movie_handle):
