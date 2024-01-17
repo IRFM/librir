@@ -164,3 +164,10 @@ def test_movie_getitem(movie: IRMovie):
 def test_frames_attributes(movie: IRMovie):
     movie.frame_attributes
     movie.frames_attributes
+
+
+def test_flip_camera_calibration(movie: IRMovie):
+    movie.flip_calibration(True, False)
+    movie.flip_calibration(False, False)
+    movie.flip_calibration(False, True)
+    movie.flip_calibration(True, True)
