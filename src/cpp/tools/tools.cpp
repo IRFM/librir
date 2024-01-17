@@ -508,12 +508,12 @@ static int init_blosc()
 }
 static int _init_blosc = init_blosc();
 
-int64_t blosc_compress_zstd(char *src, int64_t srcSize, char *dst, int64_t dstSize, size_t typesize, int doshuffle, int level)
+int64_t blosc_compress_zstd(const char *src, int64_t srcSize, char *dst, int64_t dstSize, size_t typesize, int doshuffle, int level)
 {
 	return blosc_compress(level, doshuffle, typesize, srcSize, src, dst, dstSize);
 }
 
-int64_t blosc_decompress_zstd(char *src, int64_t, char *dst, int64_t dstSize)
+int64_t blosc_decompress_zstd(const char *src, int64_t, char *dst, int64_t dstSize)
 {
 	return blosc_decompress(src, dst, dstSize);
 }
