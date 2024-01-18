@@ -165,6 +165,9 @@ else
    echo "Dir $FILE does not exist."
    git clone https://github.com/ultravideo/kvazaar.git
 fi
+cd kvazaar
+git checkout v2.2.0
+cd ..
 
 FILE=kvazaar/install/lib/pkgconfig/kvazaar.pc
 if [ -f $FILE ]; then
