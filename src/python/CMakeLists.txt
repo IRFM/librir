@@ -38,7 +38,7 @@ foreach(target ${LIBRIR_TARGETS})
     # target_link_libraries(westbind west)
     target_link_libraries(${_pythonbind_target_name} PUBLIC pybind11::module ${target})
     list(APPEND __python_bindings ${_pythonbind_target_name})
-
+    install(TARGETS ${_pythonbind_target_name} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}/${target})
 
 endforeach(target $LIBRIR_TARGETS)
 
@@ -121,7 +121,7 @@ file(APPEND __init__.py.in "\n__version__ = \"@PROJECT_VERSION_MAJOR@.@PROJECT_V
 configure_file(__init__.py.in __init__.py @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/__init__.py DESTINATION ${CMAKE_INSTALL_PREFIX}/python/${PROJECT_NAME}/)
 FILE(REMOVE __init__.py.in)
-install(TARGETS ${__python_bindings} DESTINATION ${CMAKE_INSTALL_PREFIX}/librir/${target})
+install(TARGETS ${__python_bindings} DESTINATION ${CMAKE_INSTALL_PREFIX}/python/librir/${target})
 
 
 # for development purposes
