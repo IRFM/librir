@@ -1,7 +1,12 @@
 common_config:
   cxx_flags: ["-std=c++11"]
-  include_directories: ["${CFG_DIR}"]
+  include_directories:
+    [
+      "${CFG_DIR}",
+      "/Home/LD243615/code/librir/src/cpp/tools",
+      "/Home/LD243615/code/librir/build",
+    ]
 
 io_configs:
-  - inputs: ["../cpp/tools/tools.h"] #, "template_pb11_weaver_helper.h"]
+  - inputs: ["../../build/rir_config.h", "../cpp/tools/tools.h"] #, "template_pb11_weaver_helper.h"]
     output: "${CFG_DIR}/_binding.cc.inc"
