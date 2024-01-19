@@ -304,9 +304,7 @@ def flip_camera_calibration(camera, flip_rl, flip_ud):
     if ret == -1:
         raise RuntimeError("camera is a NULL pointer")
     if ret == -2:
-        logger.warning("There is no calibration in movie")
-
-        # raise RuntimeError("An error occured while calling 'flip_camera_calibration'")
+        raise RuntimeError("There is no calibration in movie")
 
 
 def calibration_files(movie_handle):
