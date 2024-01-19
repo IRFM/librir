@@ -166,8 +166,12 @@ def test_frames_attributes(movie: IRMovie):
     movie.frames_attributes
 
 
-def test_flip_camera_calibration(movie: IRMovie):
-    movie.flip_calibration(True, False)
-    movie.flip_calibration(False, False)
-    movie.flip_calibration(False, True)
-    movie.flip_calibration(True, True)
+def test_flip_camera_calibration_when_no_calibration(movie: IRMovie):
+    with pytest.raises(RuntimeError):
+        movie.flip_calibration(True, False)
+    with pytest.raises(RuntimeError):
+        movie.flip_calibration(False, False)
+    with pytest.raises(RuntimeError):
+        movie.flip_calibration(False, True)
+    with pytest.raises(RuntimeError):
+        movie.flip_calibration(True, True)
