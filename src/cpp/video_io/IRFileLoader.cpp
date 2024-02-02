@@ -702,6 +702,8 @@ namespace rir
 			m_data->min_T_height = imageSize().height - 3;
 		}
 
+		m_data->calib = buildCalibration(filename, this);
+
 		return true;
 	}
 
@@ -742,6 +744,9 @@ namespace rir
 		{
 			m_data->min_T_height = imageSize().height - 3;
 		}
+
+		// TODO: add buildCalibration for file_reader
+		m_data->calib = buildCalibration(NULL, this);
 
 		return true;
 	}
