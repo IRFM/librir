@@ -187,7 +187,7 @@ class IRMovie(object):
         if _old_calib_idx != _calibration_index:
             self._calibration_index = _calibration_index
             self._payload = None
-            # clearing lru cache of librir
+            # clearing lru cache of IRMovie
             IRMovie.data.fget.cache_clear()
         if _calibration_index is None:
             self._calibration_index = _old_calib_idx
