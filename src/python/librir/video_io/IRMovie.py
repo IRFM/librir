@@ -152,8 +152,7 @@ class IRMovie(object):
     def calibration(self):
         return list(self._calibration_nickname_mapper.keys())[self._calibration_index]
 
-    @calibration.setter
-    def calibration(self, value: Union[str, int]):
+    def _parse_calibration_index(self, value: Union[str, int]):
         searching_keys = self.calibrations + list(
             self._calibration_nickname_mapper.keys()
         )
@@ -166,23 +165,31 @@ class IRMovie(object):
                     f"Calibration index out of range : {self._calibration_index}"
                 )
 
-            self._calibration_index = value
-            return
+            return value
 
         if value not in searching_keys:
             raise CalibrationNotFound(
                 f"{value} not in available calibrations : {searching_keys}"
             )
         lists = list(self._calibration_nickname_mapper), self.calibrations
-        _old_calib_idx = self._calibration_index
         idx = None
         for _list in lists:
             try:
                 idx = _list.index(value)
-                self._calibration_index = idx
+                return idx
             except ValueError:
                 pass
-        if idx is None:
+
+    @calibration.setter
+    def calibration(self, value: Union[str, int]):
+        _old_calib_idx = self._calibration_index
+        _calibration_index = self._parse_calibration_index(value)
+        if _old_calib_idx != _calibration_index:
+            self._calibration_index = _calibration_index
+            self._payload = None
+            # clearing lru cache of librir
+            IRMovie.data.fget.cache_clear()
+        if _calibration_index is None:
             self._calibration_index = _old_calib_idx
             raise CalibrationNotFound(f"calibration '{value}' is not registered")
 
@@ -281,8 +288,8 @@ class IRMovie(object):
         """
         if calibration is None:
             calibration = 0
-
-        self.calibration = calibration
+        if self._parse_calibration_index(calibration) != self._calibration_index:
+            self.calibration = self._parse_calibration_index(calibration)
         res = load_image(self.handle, pos, self._calibration_index)
         self._frame_attributes_d[pos] = get_attributes(self.handle)
         # self.frame_attributes = get_attributes(self.handle)
