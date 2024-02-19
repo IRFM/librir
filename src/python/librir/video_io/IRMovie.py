@@ -624,8 +624,9 @@ class IRMovie(object):
     @property
     @functools.lru_cache()
     def frames_attributes(self) -> pd.DataFrame:
-        for i in range(self.images):
-            self.load_pos(i)
+        if len(self._frame_attributes_d) != self.images:
+            for i in range(self.images):
+                self.load_pos(i, self._calibration_index)
         df = pd.DataFrame(self._frame_attributes_d).T
         return df
 
