@@ -9,7 +9,6 @@
 #include <ctime>
 #include <chrono>
 #include <iomanip>
-#include <bitset>
 #include <memory>
 
 #include "IRFileLoader.h"
@@ -18,7 +17,7 @@
 #include <mutex>
 
 #include "HCCLoader.h"
-#include "ZFile.h"
+// #include "ZFile.h"
 #include "Log.h"
 #include "Filters.h"
 #include "ReadFileChunk.h"
@@ -311,51 +310,6 @@ namespace rir
 				f = NULL;
 			}
 		}
-		else if (f->type == BIN_FILE_Z_COMPRESSED)
-		{
-			// f->file.close();
-			f->zfile = z_open_file_read(f->file);
-			if (!f->zfile)
-			{
-				destroyFileReader(f->file);
-				delete f;
-				f = NULL;
-				goto end;
-			}
-
-			f->width = infos.X;
-			f->height = infos.Y;
-			f->count = z_image_count(f->zfile);
-
-			if (f->count == 0)
-			{
-				destroyFileReader(f->file);
-				delete f;
-				f = NULL;
-				goto end;
-			}
-
-			f->times.resize(f->count); // = (int64_t*)malloc(f->count * sizeof(int64_t));
-			memcpy(f->times.data(), z_get_timestamps(f->zfile), f->count * sizeof(int64_t));
-			int64_t t0 = f->times[0];
-
-			if (t0 > 28000 && t0 < 32000)
-			{
-				// the time is in us since origin, do NOT subtract first timestamp
-				// remove 10ms to have a precision of +- 10ms
-				for (unsigned int i = 0; i < f->count; ++i)
-					f->times[i] = (f->times[i] * (int64_t)1000000) - 10000000ULL; // convert to ns
-			}
-			else
-			{
-				if (!(f->times.front() < -1000000000 || f->times.back() > 1000000000))
-				{ // time already in ns
-					for (unsigned int i = 0; i < f->count; ++i)
-						f->times[i] = (f->times[i] - t0) * (int64_t)1000000; // convert to ns
-				}
-			}
-			f->has_times = 1;
-		}
 		else if (f->type == BIN_FILE_H264)
 		{
 			if (!f->h264.open(f->file))
@@ -462,8 +416,7 @@ namespace rir
 
 	static void bin_close_file(BinFile *f)
 	{
-		if (f->zfile)
-			z_close_file(f->zfile);
+
 		f->h264.close();
 		f->hcc.close();
 		if (f->other)
@@ -521,8 +474,6 @@ namespace rir
 			f->hcc.readImage(pos, 0, img);
 			return 0;
 		}
-		else if (f->zfile)
-			return z_read_image(f->zfile, pos, img, timestamp);
 		else
 		{
 			if (timestamp)
@@ -558,22 +509,17 @@ namespace rir
 		int min_T_height;
 		bool store_it;
 		bool motionCorrectionEnabled;
+		std::vector<PointF> translation_points;
 		std::vector<unsigned short> img;
 		bool has_times;
 		bool saturate;
 		bool bp_enabled;
 		int median_value;
-		int initOpticalTemperature;
-		int initSTEFITemperature;
 		Polygon bad_pixels;
 		BaseCalibration *calib;
-		std::map<std::string, std::string> attributes;
-
-		std::vector<PointF> upper; // upper divertor or full view
-		std::vector<PointF> lower; // lower divertor
 
 		PrivateData()
-			: file(NULL), type(0), min_T(0), min_T_height(0), store_it(false), motionCorrectionEnabled(false), saturate(false), bp_enabled(false), median_value(-1), initOpticalTemperature(-1), initSTEFITemperature(-1), calib(NULL)
+			: file(NULL), type(0), min_T(0), min_T_height(0), store_it(false), motionCorrectionEnabled(false), saturate(false), bp_enabled(false), median_value(-1), calib(NULL)
 		{
 		}
 	};
@@ -597,7 +543,14 @@ namespace rir
 	bool IRFileLoader::isHCC() const { return m_data->type == BIN_FILE_HCC; }
 	bool IRFileLoader::hasTimes() const { return m_data->has_times; }
 	bool IRFileLoader::hasCalibration() const { return m_data->calib && m_data->calib->isValid(); }
+	bool IRFileLoader::is_in_T() const { return m_data->store_it; }
+
 	BaseCalibration *IRFileLoader::calibration() const { return m_data->calib; }
+	bool IRFileLoader::setCalibration(BaseCalibration *calibration)
+	{
+		m_data->calib = calibration;
+		return true;
+	}
 
 	void IRFileLoader::setBadPixelsEnabled(bool enable)
 	{
@@ -668,29 +621,7 @@ namespace rir
 
 	void IRFileLoader::removeMotion(unsigned short *img, int w, int h, int pos)
 	{
-		if (!m_data->motionCorrectionEnabled)
-			return;
-
-		if (m_data->upper.size() && !m_data->lower.size())
-		{
-
-			// Apply on the full image
-			std::vector<float> tmp(w * h);
-			translate(img, tmp.data(), 0.f, w, h, -m_data->upper[pos].x(), -m_data->upper[pos].y(), rir::TranslateNearest);
-			std::copy(tmp.begin(), tmp.end(), img);
-		}
-		else if (m_data->upper.size() && m_data->lower.size())
-		{
-
-			// Apply upper part
-			std::vector<float> tmp(w * h / 2);
-			translate(img, tmp.data(), 0.f, w, h / 2, -m_data->upper[pos].x(), -m_data->upper[pos].y(), rir::TranslateNearest);
-			std::copy(tmp.begin(), tmp.end(), img);
-
-			// Apply lower part
-			translate(img + (h / 2) * w, tmp.data(), 0.f, w, h / 2, -m_data->lower[pos].x(), -m_data->lower[pos].y(), rir::TranslateNearest);
-			std::copy(tmp.begin(), tmp.end(), img + (h / 2) * w);
-		}
+		// TODO
 	}
 
 	bool IRFileLoader::loadTranslationFile(const char *filename)
@@ -711,19 +642,15 @@ namespace rir
 			return false;
 		}
 
-		m_data->upper.resize(ar.height);
-		if (ar.width == 7)
-			m_data->lower.resize(ar.height);
+		m_data->translation_points.resize(ar.height);
 
 		for (size_t i = 0; i < ar.height; ++i)
 		{
-			m_data->upper[i] = PointF(ar(i, 1), ar(i, 2));
-			if (ar.width == 7)
-			{
-				m_data->lower[i] = PointF(ar(i, 4), ar(i, 5));
-			}
+			m_data->translation_points[i] = PointF(ar(i, 1), ar(i, 2));
 		}
 		return true;
+
+		return false;
 	}
 	void IRFileLoader::enableMotionCorrection(bool enable)
 	{
@@ -757,20 +684,6 @@ namespace rir
 		m_data->filename = filename;
 		replace(m_data->filename, "\\", "/");
 
-		if ((m_data->calib = buildCalibration(m_data->filename.c_str(), this)))
-		{
-			this->setOpticaltemperature(m_data->calib->opticalTemperature());
-			this->setSTEFItemperature(m_data->calib->STEFITemperature());
-		}
-		else if (m_data->file->other)
-		{
-			if ((m_data->calib = m_data->file->other->calibration()))
-			{
-				this->setOpticaltemperature(m_data->calib->opticalTemperature());
-				this->setSTEFItemperature(m_data->calib->STEFITemperature());
-			}
-		}
-
 		m_data->min_T = m_data->min_T_height = 0;
 		std::map<std::string, std::string>::const_iterator min_T = this->globalAttributes().find("MIN_T");
 		std::map<std::string, std::string>::const_iterator min_T_height = this->globalAttributes().find("MIN_T_HEIGHT");
@@ -788,6 +701,8 @@ namespace rir
 		{
 			m_data->min_T_height = imageSize().height - 3;
 		}
+
+		m_data->calib = buildCalibration(filename, this);
 
 		return true;
 	}
@@ -812,20 +727,6 @@ namespace rir
 		m_data->size.width = w;
 		m_data->size.height = h;
 
-		if ((m_data->calib = buildCalibration(NULL, this)))
-		{
-			this->setOpticaltemperature(m_data->calib->opticalTemperature());
-			this->setSTEFItemperature(m_data->calib->STEFITemperature());
-		}
-		else if (m_data->file->other)
-		{
-			if ((m_data->calib = m_data->file->other->calibration()))
-			{
-				this->setOpticaltemperature(m_data->calib->opticalTemperature());
-				this->setSTEFItemperature(m_data->calib->STEFITemperature());
-			}
-		}
-
 		m_data->min_T = m_data->min_T_height = 0;
 		std::map<std::string, std::string>::const_iterator min_T = this->globalAttributes().find("MIN_T");
 		std::map<std::string, std::string>::const_iterator min_T_height = this->globalAttributes().find("MIN_T_HEIGHT");
@@ -843,6 +744,9 @@ namespace rir
 		{
 			m_data->min_T_height = imageSize().height - 3;
 		}
+
+		// TODO: add buildCalibration for file_reader
+		m_data->calib = buildCalibration(NULL, this);
 
 		return true;
 	}
@@ -909,198 +813,6 @@ namespace rir
 		return res;
 	}
 
-#define PIXEL_ADDRESS_ALARM_32_ROIS 64
-#define PIXEL_ADDRESS_GLOBAL_ALARMS 65
-#define PIXEL_ADDRESS_FRAME_COUNTER 66
-
-#define PIXEL_ADDRESS_TEMPERATURE_FPGA 71
-#define PIXEL_ADDRESS_VOLTAGE_FPGA 72
-
-#define PIXEL_ADDRESS_CAMSTATUS 82
-#define PIXEL_ADDRESS_FRAME_PERIOD 83
-#define PIXEL_ADDRESS_CHRONO_TIME 84
-#define PIXEL_ADDRESS_BOARD_TIME 85
-#define PIXEL_ADDRESS_DMA_TIME 86
-#define PIXEL_ADDRESS_FIRMWARE_DATE 127
-#define PIXEL_ADDRESS_ABSOLUTE_TIME 89
-
-#define PIXEL_ADDRESS_THR_POSITION 91
-
-	union U_CAMSTATUS
-	{
-		uint32_t values;
-		struct
-		{
-			uint32_t camtemp : 9;	 // camtemp * 10
-			uint32_t filtertemp : 9; // filtertemp * 10
-			uint32_t Peltierpower : 7;
-			uint32_t Watercooling : 1;
-			uint32_t Powersupplies : 1;
-			uint32_t Camident : 4;
-		};
-	};
-	union U_THR_POSITION
-	{
-		int64_t values;
-		struct
-		{
-			int64_t pfu : 7;
-			int64_t M1 : 19;
-			int64_t mb : 7;
-			int64_t M2 : 19;
-			int64_t focale : 12; // focale * 100
-		};
-	};
-
-	template <size_t size>
-	std::bitset<size> extract_bits(std::bitset<size> x, int begin, int end)
-	{
-		(x >>= (size - end)) <<= (size - end);
-		x <<= begin;
-		return x;
-	}
-
-	std::map<std::string, std::string> IRFileLoader::extractInfos(const unsigned short *img)
-	{
-		std::map<std::string, std::string> attrs;
-		int w = imageSize().width;
-		int h = imageSize().height;
-		if ((w == 640 || w == 320) && (h == 515 || h == 243))
-		{
-
-			// extract infos in last lines
-
-			// extract
-			unsigned int *line0 = (unsigned int *)(img + w * (h - 3));
-			//	unsigned int * line1 = (unsigned int *)(line0 + width);
-			//	unsigned int * line2 = (unsigned int *)(line1 + width);
-
-			// alarms
-			unsigned int alarm32ROIs, globalAlarm;
-			int firmware_date, day, month, year;
-
-			memcpy(&alarm32ROIs, line0 + PIXEL_ADDRESS_ALARM_32_ROIS, 4);
-			memcpy(&globalAlarm, line0 + PIXEL_ADDRESS_GLOBAL_ALARMS, 4);
-
-			// frame counter
-			unsigned frameCounter;
-			memcpy(&frameCounter, line0 + PIXEL_ADDRESS_FRAME_COUNTER, 4);
-
-			// temperature du FPGA de la carte Sundance, tensions d'alimentation FPGA  de la carte Sundance
-			unsigned board_T, board_V;
-			memcpy(&board_T, line0 + PIXEL_ADDRESS_TEMPERATURE_FPGA, 4);
-			memcpy(&board_V, line0 + PIXEL_ADDRESS_VOLTAGE_FPGA, 4);
-
-			// TODO : TYPO ???
-			// unsigned frame_period;
-			memcpy(&board_V, line0 + PIXEL_ADDRESS_FRAME_PERIOD, 4);
-
-			// chrono time
-			unsigned chrono_time, board_time, dma_time;
-			time_t absolute_time;
-
-			memcpy(&chrono_time, line0 + PIXEL_ADDRESS_CHRONO_TIME, 4);
-			memcpy(&board_time, line0 + PIXEL_ADDRESS_BOARD_TIME, 4);
-			memcpy(&dma_time, line0 + PIXEL_ADDRESS_DMA_TIME, 4);
-			memcpy(&absolute_time, line0 + PIXEL_ADDRESS_ABSOLUTE_TIME, 8);
-			memcpy(&firmware_date, line0 + PIXEL_ADDRESS_FIRMWARE_DATE, 4);
-
-			std::chrono::system_clock::time_point tp{std::chrono::milliseconds{absolute_time}};
-
-			attrs["Alarm ROIs"] = tostring_binary32(alarm32ROIs, 12);
-			attrs["Alarm ALL"] = tostring_binary32(globalAlarm, 12);
-			// attrs["Board temperature"] = toString(board_T);
-			// attrs["Board tension"] = toString(board_V);
-			attrs["Frame number"] = toString(frameCounter);
-			// attrs["Frame period"] = toString(frame_period);
-			attrs["Time (chrono)"] = toString(chrono_time);
-			attrs["Time (board)"] = toString(board_time);
-			attrs["Time (DMA)"] = toString(dma_time);
-			attrs["Time (absolute in ms)"] = toString(absolute_time);
-			attrs["Datetime"] = serializeTimePoint(tp, "%FT%TZ");
-
-			day = (firmware_date >> 24) & 0xFF;
-			month = (firmware_date >> 16) & 0xFF;
-			year = (firmware_date) & 0xFFFF;
-
-			attrs["Firmware Date"] = toString(day) + "-" + toString(month) + "-" + toString(year);
-
-			attrs["Camera T (C)"] = "0";
-			attrs["IR Filter T (C)"] = "0";
-			attrs["Peltier Power (%)"] = "0";
-
-			if (h > 511)
-			{
-				/*unsigned int cam_status = line0[32 * 2 + 18];
-
-				int Filtertemp = (cam_status >> 9) & 0x1FF;
-				int Peltierpower = (cam_status >> 18) & 0x7F;
-				int Camtemp = cam_status & 0x1FF;*/
-
-				// Camstatus = Camtemp & 0x1FF | ((Filtertemp & 0x1FF) << 9) | ((Peltierpower & 0x7F) << 18) | ((Watercooling & 0x1) << 25) | ((Powersupplies & 0x1) << 26) | ((Camident & 0xF) << 27);
-				// reg_write(68, Camstatus); // Set cam status
-
-				/*int c1 = cam_status & 0xFF;
-				int c_1 = (cam_status>>8) & 0xFF;
-				int c2 = cam_status & 0xFFF;
-				int c3 = cam_status & 0xFFFF;
-				int c4 = cam_status & 0xFFFFF;
-				int c5 = cam_status & 0xFFFFFF;
-				int c6 = cam_status & 0xFFFFFFF;*/
-
-				// unsigned int frame_period = line0[32 * 2 + 19] / 1000 * 8;   // In us
-				unsigned char *pc_cam_header0 = (unsigned char *)(line0 + 320);
-
-				int temp_pos = (pc_cam_header0[47] & 0x0FF) << 8 | (pc_cam_header0[46] & 0x0FF);
-				int temp_neg = (pc_cam_header0[49] & 0x0FF) << 8 | (pc_cam_header0[48] & 0x0FF);
-				double diode_temp = 77 - (((temp_pos - temp_neg) * 0.000045776) * 1000 - 1042) / 1.56;
-				attrs["Sensor T (K)"] = toString(diode_temp);
-
-				double VCC = (((pc_cam_header0[53] & 0x0FF) << 8 | (pc_cam_header0[52] & 0x0FF)) * 0.000045776) * 2;
-				attrs["VCC (V)"] = toString(VCC);
-
-				double VDD = (((pc_cam_header0[55] & 0x0FF) << 8 | (pc_cam_header0[54] & 0x0FF)) * 0.000045776);
-				attrs["VDD (V)"] = toString(VDD);
-
-				double VDO = (((pc_cam_header0[57] & 0x0FF) << 8 | (pc_cam_header0[56] & 0x0FF)) * 0.000045776);
-				attrs["VDO (V)"] = toString(VDO);
-
-				double VNEG = ((((pc_cam_header0[59] & 0x0FF) << 8 | (pc_cam_header0[58] & 0x0FF)) * 0.000045776));
-				attrs["VNEG (V)"] = toString(VNEG);
-
-				static_assert(sizeof(U_CAMSTATUS) == sizeof(uint32_t), "wrong size of U_CAMSTATUS");
-				U_CAMSTATUS camstatus;
-				memcpy(&camstatus, line0 + PIXEL_ADDRESS_CAMSTATUS, sizeof(U_CAMSTATUS));
-				attrs["Camera T (C)"] = toString((double)camstatus.camtemp / 10);
-				attrs["IR Filter T (C)"] = toString((double)camstatus.filtertemp / 10);
-				attrs["Peltier Power (%)"] = toString(camstatus.Peltierpower);
-				attrs["watercooling"] = toString(camstatus.Watercooling);
-				attrs["power_supply"] = toString(camstatus.Powersupplies);
-				attrs["Camera #"] = toString(camstatus.Camident);
-
-				std::bitset<12> global_alarm{globalAlarm};
-
-				attrs["toohot_triggered"] = toString((globalAlarm >> 0) & 1);
-				attrs["external_alarm"] = toString((globalAlarm >> 1) & 1);
-				attrs["internal_alarm"] = toString((globalAlarm >> 2) & 1);
-				attrs["alarm_filter"] = toString(extract_bits(global_alarm, 4, 9).count());
-
-				static_assert(sizeof(U_THR_POSITION) == sizeof(int64_t), "wrong size of U_THR_POSITION");
-				U_THR_POSITION thr_status;
-				memcpy(&thr_status, line0 + PIXEL_ADDRESS_THR_POSITION, sizeof(U_THR_POSITION));
-				if (thr_status.values != 0)
-				{
-					attrs["M1"] = toString(thr_status.M1);
-					attrs["M2"] = toString(thr_status.M2);
-					attrs["PFU"] = toString(thr_status.pfu);
-					attrs["MB"] = toString(thr_status.mb);
-					attrs["focale"] = toString((double)thr_status.focale / 100);
-				}
-			}
-		}
-		return attrs;
-	}
-
 	bool IRFileLoader::extractAttributes(std::map<std::string, std::string> &attrs) const
 	{
 		bool res = true;
@@ -1111,7 +823,7 @@ namespace rir
 		else if (m_data->type == BIN_FILE_OTHER)
 			res = m_data->file->other->extractAttributes(attrs);
 
-		for (std::map<std::string, std::string>::const_iterator it = m_data->attributes.begin(); it != m_data->attributes.end(); ++it)
+		for (std::map<std::string, std::string>::const_iterator it = attributes.begin(); it != attributes.end(); ++it)
 			attrs.insert(*it);
 
 		return res;
@@ -1129,10 +841,6 @@ namespace rir
 		else if (calibration == 1)
 		{
 			// apply the calibration
-			if (m_data->calib->opticalTemperature() != this->opticalTemperature())
-				m_data->calib->setOpticalTemperature(this->opticalTemperature());
-			if (m_data->calib->STEFITemperature() != this->STEFITemperature())
-				m_data->calib->setSTEFITemperature(this->STEFITemperature());
 			if (!m_data->calib->applyF(img, this->invEmissivities(), size, out, &m_data->saturate))
 				return false;
 			return true;
@@ -1146,10 +854,6 @@ namespace rir
 		else if (calibration == 1)
 		{
 			// apply the calibration
-			if (m_data->calib->opticalTemperature() != this->opticalTemperature())
-				m_data->calib->setOpticalTemperature(this->opticalTemperature());
-			if (m_data->calib->STEFITemperature() != this->STEFITemperature())
-				m_data->calib->setSTEFITemperature(this->STEFITemperature());
 			if (!m_data->calib->apply(img, this->invEmissivities(), size, img, &m_data->saturate))
 				return false;
 			return true;
@@ -1159,7 +863,6 @@ namespace rir
 
 	bool IRFileLoader::readImage(int pos, int calibration, unsigned short *pixels)
 	{
-		m_data->attributes.clear();
 
 		if (pos < 0 || pos >= size() || !m_data->file)
 			return false;
@@ -1180,11 +883,6 @@ namespace rir
 		if (bin_read_image(m_data->file, pos, pixels, &time) != 0)
 			return false;
 
-		if (m_data->initOpticalTemperature == -1 && m_data->calib)
-			m_data->initOpticalTemperature = m_data->calib->opticalTemperature();
-		if (m_data->initSTEFITemperature == -1 && m_data->calib)
-			m_data->initSTEFITemperature = m_data->calib->STEFITemperature();
-
 		bool is_in_T = m_data->store_it;
 
 		// If the image is already in temperature with subtracted min, add the min temperature stored as attribute
@@ -1202,8 +900,6 @@ namespace rir
 		if ((int)m_data->img.size() != m_data->size.height * m_data->size.width)
 			m_data->img.resize(m_data->size.height * m_data->size.width);
 		memcpy(m_data->img.data(), pixels, m_data->img.size() * 2);
-
-		m_data->attributes = extractInfos(pixels);
 
 		m_data->saturate = false;
 
@@ -1229,29 +925,6 @@ namespace rir
 			return false;
 		else
 		{
-			if (is_in_T)
-			{
-				if (m_data->initOpticalTemperature != this->opticalTemperature() || m_data->initSTEFITemperature != this->STEFITemperature() || this->globalEmissivity() != 1.f)
-				{
-					// switch back to DL without the last 3 lines
-					m_data->calib->applyInvert(pixels, m_data->file->h264.lastIt().data(), m_data->min_T_height * imageSize().width, pixels);
-					m_data->calib->setOpticalTemperature(this->opticalTemperature());
-					m_data->calib->setSTEFITemperature(this->STEFITemperature());
-					// back to T for the full image
-					if (!m_data->calib->apply(pixels, this->invEmissivities(), m_data->size.height * m_data->size.width, pixels, &m_data->saturate))
-						return false;
-				}
-			}
-			else
-			{
-				// apply the calibration
-				if (m_data->calib->opticalTemperature() != this->opticalTemperature())
-					m_data->calib->setOpticalTemperature(this->opticalTemperature());
-				if (m_data->calib->STEFITemperature() != this->STEFITemperature())
-					m_data->calib->setSTEFITemperature(this->STEFITemperature());
-				if (!m_data->calib->apply(pixels, this->invEmissivities(), m_data->size.height * m_data->size.width, pixels, &m_data->saturate))
-					return false;
-			}
 
 			// Remove motion if possible
 			removeMotion(pixels, imageSize().width, imageSize().height - 3, pos);

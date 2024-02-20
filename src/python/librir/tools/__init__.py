@@ -1,8 +1,3 @@
-import os
-import sys
-
-sys.path.insert(1, os.path.realpath(os.path.pardir))
-
 # import useful functions from rir_tools
 from .rir_tools import (
     zstd_compress_bound,
@@ -15,6 +10,8 @@ from .rir_tools import (
     BLOSC_BITSHUFFLE,
 )
 
+from . import _thermavip
+
 __all__ = [
     "zstd_compress_bound",
     "zstd_compress",
@@ -24,4 +21,5 @@ __all__ = [
     "BLOSC_NOSHUFFLE",
     "BLOSC_SHUFFLE",
     "BLOSC_BITSHUFFLE",
+    "_thermavip",
 ]

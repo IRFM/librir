@@ -1,4 +1,3 @@
-import datetime
 import functools
 import logging
 import math
@@ -11,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 from librir.tools.FileAttributes import FileAttributes
-from librir.tools.utils import init_thermavip, unbind_thermavip_shared_mem
+from librir.tools._thermavip import init_thermavip, unbind_thermavip_shared_mem
 from librir.video_io.rir_video_io import (
     FILE_FORMAT_H264,
     enable_motion_correction,
@@ -35,12 +34,10 @@ from .rir_video_io import (
     get_image_count,
     get_image_size,
     get_image_time,
-    get_optical_temperature,
     load_image,
     open_camera_file,
     set_emissivity,
     set_global_emissivity,
-    set_optical_temperature,
     support_emissivity,
     supported_calibrations,
 )
@@ -48,10 +45,6 @@ from .rir_video_io import (
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-
-
-class IncoherentMetadata(Exception):
-    pass
 
 
 class CalibrationNotFound(Exception):
@@ -75,18 +68,6 @@ class IRMovie(object):
     __tempfile__ = None
     handle = -1
     _calibration_nickname_mapper = {"DL": "Digital Level"}
-    _roi_result_line = {"CEDIP": 240, "WEST": 512, "NIT": 256}
-
-    _SHAPES = {
-        (512, 640): "WEST",
-        (515, 640): "WEST",
-        (240, 320): "CEDIP",
-        (242, 320): "CEDIP",
-        (243, 320): "CEDIP",
-        (256, 320): "NIT",
-        (259, 320): "NIT",
-    }
-
     _th = None
 
     @classmethod
@@ -154,10 +135,9 @@ class IRMovie(object):
 
         self.handle = handle
         self.times = None
-        self._enable_bad_pixels = False
+        self._bad_pixels_correction = False
         self._last_lines = None
-        self._payload = None
-        self._survir_data = None
+
         self.__tempfile__ = ""
         self._calibration_index = 0
         self._timestamps = None
@@ -172,8 +152,7 @@ class IRMovie(object):
     def calibration(self):
         return list(self._calibration_nickname_mapper.keys())[self._calibration_index]
 
-    @calibration.setter
-    def calibration(self, value: Union[str, int]):
+    def _parse_calibration_index(self, value: Union[str, int]):
         searching_keys = self.calibrations + list(
             self._calibration_nickname_mapper.keys()
         )
@@ -186,23 +165,31 @@ class IRMovie(object):
                     f"Calibration index out of range : {self._calibration_index}"
                 )
 
-            self._calibration_index = value
-            return
+            return value
 
         if value not in searching_keys:
             raise CalibrationNotFound(
                 f"{value} not in available calibrations : {searching_keys}"
             )
         lists = list(self._calibration_nickname_mapper), self.calibrations
-        _old_calib_idx = self._calibration_index
         idx = None
         for _list in lists:
             try:
                 idx = _list.index(value)
-                self._calibration_index = idx
+                return idx
             except ValueError:
                 pass
-        if idx is None:
+
+    @calibration.setter
+    def calibration(self, value: Union[str, int]):
+        _old_calib_idx = self._calibration_index
+        _calibration_index = self._parse_calibration_index(value)
+        if _old_calib_idx != _calibration_index:
+            self._calibration_index = _calibration_index
+            self._payload = None
+            # clearing lru cache of IRMovie
+            IRMovie.data.fget.cache_clear()
+        if _calibration_index is None:
             self._calibration_index = _old_calib_idx
             raise CalibrationNotFound(f"calibration '{value}' is not registered")
 
@@ -255,6 +242,7 @@ class IRMovie(object):
             raise FileNotFoundError(f"{value} doesn't exist")
         self._registration_file = value
         load_motion_correction_file(self.handle, self._registration_file)
+        self.registration = True
 
     @property
     def registration(self) -> bool:
@@ -286,13 +274,6 @@ class IRMovie(object):
         return get_image_size(self.handle)
 
     @property
-    def payload_size(self):
-        shape = get_image_size(self.handle)
-        limit = self._roi_result_line[self._SHAPES[shape]]
-        shape = (limit, shape[1])
-        return shape
-
-    @property
     def calibrations(self):
         return supported_calibrations(
             self.handle
@@ -307,8 +288,8 @@ class IRMovie(object):
         """
         if calibration is None:
             calibration = 0
-
-        self.calibration = calibration
+        if self._parse_calibration_index(calibration) != self._calibration_index:
+            self.calibration = self._parse_calibration_index(calibration)
         res = load_image(self.handle, pos, self._calibration_index)
         self._frame_attributes_d[pos] = get_attributes(self.handle)
         # self.frame_attributes = get_attributes(self.handle)
@@ -331,13 +312,13 @@ class IRMovie(object):
         return res
 
     @property
-    def enable_bad_pixels(self):
-        return self._enable_bad_pixels
+    def bad_pixels_correction(self):
+        return self._bad_pixels_correction
 
-    @enable_bad_pixels.setter
-    def enable_bad_pixels(self, value):
-        self._enable_bad_pixels = bool(value)
-        enable_bad_pixels(self.handle, self._enable_bad_pixels)
+    @bad_pixels_correction.setter
+    def bad_pixels_correction(self, value):
+        self._bad_pixels_correction = bool(value)
+        enable_bad_pixels(self.handle, self._bad_pixels_correction)
 
     @property
     def filename(self):
@@ -410,20 +391,6 @@ class IRMovie(object):
             return self[:]
 
     @property
-    def optical_temperature(self):
-        return get_optical_temperature(self.handle)
-
-    @optical_temperature.setter
-    def optical_temperature(self, temperature):
-        """
-        Set the optical temperature for given handle in degree Celsius.
-        This should be the temperature of the B30.
-        Not all cameras support this feature. Use support_optical_temperature() function
-        to test it.
-        """
-        set_optical_temperature(self.handle, temperature)
-
-    @property
     def support_emissivity(self):
         return support_emissivity(self.handle)
 
@@ -459,11 +426,11 @@ class IRMovie(object):
         :return:
         """
         if self.calibration == "Digital Level":
-            tis = (self.payload & (2**16 - 2**13)) >> 13
+            tis = (self.data & (2**16 - 2**13)) >> 13
         else:
             old_calib = self.calibration
             self.calibration = "DL"
-            tis = (self.payload & (2**16 - 2**13)) >> 13
+            tis = (self.data & (2**16 - 2**13)) >> 13
             self.calibration = old_calib
         return tis
 
@@ -655,56 +622,11 @@ class IRMovie(object):
         return "IRMovie({})".format(self.filename)
 
     @property
-    def last_line_index(self):
-        return self._roi_result_line.get(self.camera_type, -3)
-
-    @property
-    def payload(self):
-        if self._payload is None:
-            self._payload = self.data[:, : self.last_line_index, :]
-        return self._payload
-
-    @property
-    def payload_generator(self):
-        for img in self:
-            yield img[: self.last_line_index, :]
-
-    # @cached_property
-    @property
-    @functools.lru_cache()
-    def internal_camera_number(self):
-        res = self.frames_attributes["Camera #"].astype(np.uint8)
-        cam_numbers = np.unique(res)
-        if not len(np.unique(res)) == 1:
-            msg = (
-                f"Many cameras used for this movie: {cam_numbers}\n"
-                "Something is wrong..."
-            )
-            raise IncoherentMetadata(msg)
-        return cam_numbers[0]
-
-    @classmethod
-    def _read_last_line_fpga_embedded_32_bits_word(cls, arr, address):
-        return (arr[:, 0, address + 1].astype(np.int32) << 16) | arr[:, 0, address]
-
-    @property
-    # @functools.lru_cache()
-    def camera_temperatures(self):
-        return self._frame_attribute_getter("Camera T (C)")
-
-    @property
-    # @functools.lru_cache()
-    def sensor_temperatures(self):
-        return self._frame_attribute_getter("Sensor T (K)")
-
-    @property
     @functools.lru_cache()
     def frames_attributes(self) -> pd.DataFrame:
-        # l = []
-        for i in range(self.images):
-            self.load_pos(i)
-            # val = self.frame_attributes[key]
-            # l.append(self._frame_attributes_d[i])
+        if len(self._frame_attributes_d) != self.images:
+            for i in range(self.images):
+                self.load_pos(i, self._calibration_index)
         df = pd.DataFrame(self._frame_attributes_d).T
         return df
 
@@ -716,63 +638,6 @@ class IRMovie(object):
             logger.warning(f"attribute '{key}' not found in movie !")
         finally:
             return np.array(values, dtype=float)
-
-    # @cached_property
-    @property
-    @functools.lru_cache()
-    def ir_filter_temperatures(self):
-        return self._frame_attribute_getter("IR Filter T (C)")
-
-    # @cached_property
-    @property
-    @functools.lru_cache()
-    def peltier_powers(self):
-        return self._frame_attribute_getter("Peltier Power (%)")
-
-    # @cached_property
-    @property
-    @functools.lru_cache()
-    def absolute_timestamps_ms(self):
-        return self._frame_attribute_getter("Time (absolute in ms)")
-
-    # @cached_property
-    @property
-    @functools.lru_cache()
-    def absolute_timestamps_str(self):
-        return self._frame_attribute_getter("Time (formatted)")
-
-    @property
-    def absolute_timestamps(self):
-        return [
-            datetime.datetime.fromtimestamp(t / 1e3)
-            for t in self.absolute_timestamps_ms
-        ]
-
-    @property
-    def metadata(self):
-        if self._last_lines is None:
-            self._last_lines = self.data[:, self.last_line_index :, :]
-        return self._last_lines
-
-    @property
-    def camera_type(self):
-        return self._SHAPES.get(self.image_size, "TEST")
-
-    @property
-    def has_metadata(self):
-        return self._last_lines is not None
-
-    @property
-    def roi_line(self):
-        return self.metadata[:, 0]
-
-    @property
-    def survir_data(self):
-        if self._survir_data is None:
-            df = self._extract_survir_data()
-            df = df.swaplevel(0, 1, axis=1).sort_index(axis=1)
-            self._survir_data = df
-        return self._survir_data
 
     def to_thermavip(self, th_instance="Thermavip-1", player_id=0):
         th = init_thermavip(th_instance)

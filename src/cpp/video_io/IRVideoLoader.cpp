@@ -14,7 +14,7 @@ namespace rir
 	static std::recursive_mutex _mutex;
 
 	IRVideoLoader::IRVideoLoader()
-		: m_opticalT(0), m_STEFIT(0), m_globalEmi(1)
+		: m_globalEmi(1)
 	{
 		_mutex.lock();
 		_instances.push_back(this);

@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "@PROJECT_NAME@"
+authors = [
+    {name = "Victor MONCADA", email = "victor.moncada@cea.fr"},
+    {name = "Léo DUBUS", email = "leo.dubus@cea.fr"},
+    {name = "Erwan GRELIER", email = "erwan.grelier@cea.fr"},
+]
+description = "Librir is a C/C++/Python library to manipulate infrared video and building Cognitive Vision/Machine Learning applications."
+requires-python = ">=3.7"
+keywords = ["infrared", "imagery", "fusion"]
+license = {text = "BSD-3-Clause"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+        "numpy",
+        "pandas",
+        "opencv-python==4.5.5.64",
+        "joblib",
+        "future-annotations;python_version<'3.7'",
+]
+dynamic = ["readme"]
+version = "@PROJECT_VERSION_MAJOR@.@PROJECT_VERSION_MINOR@.@PROJECT_VERSION_PATCH@"
+
+[tool.setuptools.dynamic]
+readme = {file = ["README.md"]}
+
+[tool.setuptools.package-data]
+"@PROJECT_NAME@.libs" = ["@SHARED_LIBRARY_SUFFIX_PATTERN@"]

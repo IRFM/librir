@@ -7,7 +7,6 @@ extern "C"
 #include "Log.h"
 #include "IRFileLoader.h"
 #include "h264.h"
-#include "ZFile.h"
 
 using namespace rir;
 
@@ -225,7 +224,7 @@ int flip_camera_calibration(int camera, int flip_rl, int flip_ud)
 	IRVideoLoader *cam = (IRVideoLoader *)c;
 	BaseCalibration *full = cam->calibration();
 	if (!full)
-		return -1;
+		return -2;
 	Size s = cam->imageSize();
 	if (s.width == 640)
 	{
@@ -317,84 +316,6 @@ int support_emissivity(int cam)
 	}
 	else
 		return 0;*/
-}
-
-int set_optical_temperature(int cam, unsigned short temp_C)
-{
-	int ok = support_optical_temperature(cam);
-	if (!ok)
-		return -1;
-
-	void *camera = get_void_ptr(cam);
-	IRVideoLoader *l = static_cast<IRVideoLoader *>(camera);
-	if (!l)
-	{
-		logError("set_optical_temperature: NULL camera");
-		return -1;
-	}
-
-	l->setOpticaltemperature(temp_C);
-	return 0;
-}
-unsigned short get_optical_temperature(int cam)
-{
-	void *camera = get_void_ptr(cam);
-	IRVideoLoader *l = static_cast<IRVideoLoader *>(camera);
-	if (!l)
-	{
-		logError("get_optical_temperature: NULL camera");
-		return -1;
-	}
-	return l->opticalTemperature();
-}
-
-int set_STEFI_temperature(int cam, unsigned short temp_C)
-{
-	int ok = support_optical_temperature(cam);
-	if (!ok)
-		return -1;
-
-	void *camera = get_void_ptr(cam);
-	IRVideoLoader *l = static_cast<IRVideoLoader *>(camera);
-	if (!l)
-	{
-		logError("set_STEFI_temperature: NULL camera");
-		return -1;
-	}
-
-	l->setSTEFItemperature(temp_C);
-	return 0;
-}
-unsigned short get_STEFI_temperature(int cam)
-{
-	void *camera = get_void_ptr(cam);
-	IRVideoLoader *l = static_cast<IRVideoLoader *>(camera);
-	if (!l)
-	{
-		logError("get_STEFI_temperature: NULL camera");
-		return -1;
-	}
-	return l->STEFITemperature();
-}
-
-int support_optical_temperature(int cam)
-{
-	void *camera = get_void_ptr(cam);
-	IRVideoLoader *l = static_cast<IRVideoLoader *>(camera);
-	if (!l || !l->calibration())
-	{
-		return 0;
-	}
-	return (l->calibration()->supportedFeatures() & BaseCalibration::SupportOpticalTemperature) ? 1 : 0;
-	/*if (strcmp(l->typeName(), "IRLoader") != 0)
-	{
-		return 1;
-	}
-	IRLoader* ir = static_cast<IRLoader*>(l);
-	std::string id = ir->identifier();
-	if (id.find("CEA") != std::string::npos)
-		return 0;
-	return 1;*/
 }
 
 int load_image(int cam, int pos, int calibration, unsigned short *data)
@@ -908,28 +829,6 @@ int get_table(int cam, const char *name, float *dst, int *dst_size)
 
 	std::copy(table.begin(), table.end(), dst);
 	*dst_size = (int)table.size();
-	return 0;
-}
-
-int open_video_write(const char *filename, int width, int height, int rate, int method, int clevel)
-{
-	return set_void_ptr(z_open_file_write(filename, width, height, rate, method, clevel));
-}
-int image_write(int writter, unsigned short *img, int64_t time)
-{
-	void *w = get_void_ptr(writter);
-	if (w)
-		return z_write_image(w, img, time);
-	return -1;
-}
-int64_t close_video(int writter)
-{
-	void *w = get_void_ptr(writter);
-	if (w)
-	{
-		return z_close_file(w);
-		rm_void_ptr(writter);
-	}
 	return 0;
 }
 

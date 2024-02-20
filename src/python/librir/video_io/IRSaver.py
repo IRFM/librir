@@ -5,8 +5,7 @@ Created on Mon Jan 13 17:53:46 2020
 @author: VM213788
 """
 
-from .. import low_level
-from ..low_level.misc import *
+import numpy as np
 from .rir_video_io import (
     h264_open_file,
     h264_close_file,
@@ -38,6 +37,12 @@ class IRSaver(object):
     This class should not be used to mix lossy and lossless frames within the same video file.
     """
 
+    handle: int = 0
+    width: int = 0
+    height: int = 0
+    global_attrs = {}
+    params = {}
+
     def __init__(
         self, outfile=None, width=None, height=None, lossy_height=None, clevel=0
     ):
@@ -45,11 +50,6 @@ class IRSaver(object):
         Constructor.
         If outfile, width and height are not NULL, open the file.
         """
-        self.saver = 0
-        self.width = 0
-        self.height = 0
-        self.global_attrs = {}
-        self.params = {}
 
         if outfile is not None and width is not None and height is not None:
             self.filename = outfile
@@ -72,7 +72,7 @@ class IRSaver(object):
         """
         Returns true if the output file is open
         """
-        return self.saver > 0
+        return self.handle > 0
 
     def close(self):
         """
@@ -80,9 +80,9 @@ class IRSaver(object):
         Note that you MUST close the file after writting frames and before using it, as it will write
         the file trailer (image timestamps and attributes).
         """
-        if self.saver > 0:
-            h264_close_file(self.saver)
-            self.saver = 0
+        if self.handle > 0:
+            h264_close_file(self.handle)
+            self.handle = 0
 
     def open(self, outfile, width, height, lossy_height=None):
         """
@@ -95,7 +95,7 @@ class IRSaver(object):
         default, lossy_height is equal to height.
         """
         self.close()
-        self.saver = h264_open_file(outfile, width, height, lossy_height)
+        self.handle = h264_open_file(outfile, width, height, lossy_height)
         self.width = width
         self.height = height
         self.lossy_height = lossy_height
@@ -103,10 +103,10 @@ class IRSaver(object):
 
         # set attributes and parameters (if any)
         if len(self.global_attrs) > 0:
-            h264_set_global_attributes(self.saver, self.global_attrs)
+            h264_set_global_attributes(self.handle, self.global_attrs)
         if len(self.params) > 0:
             for k in self.params:
-                h264_set_parameter(self.saver, k, self.params[k])
+                h264_set_parameter(self.handle, k, self.params[k])
         self.global_attrs = {}
         self.params = {}
 
@@ -126,7 +126,7 @@ class IRSaver(object):
                 - runningAverage: running average length as described in [], used for lossy compression. Default to 32.
         """
         if self.is_open():
-            h264_set_parameter(self.saver, param, str(value))
+            h264_set_parameter(self.handle, param, str(value))
         else:
             self.params[param] = str(value)
 
@@ -136,7 +136,7 @@ class IRSaver(object):
         Note that only the pairs (key,value) convertible to a string are stored.
         """
         if self.is_open():
-            h264_set_global_attributes(self.saver, attributes)
+            h264_set_global_attributes(self.handle, attributes)
         else:
             self.global_attrs = attributes
 
@@ -151,9 +151,9 @@ class IRSaver(object):
         ):
             raise RuntimeError("wrong image dimension")
 
-        h264_add_image_lossless(self.saver, image, timestamp, attributes)
+        h264_add_image_lossless(self.handle, image, timestamp, attributes)
 
-    def add_image_lossy(self, image_DL, timestamp, attributes=dict()):
+    def add_image_lossy(self, image_DL: np.ndarray, timestamp, attributes=dict()):
         """
         Add an image compressed in a lossy way.
         """
@@ -166,9 +166,9 @@ class IRSaver(object):
         # if len(image_T.shape) != 2 or image_T.shape[1] != self.width or image_T.shape[0] != self.height:
         #    raise RuntimeError("wrong T image dimension")
 
-        h264_add_image_lossy(self.saver, image_DL, timestamp, attributes)
+        h264_add_image_lossy(self.handle, image_DL, timestamp, attributes)
 
-    def add_loss(self, image):
+    def add_loss(self, image: np.ndarray):
         """
         Add loss to image (without writing it) and returns the result
         """
@@ -181,10 +181,10 @@ class IRSaver(object):
         # if len(image_T.shape) != 2 or image_T.shape[1] != self.width or image_T.shape[0] != self.height:
         #    raise RuntimeError("wrong T image dimension")
 
-        return h264_add_loss(self.saver, image)
+        return h264_add_loss(self.handle, image)
 
     def get_low_errors(self):
-        return h264_get_low_errors(self.saver)
+        return h264_get_low_errors(self.handle)
 
     def get_high_errors(self):
-        return h264_get_high_errors(self.saver)
+        return h264_get_high_errors(self.handle)

@@ -1,5 +1,6 @@
 [![Build on Linux](https://github.com/IRFM/librir/actions/workflows/build-linux.yml/badge.svg)](https://github.com/IRFM/librir/actions/workflows/build-linux.yml)
 [![Build on Windows](https://github.com/IRFM/librir/actions/workflows/build-windows.yml/badge.svg?branch=main)](https://github.com/IRFM/librir/actions/workflows/build-windows.yml)
+[![codecov](https://codecov.io/gh/IRFM/librir/graph/badge.svg?token=33OAGARS5K)](https://codecov.io/gh/IRFM/librir)
 
 # Librir
 

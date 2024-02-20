@@ -23,8 +23,6 @@ namespace rir
 		{
 			SupportGlobalEmissivity = 0x01,
 			SupportPixelEmissivity = 0x02,
-			SupportOpticalTemperature = 0x04,
-			SupportSTEFITemperature = 0x08 // Only for WEST cameras
 		};
 
 		virtual ~BaseCalibration() {}
@@ -52,23 +50,13 @@ namespace rir
 		/**Returns the list of calibration files required for this calibration*/
 		virtual StringList calibrationFiles() const = 0;
 
-		/**Convert Digital Level value and Integration time to temperature (�C) for given integration time*/
+		/**Convert Digital Level value and Integration time to temperature (°C) for given integration time*/
 		virtual unsigned rawDLToTemp(unsigned DL, int ti) const = 0;
-		/**Convert Digital Level value and Integration time to temperature (�C) for given integration time*/
+		/**Convert Digital Level value and Integration time to temperature (°C) for given integration time*/
 		virtual float rawDLToTempF(unsigned DL, int ti) const = 0;
-		/**Convert temperature (�C) to Digital Level for given Integration time*/
+		/**Convert temperature (°C) to Digital Level for given Integration time*/
 		virtual unsigned tempToRawDL(unsigned temp, int ti) const = 0;
 		virtual unsigned tempToRawDLF(float temp, int ti) const = 0;
-
-		/**Returns optics temperature*/
-		virtual unsigned short opticalTemperature() const = 0;
-		/**Set optics temperature (B30 temperature)*/
-		virtual void setOpticalTemperature(unsigned short) = 0;
-
-		/**Returns STEFI temperature*/
-		virtual unsigned short STEFITemperature() const = 0;
-		/**Set STEFI temperature */
-		virtual void setSTEFITemperature(unsigned short) = 0;
 
 		/**
 		 * Returns the names of internal used tables (floating point matrices) used for calibration
@@ -77,7 +65,7 @@ namespace rir
 		virtual std::pair<const float *, size_t> getTable(const char *name) const { return {nullptr, 0}; }
 
 		/**
-		Apply inverted calibration (from T�C to DL).
+		Apply inverted calibration (from T°C to DL).
 		IT is the image of integration time (can be NULL for some implementations)
 		*/
 		virtual bool applyInvert(const unsigned short *T, const unsigned char *IT, unsigned int size, unsigned short *out) const = 0;
@@ -102,7 +90,7 @@ namespace rir
 		@param saturate if not NULL, set to true if the calibration saturated, false otherwise
 		Returns true on success, false otherwise.
 
-		This function performs a floating point calibration (precision < 1�C) and is slightly slower than #apply() function.
+		This function performs a floating point calibration (precision < 1°C) and is slightly slower than #apply() function.
 		*/
 		virtual bool applyF(const unsigned short *DL, const std::vector<float> &inv_emissivities, unsigned int size, float *out, bool *saturate = NULL) const = 0;
 	};

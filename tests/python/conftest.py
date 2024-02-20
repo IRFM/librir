@@ -3,6 +3,8 @@ import struct
 
 import sys
 from pathlib import Path
+from typing import List
+from librir.tools import FileAttributes
 
 import numpy as np
 import pytest
@@ -19,6 +21,16 @@ base = Path(thismodule.__file__).parent
 IMAGES = 10
 N_TIS = 7
 DL_MAX_VALUE = 8192
+
+
+def add_noise(image, mean=0, var=0.5):
+    """Add gaussian noise to input image"""
+    row, col = image.shape
+    sigma = var**0.5
+    gauss = np.random.normal(mean, sigma, (row, col))
+    gauss = gauss.reshape(row, col)
+    noisy = image + gauss
+    return np.array(noisy, dtype=np.uint16)
 
 
 def generate_mock_movie_data_uniform(*shape):
@@ -153,27 +165,22 @@ def filename(movie: IRMovie):
 
 
 @pytest.fixture(scope="session")
+def wrong_filename():
+    return "not_existing_filename"
+
+
+@pytest.fixture(scope="session")
 def timestamps(array):
     return np.arange(len(array), dtype=float) * 2
 
 
 @pytest.fixture(scope="session")
-def movie_with_firmware_date(valid_2D_array):
-    # 23-01-2023
-    day = 23
-    month = 1
-    year = 2023
-    firmware_date = np.uint32(0)
-
-    firmware_date = (day << 24) | (month << 16) | year
-
-    # struct.pack("I", firmware_date)
-    r = bytearray(valid_2D_array.tobytes("C"))
-    v = struct.pack("I", firmware_date)
-    offset = (valid_2D_array.shape[0] - 3) * valid_2D_array.shape[1] * 2
-    r[(offset + 254 * 2) : (offset + 256 * 2)] = v
-
-    arr = np.frombuffer(bytes(r), dtype=np.uint16).reshape(valid_2D_array.shape)
-    arr[-3, 254:256]
-    with IRMovie.from_numpy_array(arr) as mov:
-        yield mov
+def images() -> List[np.ndarray]:
+    # generate 100 noisy images with an average background value going from 10 to 110 by step of 1
+    images = []
+    background = np.random.rand(512, 640) * 1000
+    for i in range(10, 110, 1):
+        img = background + np.ones((512, 640)) * i
+        img = add_noise(img, 0, 0.5)
+        images.append(img)
+    return images

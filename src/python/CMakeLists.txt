@@ -1,0 +1,72 @@
+
+
+
+
+
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}
+	DESTINATION ${CMAKE_INSTALL_PREFIX}/python
+	FILES_MATCHING PATTERN "*.py"
+)
+
+install(DIRECTORY $${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}/LICENSES 
+		DESTINATION ${CMAKE_INSTALL_PREFIX}/python/
+		FILES_MATCHING PATTERN "*.txt"
+)
+
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}/LICENSE 
+		DESTINATION ${CMAKE_INSTALL_PREFIX}/python/${PROJECT_NAME}
+)
+
+# install(TARGETS ${LIBRIR_TARGETS} RUNTIME 
+# 		DESTINATION ${CMAKE_INSTALL_PREFIX}/python/${PROJECT_NAME}/libs
+# )
+install(CODE "set(FFMPEG_LIB_DIR \"${FFMPEG_LIB_DIR}\")")
+install(CODE "set(FFMPEG_INCLUDE_DIR \"${FFMPEG_INCLUDE_DIR}\")")
+install(CODE "set(FFMPEG_LIBS \"${FFMPEG_LIBS}\")")
+install(CODE "set(ADDITIONAL_FFMPEG_LIBS \"${ADDITIONAL_FFMPEG_LIBS}\")")
+install(CODE "set(FFMPEG_PREFIX \"${FFMPEG_PREFIX}\")")
+install(CODE "set(FFMPEG_SUFFIX \"${FFMPEG_SUFFIX}\")")
+install(CODE "set(COMPLETE_FFMPEG_LIBS \"${COMPLETE_FFMPEG_LIBS}\")")
+install(CODE "set(FFMPEG_INSTALL_DIR \"${CMAKE_INSTALL_PREFIX}/python/${PROJECT_NAME}/libs\")")
+install(SCRIPT ../cpp/video_io/InstallFfmpeg.cmake)
+
+install(IMPORTED_RUNTIME_ARTIFACTS ${LIBRIR_TARGETS} DESTINATION ${CMAKE_INSTALL_PREFIX}/python/${PROJECT_NAME}/libs)
+
+if(MSVC OR WIN32)
+set(SHARED_LIBRARY_SUFFIX_PATTERN "*.dll")
+else()
+set(SHARED_LIBRARY_SUFFIX_PATTERN "*.so*")
+endif()
+configure_file(pyproject.toml.in pyproject.toml @ONLY)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pyproject.toml ${PROJECT_SOURCE_DIR}/README.md
+		DESTINATION ${CMAKE_INSTALL_PREFIX}/python
+)
+
+# setting version in __init__.py
+
+function(cat IN_FILE OUT_FILE)
+  file(READ ${IN_FILE} CONTENTS)
+  file(APPEND ${OUT_FILE} "${CONTENTS}")
+endfunction()
+
+set(INIT_PY_FILES)
+file(REMOVE __init__.py.in)
+file(WRITE __init__.py.in "")
+
+cat( ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}/__init__.py __init__.py.in)
+file(APPEND __init__.py.in "\n__version__ = \"@PROJECT_VERSION_MAJOR@.@PROJECT_VERSION_MINOR@.@PROJECT_VERSION_PATCH@\"")
+
+configure_file(__init__.py.in __init__.py @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/__init__.py DESTINATION ${CMAKE_INSTALL_PREFIX}/python/${PROJECT_NAME}/)
+FILE(REMOVE __init__.py.in)
+
+# for development purposes
+install(IMPORTED_RUNTIME_ARTIFACTS ${LIBRIR_TARGETS} 
+	DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}/libs
+)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pyproject.toml ${PROJECT_SOURCE_DIR}/README.md
+		DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
+)
+install(CODE "set(FFMPEG_INSTALL_DIR \"${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}/libs\")")
+install(SCRIPT ../cpp/video_io/InstallFfmpeg.cmake) 

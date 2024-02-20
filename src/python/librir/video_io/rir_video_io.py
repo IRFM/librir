@@ -1,8 +1,13 @@
 import ctypes as ct
+import logging
 
 import numpy as np
 
-from ..low_level.misc import _video_io, toString, toArray, toBytes
+from ..low_level.misc import _video_io, toArray, toBytes, toString
+
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 FILE_FORMAT_PCR = 1
@@ -15,7 +20,8 @@ FILE_FORMAT_H264 = 5
 def open_camera_file(filename):
     """
     Open a video file.
-    Returns an integer value representing the camera. This value can be used by the functions:
+    Returns an integer value representing the camera. This value can be used by the
+    functions:
     - close_camera
     - get_camera_identifier
     - get_camera_pulse
@@ -208,7 +214,18 @@ def set_emissivity(camera, emissivity_array):
 
 
 def get_emissivity(camera):
-    """Returns the emissivity map for given camera"""
+    """
+    Returns the emissivity map for given camera.
+
+    Args:
+        camera (_type_): _description_
+
+    Raises:
+        RuntimeError: _description_
+
+    Returns:
+        _type_: _description_
+    """
     size = get_image_size(camera)
     pixels = np.zeros(size, dtype=np.float32)
     _video_io.get_emissivity.argtypes = [ct.c_int, ct.POINTER(ct.c_float), ct.c_int]
@@ -221,65 +238,37 @@ def get_emissivity(camera):
 
 
 def support_emissivity(camera):
-    """Returns True if given camera supports setting a custom emissivity value, False otherwise"""
+    """
+    Returns True if given camera supports setting a custom emissivity value, False
+    otherwise
+
+    Args:
+        camera (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     res = _video_io.support_emissivity(int(camera))
     if res == 1:
         return True
     return False
 
 
-def camera_saturate(camera):
+def camera_saturate(movie_handle):
     """
-    Returns true if setting the emissivity saturates the temperature calibration for the last call
-    to load_image, False otherwise.
+    Returns true if setting the emissivity saturates the temperature
+    calibration for the last call to load_image, False otherwise.
+
+    Args:
+        movie_handle (int): movie handle
+
+    Returns:
+        bool: is the image saturated ?
     """
-    res = _video_io.camera_saturate(int(camera))
+    res = _video_io.camera_saturate(int(movie_handle))
     if res == 1:
         return True
     return False
-
-
-def set_optical_temperature(camera, temperature):
-    """
-    Set the optical temperature for given camera in degree Celsius.
-    This should be the temperature of the B30.
-    Not all cameras supoort this feature. Use support_optical_temperature() function to test it.
-    """
-    _video_io.set_optical_temperature.argtypes = [ct.c_int, ct.c_uint16]
-    res = _video_io.set_optical_temperature(int(camera), np.ushort(temperature))
-    if res < 0:
-        raise RuntimeError("An error occured while calling 'set_optical_temperature'")
-
-
-def get_optical_temperature(camera):
-    """Returns the optical temperature degree Celsius for given camera"""
-    res = _video_io.get_optical_temperature(camera)
-    return res
-
-
-def set_STEFI_temperature(camera, temperature):
-    """
-    Set the STEFI temperature for given camera in degree Celsius.
-    Not all cameras supoort this feature. Use support_optical_temperature() function to test it.
-    """
-    _video_io.set_STEFI_temperature.argtypes = [ct.c_int, ct.c_uint16]
-    res = _video_io.set_STEFI_temperature(int(camera), np.ushort(temperature))
-    if res < 0:
-        raise RuntimeError("An error occured while calling 'set_STEFI_temperature'")
-
-
-def get_STEFI_temperature(camera):
-    """Returns the STEFI temperature degree Celsius for given camera"""
-    res = _video_io.get_STEFI_temperature(camera)
-    return res
-
-
-def support_optical_temperature(camera):
-    """Returns True if given camera supports custom optical temperature; False otherwise"""
-    res = _video_io.support_optical_temperature(camera)
-    if res == 0:
-        return False
-    return True
 
 
 def enable_bad_pixels(camera, enable=True):
@@ -312,11 +301,13 @@ def flip_camera_calibration(camera, flip_rl, flip_ud):
     For given camera, flip the calibration files
     """
     ret = _video_io.flip_camera_calibration(int(camera), int(flip_rl), int(flip_ud))
-    if ret < 0:
-        raise RuntimeError("An error occured while calling 'flip_camera_calibration'")
+    if ret == -1:
+        raise RuntimeError("camera is a NULL pointer")
+    if ret == -2:
+        raise RuntimeError("There is no calibration in movie")
 
 
-def calibration_files(camera):
+def calibration_files(movie_handle):
     """
     Returns the calibration file names for given camera.
     """
@@ -324,14 +315,14 @@ def calibration_files(camera):
     dstSize = np.zeros((1), dtype="i")
     dstSize[0] = 100
     ret = _video_io.calibration_files(
-        camera,
+        movie_handle,
         dst.ctypes.data_as(ct.POINTER(ct.c_char)),
         dstSize.ctypes.data_as(ct.POINTER(ct.c_int)),
     )
     if ret == -2:
         dst = np.zeros((dstSize[0]), dtype="c")
         ret = _video_io.calibration_files(
-            camera,
+            movie_handle,
             dst.ctypes.data_as(ct.POINTER(ct.c_char)),
             dstSize.ctypes.data_as(ct.POINTER(ct.c_int)),
         )
@@ -623,12 +614,12 @@ def h264_add_loss(saver, image):
     return image
 
 
-def h264_get_low_errors(saver):
+def h264_get_low_errors(saver: int):
     """
     Returns the low error vector for last saved movie
 
     """
-    _video_io.h264_get_low_erros.argtypes = [
+    _video_io.h264_get_low_errors.argtypes = [
         ct.c_int,
         ct.POINTER(ct.c_uint16),
         ct.POINTER(ct.c_int),
@@ -658,7 +649,7 @@ def h264_get_high_errors(saver):
     Returns the high error vector for last saved movie
 
     """
-    _video_io.h264_get_high_erros.argtypes = [
+    _video_io.h264_get_high_errors.argtypes = [
         ct.c_int,
         ct.POINTER(ct.c_uint16),
         ct.POINTER(ct.c_int),
@@ -721,57 +712,6 @@ def correct_PCR_file(filename, width, height, frequency):
     # res = _video_io.correct_PCR_file(filename.encode(),int(width), int(height), int(frequency))
     # if res < 0:
     #     raise RuntimeError("'correct_PCR_file': unknown error")
-
-
-def bzstd_open_file(filename, width, height, rate, method, clevel):
-    """
-    Open output video file compressed using zstd and blosc, with given image width and height, frame rate, comrpession method and compression level.
-        method == 1 means ZSTD standard compression (clevel goes from 0 to 22),
-        method == 2 means blosc+ZSTD standard compression (clevel goes from 1 to 10),
-        method == 3 means blosc+ZSTD advanced compression (clevel goes from 1 to 10).
-    Returns file identifier on success.
-    The bzstd format is provided for tests only and should not be used (prefer the h264 format instead)
-    """
-    _video_io.open_video_write.argtypes = [
-        ct.c_char_p,
-        ct.c_int,
-        ct.c_int,
-        ct.c_int,
-        ct.c_int,
-        ct.c_int,
-    ]
-    tmp = _video_io.open_video_write(
-        str(filename).encode("ascii"),
-        int(width),
-        int(height),
-        int(rate),
-        int(method),
-        int(clevel),
-    )
-    if tmp < 0:
-        raise RuntimeError("An error occured while calling 'open_video_write'")
-    return tmp
-
-
-def bzstd_close_file(saver):
-    """
-    Close video saver
-    """
-    _video_io.close_video(saver)
-
-
-def bzstd_add_image(saver, image, timestamp):
-    """
-    Add and compress (lossless) an image to the bzstd file.
-    """
-    _video_io.image_write.argtypes = [ct.c_int, ct.POINTER(ct.c_uint16), ct.c_longlong]
-    timestamp = np.int64(timestamp)
-    image = np.array(image, dtype="H")
-    tmp = _video_io.image_write(
-        saver, image.ctypes.data_as(ct.POINTER(ct.c_uint16)), timestamp
-    )
-    if tmp < 0:
-        raise RuntimeError("An error occured while calling 'h264_add_image_lossless'")
 
 
 def load_motion_correction_file(cam, filename):

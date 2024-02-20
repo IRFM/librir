@@ -1,4 +1,5 @@
 import random
+from librir.video_io.utils import is_ir_file_corrupted, split_rush
 
 import numpy as np
 import numpy.testing as npt
@@ -8,26 +9,29 @@ from librir.video_io.IRMovie import CalibrationNotFound
 from librir.video_io.rir_video_io import FILE_FORMAT_H264
 
 
-@pytest.mark.instanstiation
+@pytest.mark.instantiation
 def test_IRMovie_with_filename_as_input(filename):
     mov = IRMovie.from_filename(filename)
     assert type(mov) is IRMovie
+    with pytest.raises(RuntimeError):
+        IRMovie.from_filename("")
+    assert mov.filename == filename
 
 
-@pytest.mark.instanstiation
+@pytest.mark.instantiation
 def test_IRMovie_instantiation_with_2D_numpy_array(valid_2D_array):
     mov = IRMovie.from_numpy_array(valid_2D_array)
     expected = valid_2D_array[np.newaxis, :]
     npt.assert_array_equal(mov.data, expected)
 
 
-@pytest.mark.instanstiation
+@pytest.mark.instantiation
 def test_IRMovie_instantiation_with_3D_numpy_array(valid_3d_array):
     mov = IRMovie.from_numpy_array(valid_3d_array)
     npt.assert_array_equal(mov.data, valid_3d_array)
 
 
-@pytest.mark.instanstiation
+@pytest.mark.instantiation
 def test_IRMovie_instantiation_with_bad_numpy_array(bad_array):
     with pytest.raises(ValueError) as e:
         mov = IRMovie.from_numpy_array(bad_array)
@@ -113,7 +117,7 @@ def movie_as_bytes(filename) -> bytes:
     return data
 
 
-@pytest.mark.instanstiation
+@pytest.mark.instantiation
 def test_from_filename(filename):
     mov = IRMovie.from_filename(filename)
     assert mov.filename == filename
@@ -129,26 +133,45 @@ def test_from_bytes_with_timestamps(movie_as_bytes, timestamps):
 def test_close(array):
     mov = IRMovie.from_numpy_array(array)
     del mov
-
-
-def test_payload_generator(movie: IRMovie):
-    npt.assert_array_equal(movie.payload[0], next(movie.payload_generator))
+    mov = IRMovie.from_numpy_array(array, attrs={"name": "toto"})
+    assert mov.attributes["name"]
+    del mov
 
 
 def test_video_file_format(movie: IRMovie):
     assert movie.video_file_format == FILE_FORMAT_H264
 
 
-# def test_last_line()
-def test_firmware_date_pixel(movie_with_firmware_date: IRMovie):
-    movie_with_firmware_date.load_pos(0)
-    assert movie_with_firmware_date.frame_attributes["Firmware Date"] == "23-1-2023"
+def test_split_rush(movie: IRMovie):
+    total = movie.images
+    steps = 2
+    filenames = split_rush(movie.filename, step=steps)
+    assert len(filenames) == (total // steps)
 
-    # firmware_date = movie_with_firmware_date.metadata[0, 0, 254:256].tobytes()
-    # firmware_date = np.frombuffer(firmware_date, dtype=np.uint32)[0]
-    # day = (firmware_date >> 24) & 0xFF
-    # assert day == 23
-    # month = (firmware_date >> 16) & 0xFF
-    # assert month == 1
-    # year = (firmware_date) & 0xFFFF
-    # assert year == 2023
+    for f in filenames:
+        assert not is_ir_file_corrupted(f)
+
+
+def test_is_ir_file_corrupted(filename):
+    assert not is_ir_file_corrupted(filename)
+    assert is_ir_file_corrupted("inexistent_filename")
+
+
+def test_movie_getitem(movie: IRMovie):
+    img = movie[0]
+
+
+def test_frames_attributes(movie: IRMovie):
+    movie.frame_attributes
+    movie.frames_attributes
+
+
+def test_flip_camera_calibration_when_no_calibration(movie: IRMovie):
+    with pytest.raises(RuntimeError):
+        movie.flip_calibration(True, False)
+    with pytest.raises(RuntimeError):
+        movie.flip_calibration(False, False)
+    with pytest.raises(RuntimeError):
+        movie.flip_calibration(False, True)
+    with pytest.raises(RuntimeError):
+        movie.flip_calibration(True, True)

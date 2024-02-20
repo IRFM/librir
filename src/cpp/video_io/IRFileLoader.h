@@ -61,6 +61,9 @@ namespace rir
 	A IR video reader that can read several IR video formats: PCR files, a BIN (WEST format) files, PCR encapsulated into a BIN file, H264 video files, or any additional formats
 	defined using the IRVideoLoaderBuilder mechanism.
 	*/
+	using time_point = std::chrono::time_point<std::chrono::system_clock>;
+	IO_EXPORT std::string tostring_binary32(unsigned value, unsigned size);
+	IO_EXPORT std::string serializeTimePoint(const time_point &time, const std::string &format);
 	class IO_EXPORT IRFileLoader : public IRVideoLoader
 	{
 	public:
@@ -81,7 +84,9 @@ namespace rir
 		bool isHCC() const;
 		bool hasTimes() const;
 		bool hasCalibration() const;
+		bool is_in_T() const;
 		virtual BaseCalibration *calibration() const;
+		virtual bool setCalibration(BaseCalibration *calibration);
 
 		virtual bool supportBadPixels() const { return true; }
 		virtual void setBadPixelsEnabled(bool enable);
@@ -110,8 +115,10 @@ namespace rir
 		void removeBadPixels(unsigned short *img, int w, int h);
 		void removeMotion(unsigned short *img, int w, int h, int pos);
 
+		// protected:
+		std::map<std::string, std::string> attributes;
+
 	private:
-		std::map<std::string, std::string> extractInfos(const unsigned short *img);
 		class PrivateData;
 		PrivateData *m_data;
 	};

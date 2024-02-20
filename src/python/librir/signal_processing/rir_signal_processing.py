@@ -5,6 +5,20 @@ import numpy as np
 
 from ..low_level.misc import _signal_processing, toCharP
 
+_DTYPES = {
+    np.dtype(np.bool_): "?",
+    np.dtype(np.int8): "b",
+    np.dtype(np.uint8): "B",
+    np.dtype(np.int16): "h",
+    np.dtype(np.uint16): "H",
+    np.dtype(np.int32): "i",
+    np.dtype(np.uint32): "I",
+    np.dtype(np.int64): "l",
+    np.dtype(np.int64): "L",
+    np.dtype(np.float32): "f",
+    np.dtype(np.float64): "d",
+}
+
 
 def translate(image, dx, dy, strategy=str(), background=None):
     """
@@ -48,141 +62,20 @@ def translate(image, dx, dy, strategy=str(), background=None):
     _tr[0] = dx
     _tr[1] = dy
     back = _back.ctypes.data_as(ct.c_void_p)
-
-    if image.dtype == np.bool_:
-        r = _signal_processing.translate(
-            ord("?"),
-            src,
-            dst,
-            img.shape[1],
-            img.shape[0],
-            _tr[0],
-            _tr[1],
-            back,
-            strategy,
-        )
-    elif image.dtype == np.int8:
-        r = _signal_processing.translate(
-            ord("b"),
-            src,
-            dst,
-            img.shape[1],
-            img.shape[0],
-            _tr[0],
-            _tr[1],
-            back,
-            strategy,
-        )
-    elif image.dtype == np.uint8:
-        r = _signal_processing.translate(
-            ord("B"),
-            src,
-            dst,
-            img.shape[1],
-            img.shape[0],
-            _tr[0],
-            _tr[1],
-            back,
-            strategy,
-        )
-    elif image.dtype == np.int16:
-        r = _signal_processing.translate(
-            ord("h"),
-            src,
-            dst,
-            img.shape[1],
-            img.shape[0],
-            _tr[0],
-            _tr[1],
-            back,
-            strategy,
-        )
-    elif image.dtype == np.uint16:
-        r = _signal_processing.translate(
-            ord("H"),
-            src,
-            dst,
-            img.shape[1],
-            img.shape[0],
-            _tr[0],
-            _tr[1],
-            back,
-            strategy,
-        )
-    elif image.dtype == np.int32:
-        r = _signal_processing.translate(
-            ord("i"),
-            src,
-            dst,
-            img.shape[1],
-            img.shape[0],
-            _tr[0],
-            _tr[1],
-            back,
-            strategy,
-        )
-    elif image.dtype == np.uint32:
-        r = _signal_processing.translate(
-            ord("I"),
-            src,
-            dst,
-            img.shape[1],
-            img.shape[0],
-            _tr[0],
-            _tr[1],
-            back,
-            strategy,
-        )
-    elif image.dtype == np.int64:
-        r = _signal_processing.translate(
-            ord("l"),
-            src,
-            dst,
-            img.shape[1],
-            img.shape[0],
-            _tr[0],
-            _tr[1],
-            back,
-            strategy,
-        )
-    elif image.dtype == np.int64:
-        r = _signal_processing.translate(
-            ord("L"),
-            src,
-            dst,
-            img.shape[1],
-            img.shape[0],
-            _tr[0],
-            _tr[1],
-            back,
-            strategy,
-        )
-    elif image.dtype == np.float32:
-        r = _signal_processing.translate(
-            ord("f"),
-            src,
-            dst,
-            img.shape[1],
-            img.shape[0],
-            _tr[0],
-            _tr[1],
-            back,
-            strategy,
-        )
-    elif image.dtype == np.float64:
-        r = _signal_processing.translate(
-            ord("d"),
-            src,
-            dst,
-            img.shape[1],
-            img.shape[0],
-            _tr[0],
-            _tr[1],
-            back,
-            strategy,
-        )
-    else:
+    _dtype = _DTYPES.get(image.dtype, None)
+    if _dtype is None:
         raise RuntimeError("An error occured while calling 'translate'")
+    r = _signal_processing.translate(
+        ord(_dtype),
+        src,
+        dst,
+        img.shape[1],
+        img.shape[0],
+        _tr[0],
+        _tr[1],
+        back,
+        strategy,
+    )
 
     if r < 0:
         raise RuntimeError("An error occured while calling 'translate'")
@@ -487,7 +380,7 @@ def jpegls_decode(buff, width, height):
     return image
 
 
-def label_image(image, background_value=0):
+def label_image(image: np.ndarray, background_value=0):
     """
     Closed Component Labelling algorithm
     Returns a tuple (image,areas, first_points), each index of the list corresponding
@@ -526,52 +419,12 @@ def label_image(image, background_value=0):
     dareas = areas.ctypes.data_as(ct.POINTER(ct.c_int))
     dxy = xy.ctypes.data_as(ct.POINTER(ct.c_double))
 
-    if image.dtype == np.bool_:
-        r = _signal_processing.label_image(
-            ord("?"), src, dst, img.shape[1], img.shape[0], back, dxy, dareas
-        )
-    elif image.dtype == np.int8:
-        r = _signal_processing.label_image(
-            ord("b"), src, dst, img.shape[1], img.shape[0], back, dxy, dareas
-        )
-    elif image.dtype == np.uint8:
-        r = _signal_processing.label_image(
-            ord("B"), src, dst, img.shape[1], img.shape[0], back, dxy, dareas
-        )
-    elif image.dtype == np.int16:
-        r = _signal_processing.label_image(
-            ord("h"), src, dst, img.shape[1], img.shape[0], back, dxy, dareas
-        )
-    elif image.dtype == np.uint16:
-        r = _signal_processing.label_image(
-            ord("H"), src, dst, img.shape[1], img.shape[0], back, dxy, dareas
-        )
-    elif image.dtype == np.int32:
-        r = _signal_processing.label_image(
-            ord("i"), src, dst, img.shape[1], img.shape[0], back, dxy, dareas
-        )
-    elif image.dtype == np.uint32:
-        r = _signal_processing.label_image(
-            ord("I"), src, dst, img.shape[1], img.shape[0], back, dxy, dareas
-        )
-    elif image.dtype == np.int64:
-        r = _signal_processing.label_image(
-            ord("l"), src, dst, img.shape[1], img.shape[0], back, dxy, dareas
-        )
-    elif image.dtype == np.int64:
-        r = _signal_processing.label_image(
-            ord("L"), src, dst, img.shape[1], img.shape[0], back, dxy, dareas
-        )
-    elif image.dtype == np.float32:
-        r = _signal_processing.label_image(
-            ord("f"), src, dst, img.shape[1], img.shape[0], back, dxy, dareas
-        )
-    elif image.dtype == np.float64:
-        r = _signal_processing.label_image(
-            ord("d"), src, dst, img.shape[1], img.shape[0], back, dxy, dareas
-        )
-    else:
+    _dtype = _DTYPES.get(image.dtype, None)
+    if _dtype is None:
         raise RuntimeError("An error occured while calling 'label_image'")
+    r = _signal_processing.label_image(
+        ord(_dtype), src, dst, img.shape[1], img.shape[0], back, dxy, dareas
+    )
 
     if r < 0:
         raise RuntimeError("An error occured while calling 'label_image'")
@@ -613,52 +466,12 @@ def keep_largest_area(image, background_value=0, foreground_value=1):
     dst = res.ctypes.data_as(ct.POINTER(ct.c_int))
     back = background.ctypes.data_as(ct.c_void_p)
 
-    if image.dtype == np.bool_:
-        r = _signal_processing.keep_largest_area(
-            ord("?"), src, dst, img.shape[1], img.shape[0], back, foreground_value
-        )
-    elif image.dtype == np.int8:
-        r = _signal_processing.keep_largest_area(
-            ord("b"), src, dst, img.shape[1], img.shape[0], back, foreground_value
-        )
-    elif image.dtype == np.uint8:
-        r = _signal_processing.keep_largest_area(
-            ord("B"), src, dst, img.shape[1], img.shape[0], back, foreground_value
-        )
-    elif image.dtype == np.int16:
-        r = _signal_processing.keep_largest_area(
-            ord("h"), src, dst, img.shape[1], img.shape[0], back, foreground_value
-        )
-    elif image.dtype == np.uint16:
-        r = _signal_processing.keep_largest_area(
-            ord("H"), src, dst, img.shape[1], img.shape[0], back, foreground_value
-        )
-    elif image.dtype == np.int32:
-        r = _signal_processing.keep_largest_area(
-            ord("i"), src, dst, img.shape[1], img.shape[0], back, foreground_value
-        )
-    elif image.dtype == np.uint32:
-        r = _signal_processing.keep_largest_area(
-            ord("I"), src, dst, img.shape[1], img.shape[0], back, foreground_value
-        )
-    elif image.dtype == np.int64:
-        r = _signal_processing.keep_largest_area(
-            ord("l"), src, dst, img.shape[1], img.shape[0], back, foreground_value
-        )
-    elif image.dtype == np.int64:
-        r = _signal_processing.keep_largest_area(
-            ord("L"), src, dst, img.shape[1], img.shape[0], back, foreground_value
-        )
-    elif image.dtype == np.float32:
-        r = _signal_processing.keep_largest_area(
-            ord("f"), src, dst, img.shape[1], img.shape[0], back, foreground_value
-        )
-    elif image.dtype == np.float64:
-        r = _signal_processing.keep_largest_area(
-            ord("d"), src, dst, img.shape[1], img.shape[0], back, foreground_value
-        )
-    else:
+    _dtype = _DTYPES.get(image.dtype, None)
+    if _dtype is None:
         raise RuntimeError("An error occured while calling 'keep_largest_area'")
+    r = _signal_processing.keep_largest_area(
+        ord(_dtype), src, dst, img.shape[1], img.shape[0], back, foreground_value
+    )
 
     if r < 0:
         raise RuntimeError("An error occured while calling 'keep_largest_area'")
