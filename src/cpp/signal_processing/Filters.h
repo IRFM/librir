@@ -229,7 +229,7 @@ namespace rir
 	void translate(const T *src, U *dst, U background, size_t w, size_t h, float dx, float dy, TranslateBorder strategy)
 	{
 #pragma omp parallel for
-		for (size_t y = 0; y < h; ++y)
+		for (int y = 0; y < (int)h; ++y)
 		{
 			for (size_t x = 0; x < w; ++x)
 			{

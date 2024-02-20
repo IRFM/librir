@@ -1,10 +1,30 @@
 #pragma once
 
+#include <functional>
+
 #include "IRVideoLoader.h"
 #include "FileAttributes.h"
 
 namespace rir
 {
+
+	class IO_EXPORT VideoDownsampler
+	{
+	public:
+		using callback_type = std::function<void(const unsigned short*, std::int64_t, const std::map<std::string, std::string>&)>;
+
+		VideoDownsampler();
+		~VideoDownsampler();
+
+		bool open(int width, int height, int lossy_height, int factor, double factor_std, callback_type callback);
+		int close();
+
+		bool addImage(const unsigned short* img, std::int64_t timestamp, const std::map<std::string, std::string>& attributes);
+		bool addImage2(const unsigned short* img, std::int64_t timestamp, const std::map<std::string, std::string>& attributes);
+	private:
+		class PrivateData;
+		PrivateData* d_data;
+	};
 
 	/// @brief Class implementing lossless/lossy compression of infrared videos as described in article [].
 	///

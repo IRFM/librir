@@ -78,6 +78,341 @@ extern "C"
 namespace rir
 {
 
+	static double std_dev_diff(const unsigned short* p1, const unsigned short* p2, int size)
+	{
+		double x = 0.0;
+		double x_squared = 0.0;
+
+		for (int i= 0; i < size; ++i)
+		{
+			int diff = (int)p1[i] - (int)p2[i];
+			diff = (diff < 0 ? -diff : diff);
+			x += diff;
+			x_squared += diff * diff;
+		}
+
+		return std::sqrt((x_squared - (x * x) / size) /
+			(size - 1)
+		);
+	}
+
+	static double mean_image(const unsigned short* p, int size)
+	{
+		std::int64_t sum1 = 0, sum2=0;
+
+		int size2 = size / 2;
+		for (int i = 0; i < size2; ++i)
+			sum1 += p[i];
+		for (int i = size2; i < size; ++i)
+			sum2 += p[i];
+
+		sum1 += sum2;
+		return (double)sum1 / size;
+	}
+
+	static std::pair<double,double> mean_std(const double* p, int size)
+	{
+		double x = 0.0;
+		double x_squared = 0.0;
+
+		for (int i = 0; i < size; ++i)
+		{
+			x += p[i];
+			x_squared += p[i] * p[i];
+		}
+
+		return {x/size, std::sqrt((x_squared - (x * x) / size) /
+			(size - 1)
+		) };
+	}
+
+	static void max_image(unsigned short* dst, const unsigned short* im, int width, int height, int lossy_height)
+	{
+		int lossy_size = width * lossy_height;
+		for (int i = 0; i < lossy_size; ++i)
+			dst[i] = std::max(dst[i], im[i]);
+
+		// forward last lines
+		if (height != lossy_height) {
+			memcpy(dst + lossy_size, im + lossy_size, (height - lossy_height) * width * 2);
+		}
+	}
+
+	class VideoDownsampler::PrivateData 
+	{
+	public:
+		int width;
+		int height;
+		int lossy_height;
+		int factor;
+		double factor_std;
+		callback_type callback;
+
+		std::vector<double> std_dev;
+		std::vector <unsigned short> prev;
+		std::vector <unsigned short> last_saved;
+		int buffer_size;
+			
+		int part;
+		std::vector<double> std_dev_copy;
+		int last_added;
+		int count;
+		std::vector <unsigned short> max_im;
+		std::int64_t max_im_time;
+		std::vector <std::int64_t> timestamps;
+		int i;
+		std::map<std::string, std::string> attributes;
+
+		PrivateData(int _width, int _height, int _lossy_height, int _factor, double _factor_std,  callback_type _callback)
+			:width(_width), height(_height), lossy_height(_lossy_height), factor(_factor), factor_std(_factor_std), callback(_callback)
+		{
+			prev.resize(width * height);
+			last_saved.resize(width * height);
+			buffer_size = 96;
+
+			//factor_std = (1. - (1. / factor));
+			//double factor2 = (factor * 1.);
+			//part = (int)((buffer_size / factor2) * (factor2 - 1));
+			part = (int)(factor_std * buffer_size);
+			if (part < 0) part = 0;
+			else if (part >= buffer_size) part = buffer_size - 1;
+			std_dev_copy.resize(buffer_size);
+			last_added = 0;
+			count = 0;
+			max_im.resize(width * height);
+			std::fill_n(max_im.data(), max_im.size(), 0);
+			max_im_time = 0;
+			i = 0;
+		}
+	};
+
+	VideoDownsampler::VideoDownsampler()
+		:d_data(nullptr)
+	{
+	}
+	VideoDownsampler::~VideoDownsampler()
+	{
+		if(d_data)
+			delete d_data;
+	}
+
+	bool VideoDownsampler::open(int width, int height, int lossy_height, int factor, double factor_std, callback_type callback)
+	{
+		if (width <= 0 || height <= 0 || lossy_height > height || factor < 1 || factor_std < 0 || factor_std > 1 || !callback)
+			return false;
+
+		if (d_data) {
+			delete d_data;
+			d_data = nullptr;
+		}
+		d_data = new PrivateData(width, height, lossy_height, factor, factor_std, callback);
+		return true;
+	}
+
+	int VideoDownsampler::close()
+	{
+		if (!d_data)
+			return 0;
+		int res = d_data->count;
+		delete d_data;
+		d_data = nullptr;
+		return res;
+	}
+
+	bool VideoDownsampler::addImage2(const unsigned short* img, std::int64_t timestamp, const std::map<std::string, std::string>& attributes)
+	{
+		if (!d_data)
+			return false;
+
+		if (!d_data->timestamps.empty() && timestamp <= d_data->timestamps.back())
+			return false;
+
+		d_data->timestamps.push_back(timestamp);
+
+		if (d_data->factor == 1) {
+			d_data->callback(img, timestamp, attributes);
+			d_data->i++;
+			d_data->count++;
+			return true;
+		}
+
+		if (d_data->i == 0) {
+			//update prev image
+			memcpy(d_data->prev.data(), img, d_data->width * d_data->height * 2);
+			d_data->i++;
+			d_data->callback(img, timestamp, attributes);
+			d_data->last_added = 0;
+			d_data->count++;
+			return true;
+		}
+
+		double current_std = std_dev_diff(img, d_data->prev.data(), d_data->width * d_data->lossy_height);
+		if (d_data->std_dev.size() < 10) {
+			d_data->std_dev.push_back(current_std);
+			// compute maximum image
+			max_image(d_data->max_im.data(), img, d_data->width, d_data->height, d_data->lossy_height);
+			d_data->max_im_time = timestamp;
+			d_data->attributes = attributes;
+
+			if (d_data->i % d_data->factor == 0) {
+				// add image
+				d_data->callback(d_data->max_im.data(), d_data->max_im_time, d_data->attributes);
+				d_data->last_added = d_data->i;
+				d_data->count++;
+				//memcpy(d_data->last_saved.data(), img, d_data->width * d_data->height*2);
+				// reset max image
+				std::fill_n(d_data->max_im.data(), d_data->max_im.size(), 0);
+			}
+			//update prev image
+			memcpy(d_data->prev.data(), img, d_data->width * d_data->height * 2);
+			d_data->i++;
+			return true;
+		}
+		
+		auto tmp = mean_std(d_data->std_dev.data(), d_data->std_dev.size());
+		double mean = tmp.first;
+		double std = tmp.second;
+
+		// compute maximum image
+		max_image(d_data->max_im.data(), img, d_data->width, d_data->height, d_data->lossy_height);
+		d_data->max_im_time = timestamp;
+		d_data->attributes = attributes;
+
+		double std_ratio = std / mean;
+		bool nothing = std_ratio < 0.1;
+		if (nothing)
+			nothing = nothing && (current_std < mean + 2*std);
+		//if (nothing == true && current_std > mean + 0.5 * std)
+		//	printf("nothing %i\n", d_data->i);
+
+		if (d_data->i % d_data->factor == 0 || (!nothing && current_std > mean + 0.5*std)) {
+			//add image
+			d_data->callback(d_data->max_im.data(), d_data->max_im_time, attributes);
+			d_data->last_added = d_data->i;
+			d_data->count++;
+
+			// reset max image
+			std::fill_n(d_data->max_im.data(), d_data->max_im.size(), 0);
+		}
+		if ((current_std < mean + 5 * std && current_std > mean -  std) || d_data->i % d_data->factor == 0)
+		{
+			if(d_data->std_dev.size() < d_data->buffer_size)
+				d_data->std_dev.push_back(current_std);
+			else {
+				// update array of standard deviation ONLY if current image is not completely different from previous one
+				memmove(d_data->std_dev.data(), d_data->std_dev.data() + 1, (d_data->std_dev.size() - 1) * sizeof(double));
+				d_data->std_dev.back() = current_std;
+			}
+		}
+
+		//update prev image
+		memcpy(d_data->prev.data(), img, d_data->width * d_data->height * 2);
+		d_data->i++;
+		return true;
+	}
+
+	bool VideoDownsampler::addImage(const unsigned short* img, std::int64_t timestamp, const std::map<std::string, std::string>& attributes)
+	{
+		if (!d_data)
+			return false;
+		
+		if (!d_data->timestamps.empty() && timestamp <= d_data->timestamps.back())
+			return false;
+		
+		d_data->timestamps.push_back(timestamp);
+
+		if (d_data->factor == 1) {
+			d_data->callback(img, timestamp, attributes);
+			d_data->i++;
+			d_data->count++;
+			return true;
+		}
+
+
+		if (d_data->std_dev.size() < d_data->buffer_size) {
+
+			if (d_data->i > 0) {
+				// Add standardd eviation of difference of 2 consecutive images
+				double std = std_dev_diff(img, d_data->prev.data(), d_data->width * d_data->lossy_height);
+				d_data->std_dev.push_back(std);
+			}
+			
+			// compute maximum image
+			max_image(d_data->max_im.data(), img, d_data->width, d_data->height, d_data->lossy_height);
+			d_data->max_im_time = timestamp;
+			d_data->attributes = attributes;
+
+			if (d_data->i % d_data->factor == 0) {
+				// add image
+				d_data->callback(d_data->max_im.data(),  d_data->max_im_time, d_data->attributes);
+				d_data->last_added = d_data->i;
+				d_data->count++;
+				//memcpy(d_data->last_saved.data(), img, d_data->width * d_data->height*2);
+				// reset max image
+				std::fill_n(d_data->max_im.data(), d_data->max_im.size(), 0);
+			}
+		}
+		else {
+
+			std::copy(d_data->std_dev.begin(), d_data->std_dev.end(), d_data->std_dev_copy.begin());
+			std::nth_element(d_data->std_dev_copy.begin(), d_data->std_dev_copy.begin() + d_data->part, d_data->std_dev_copy.end());
+			double val = d_data->std_dev_copy[d_data->part];
+
+			auto tmp = mean_std(d_data->std_dev.data(), d_data->std_dev.size());
+			double mean = tmp.first;
+			double std = tmp.second;
+
+			double current_std = std_dev_diff(img, d_data->prev.data(), d_data->width * d_data->lossy_height);
+
+			double nothing_factor = 0.5;
+			bool nothing = current_std < tmp.first - nothing_factor *tmp.second;
+			if ((d_data->i - d_data->last_added) >= (d_data->factor * 2))
+				nothing = false;
+			
+			// compute maximum image
+			max_image(d_data->max_im.data(), img, d_data->width, d_data->height, d_data->lossy_height);
+			d_data->max_im_time = timestamp;
+
+			if ((current_std > val || (d_data->i - d_data->last_added) >= (d_data->factor)) && !nothing) {
+				// Something new that must be recorded
+
+				//d_data->attributes = attributes;
+
+				//add image
+				d_data->callback(d_data->max_im.data(),  d_data->max_im_time, attributes);
+				d_data->last_added = d_data->i;
+				d_data->count++;
+
+				// reset max image
+				std::fill_n(d_data->max_im.data(), d_data->max_im.size(), 0);
+			}
+			
+			
+			if ( current_std < mean + 10 * std) 
+			{
+				// update array of standard deviation ONLY if current image is not completely different from previous one
+				memmove(d_data->std_dev.data(), d_data->std_dev.data() + 1, (d_data->std_dev.size() - 1) * sizeof(double));
+				d_data->std_dev.back() = current_std;
+			}
+		}
+
+		//update prev image
+		memcpy(d_data->prev.data(), img, d_data->width * d_data->height * 2);
+		d_data->i++;
+		return true;
+	}
+
+
+
+
+
+
+
+
+
+
+
+
 	int init_libavcodec()
 	{
 		av_register_all();
