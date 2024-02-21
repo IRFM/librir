@@ -310,6 +310,51 @@ namespace rir
 				f = NULL;
 			}
 		}
+		else if (f->type == BIN_FILE_Z_COMPRESSED)
+		{
+			// f->file.close();
+			f->zfile = z_open_file_read(f->file);
+			if (!f->zfile)
+			{
+				destroyFileReader(f->file);
+				delete f;
+				f = NULL;
+				goto end;
+			}
+
+			f->width = infos.X;
+			f->height = infos.Y;
+			f->count = z_image_count(f->zfile);
+
+			if (f->count == 0)
+			{
+				destroyFileReader(f->file);
+				delete f;
+				f = NULL;
+				goto end;
+			}
+
+			f->times.resize(f->count); // = (int64_t*)malloc(f->count * sizeof(int64_t));
+			memcpy(f->times.data(), z_get_timestamps(f->zfile), f->count * sizeof(int64_t));
+			int64_t t0 = f->times[0];
+
+			if (t0 > 28000 && t0 < 32000)
+			{
+				// the time is in us since origin, do NOT subtract first timestamp
+				// remove 10ms to have a precision of +- 10ms
+				for (unsigned int i = 0; i < f->count; ++i)
+					f->times[i] = (f->times[i] * (int64_t)1000000) - 10000000ULL; // convert to ns
+			}
+			else
+			{
+				if (!(f->times.front() < -1000000000 || f->times.back() > 1000000000))
+				{ // time already in ns
+					for (unsigned int i = 0; i < f->count; ++i)
+						f->times[i] = (f->times[i] - t0) * (int64_t)1000000; // convert to ns
+				}
+			}
+			f->has_times = 1;
+		}
 		else if (f->type == BIN_FILE_H264)
 		{
 			if (!f->h264.open(f->file))
@@ -416,7 +461,8 @@ namespace rir
 
 	static void bin_close_file(BinFile *f)
 	{
-
+		if (f->zfile)
+			z_close_file(f->zfile);
 		f->h264.close();
 		f->hcc.close();
 		if (f->other)
@@ -474,6 +520,8 @@ namespace rir
 			f->hcc.readImage(pos, 0, img);
 			return 0;
 		}
+		else if (f->zfile)
+			return z_read_image(f->zfile, pos, img, timestamp);
 		else
 		{
 			if (timestamp)
