@@ -16,7 +16,7 @@
 
 **Librir** can be used from C, C++ or Python, and is known to work on Windows (compiled with MingW or Visual Studio) and Linux (compiled with `gcc`).
 
-While developped in C++11, Librir is mostly used through its Python interface. The Python wrapper is built using the low level C interface (using the C++ components) and the Python *ctypes* module. 
+While developped in C++14, Librir is mostly used through its Python interface. The Python wrapper is built using the low level C interface (using the C++ components) and the Python *ctypes* module. 
 
 # Compiling Librir
 
