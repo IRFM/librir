@@ -1,5 +1,17 @@
 
 
+add_custom_target(Build-wheel-${PROJECT_NAME} ALL DEPENDS ${PROJECT_NAME})
+
+add_custom_command(
+	TARGET Build-wheel-${PROJECT_NAME}
+	COMMAND pip wheel ${CMAKE_CURRENT_SOURCE_DIR}  -w ${CMAKE_CURRENT_BINARY_DIR}/dist --no-deps
+	# commands
+)
+
+install(
+	DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dist
+	DESTINATION ${CMAKE_INSTALL_PREFIX}
+)
 
 
 
