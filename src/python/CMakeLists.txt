@@ -1,5 +1,4 @@
 
-option(BUILD_WHEEL "building wheel file while installing" OFF)
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}
 	DESTINATION ${CMAKE_INSTALL_PREFIX}/python
