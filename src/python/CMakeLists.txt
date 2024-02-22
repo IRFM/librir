@@ -70,6 +70,7 @@ install(SCRIPT ../cpp/video_io/InstallFfmpeg.cmake)
 
 
 if(BUILD_WHEEL)
+	message(STATUS "Building wheel after installation")
 	install (SCRIPT BuildWheel.cmake)
 endif()
 
