@@ -1,19 +1,5 @@
 
-
-add_custom_target(Build-wheel-${PROJECT_NAME} ALL DEPENDS ${PROJECT_NAME})
-
-add_custom_command(
-	TARGET Build-wheel-${PROJECT_NAME}
-	COMMAND pip wheel ${CMAKE_CURRENT_SOURCE_DIR}  -w ${CMAKE_CURRENT_BINARY_DIR}/dist --no-deps
-	# commands
-)
-
-install(
-	DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/dist
-	DESTINATION ${CMAKE_INSTALL_PREFIX}
-)
-
-
+option(BUILD_WHEEL "building wheel file while installing" OFF)
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}
 	DESTINATION ${CMAKE_INSTALL_PREFIX}/python
@@ -82,3 +68,10 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pyproject.toml ${PROJECT_SOURCE_DIR}/R
 )
 install(CODE "set(FFMPEG_INSTALL_DIR \"${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}/libs\")")
 install(SCRIPT ../cpp/video_io/InstallFfmpeg.cmake) 
+
+
+if(BUILD_WHEEL)
+	install (SCRIPT BuildWheel.cmake)
+endif()
+
+ 
