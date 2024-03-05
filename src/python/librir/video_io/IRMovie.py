@@ -606,10 +606,10 @@ class IRMovie(object):
                 img = self.load_pos(i, 0)
 
                 _frame_attributes = (
-                    self.frame_attributes
-                    if frame_attributes is None
-                    else frame_attributes[i]
-                )
+                        self.frame_attributes
+                        if frame_attributes is None
+                        else frame_attributes[saved]
+                    )
 
                 s.add_image(img, times[i] * 1e9, attributes=_frame_attributes)
 
