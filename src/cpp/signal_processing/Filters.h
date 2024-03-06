@@ -140,6 +140,26 @@ namespace rir
 		const signed_integral win_h = 5;
 		std::vector<T> pixels(win_w * win_h);
 
+		T median_value = 0;
+		{ 
+			size_t size = w * h;
+			std::vector<T> tmp(src, src + size);
+			std::sort(tmp.begin(), tmp.end());
+			median_value = tmp[size / 2];
+
+			//compute std
+			double sum = 0;
+			int c = 0;
+			for (size_t i = 0; i < size; ++i, ++c)
+				sum += (tmp[i] - median_value) * (tmp[i] - median_value);
+			sum /= c;
+			sum = sqrt(sum);
+			if (median_value > (T)(sum * std_factor))
+				median_value -= (T)(sum * std_factor);
+			else
+				median_value = 0;
+		}
+
 		for (signed_integral y = 0; y < h; ++y)
 			for (signed_integral x = 0; x < w; ++x)
 			{
@@ -164,9 +184,10 @@ namespace rir
 				double lower = med - std_factor * std;
 				double upper = med + std_factor * std;
 
-				if (src[x + y * w] < lower || src[x + y * w] > upper)
+				if (src[x + y * w] < lower || src[x + y * w] > upper || src[x + y * w] < median_value)
 					res.push_back(Point(x, y));
 			}
+
 
 		return res;
 	}
