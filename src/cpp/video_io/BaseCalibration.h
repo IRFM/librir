@@ -31,6 +31,11 @@ namespace rir
 		/**Return supported features as a combination of Features enum*/
 		virtual int supportedFeatures() const = 0;
 
+		/** Returns true if this calibration has its initial parmaters */
+		virtual bool hasInitialParameters() const {
+			return true;
+		}
+
 		/**Returns true if the calibration is valid, false otherwise*/
 		virtual bool isValid() const = 0;
 		/**Returns potential warnings (with new line separators) emitted while building the calibration*/
