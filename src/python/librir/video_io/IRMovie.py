@@ -566,6 +566,8 @@ class IRMovie(object):
             count = self.images
         if start_img + count > self.images:
             count = self.images - start_img
+        if count == 0:
+            raise RuntimeError("No images in selected range to save")
 
         logger.info(
             "Start saving in {} from {} to {}".format(
@@ -576,6 +578,10 @@ class IRMovie(object):
         # retrieve attributes
         if attrs is None:
             attrs = self.attributes
+        if (frame_attributes is not None) and (len(frame_attributes) != count):
+            raise RuntimeError(
+                "Given frame attributes are not equal to the number of saved images"
+            )
 
         # adding custom attribute --> must be a dict[str]=str
         # attrs.update(self.additional_attributes)
@@ -609,7 +615,7 @@ class IRMovie(object):
                 _frame_attributes = (
                     self.frame_attributes
                     if frame_attributes is None
-                    else frame_attributes[i]
+                    else frame_attributes[saved]
                 )
 
                 s.add_image(img, times[i] * 1e9, attributes=_frame_attributes)

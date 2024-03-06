@@ -125,7 +125,9 @@ VALID_MASKS = [generate_constant_mask_array(*shape) for shape in VALID_3D_SHAPES
 #     return [IRMovie.from_numpy_array(arr) for arr in VALID_UNIFORM_NUMPY_ARRAYS]
 
 
-@pytest.fixture(scope="session", params=VALID_SHAPES)
+@pytest.fixture(
+    scope="session", params=VALID_SHAPES, ids=[str(s) for s in VALID_SHAPES]
+)
 def array(request):
     shape = request.param
     arr = generate_mock_movie_data_uniform(*shape)
@@ -133,19 +135,25 @@ def array(request):
     yield arr
 
 
-@pytest.fixture(scope="session", params=VALID_3D_SHAPES)
+@pytest.fixture(
+    scope="session", params=VALID_3D_SHAPES, ids=[str(s) for s in VALID_3D_SHAPES]
+)
 def valid_3d_array(request):
     shape = request.param
     yield generate_mock_movie_data_uniform(*shape)
 
 
-@pytest.fixture(scope="session", params=INVALID_SHAPES)
+@pytest.fixture(
+    scope="session", params=INVALID_SHAPES, ids=[str(s) for s in INVALID_SHAPES]
+)
 def bad_array(request):
     shape = request.param
     yield generate_mock_movie_data_uniform(*shape)
 
 
-@pytest.fixture(scope="session", params=VALID_2D_SHAPES)
+@pytest.fixture(
+    scope="session", params=VALID_2D_SHAPES, ids=[str(s) for s in VALID_2D_SHAPES]
+)
 def valid_2D_array(request):
     shape = request.param
     arr = generate_mock_movie_data_uniform(*shape)

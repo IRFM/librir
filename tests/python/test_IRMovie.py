@@ -1,4 +1,6 @@
+from pathlib import Path
 import random
+from typing import Dict
 from librir.video_io.utils import is_ir_file_corrupted, split_rush
 
 import numpy as np
@@ -186,3 +188,63 @@ def test_flip_camera_calibration_when_no_calibration(movie: IRMovie):
         movie.flip_calibration(False, True)
     with pytest.raises(RuntimeError):
         movie.flip_calibration(True, True)
+
+
+@pytest.mark.parametrize("attrs", ({}, {"additional": 123}), ids=("none", "additional"))
+def test_save_subset_of_movie_to_h264(movie: IRMovie, attrs: Dict[str, int]):
+    dest_filename = Path(f"{movie.filename}_subset.h264")
+    count = 1 if movie.images == 1 else movie.images // 2
+    frame_attributes = [{"additional_frame_attribute": i} for i in range(movie.images)]
+
+    with pytest.raises(RuntimeError):
+        movie.to_h264(
+            dest_filename,
+            start_img=0,
+            count=movie.images // 2,
+            attrs=attrs,
+            frame_attributes=frame_attributes,
+        )
+    with pytest.raises(RuntimeError):
+        movie.to_h264(
+            dest_filename,
+            start_img=movie.images // 2,
+            count=movie.images // 2,
+            attrs=attrs,
+            frame_attributes=frame_attributes,
+        )
+    with pytest.raises(RuntimeError):
+        movie.to_h264(
+            dest_filename,
+            start_img=movie.images // 2,
+            count=0,
+            attrs=attrs,
+            frame_attributes=frame_attributes,
+        )
+    with pytest.raises(RuntimeError):
+        movie.to_h264(
+            dest_filename,
+            start_img=movie.images // 2,
+            count=0,
+            attrs=attrs,
+            frame_attributes=None,
+        )
+    # assert not dest_filename.exists()
+
+    movie.to_h264(
+        dest_filename,
+        start_img=0,
+        count=count,
+        attrs=attrs,
+        frame_attributes=[{"additional_frame_attribute": i} for i in range(count)],
+    )
+    # assert dest_filename.exists()
+    expected_attrs = {k: str(v).encode() for k, v in attrs.items()}
+    expected_attrs["GOP"] = movie.attributes["GOP"]
+    # expected_attrs.update({k: str(v).encode() for k, v in attrs.items()})
+
+    with IRMovie.from_filename(dest_filename) as subset_movie:
+        # subset_movie.load_pos(0)
+        assert subset_movie.attributes == expected_attrs
+        assert len(subset_movie.frames_attributes) == subset_movie.images
+
+    # dest_filename.unlink()
