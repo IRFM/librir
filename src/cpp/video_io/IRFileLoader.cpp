@@ -613,10 +613,10 @@ namespace rir
 
 				// fill map of bad pixels
 				m_data->bad_pixels_img.resize(imageSize().width * imageSize().height);
-				std::fill_n(m_data->bad_pixels_img.begin(), false, m_data->bad_pixels_img.size());
+				std::fill_n(m_data->bad_pixels_img.begin(), m_data->bad_pixels_img.size(), false);
 
 				int width = imageSize().width;
-				for (const Point& p : m_data->bad_pixels)
+				for (const Point &p : m_data->bad_pixels)
 					m_data->bad_pixels_img[width * p.y() + p.x()] = true;
 			}
 			m_data->bp_enabled = enable;
@@ -637,13 +637,14 @@ namespace rir
 		unsigned short pixels[9];
 		// unsigned short buff[10];
 
-		if (w < 3 || h < 3) {
+		if (w < 3 || h < 3)
+		{
 			for (size_t i = 0; i < m_data->bad_pixels.size(); ++i)
 			{
 				int x = m_data->bad_pixels[i].x();
 				int y = m_data->bad_pixels[i].y();
 
-				unsigned short* pix = pixels;
+				unsigned short *pix = pixels;
 				for (int dx = x - 1; dx <= x + 1; ++dx)
 					for (int dy = y - 1; dy <= y + 1; ++dy)
 						if (dx >= 0 && dy >= 0 && dx < w && dy < h)
@@ -655,39 +656,44 @@ namespace rir
 				img[x + y * w] = pixels[c / 2];
 			}
 		}
-		else {
+		else
+		{
 			for (size_t i = 0; i < m_data->bad_pixels.size(); ++i)
 			{
 				int x = m_data->bad_pixels[i].x();
 				int y = m_data->bad_pixels[i].y();
-				unsigned short* pix = pixels;
+				unsigned short *pix = pixels;
 
 				int dx_st = x - 1;
 				int dx_en = x + 1;
-				if (x == 0) {
+				if (x == 0)
+				{
 					dx_st = 0;
 					dx_en = 2;
 				}
-				else if (x == w - 1) {
+				else if (x == w - 1)
+				{
 					dx_st = w - 3;
 					dx_en = w - 1;
 				}
 				int dy_st = y - 1;
 				int dy_en = y + 1;
-				if (y == 0) {
+				if (y == 0)
+				{
 					dy_st = 0;
 					dy_en = 2;
 				}
-				else if (y == h - 1) {
+				else if (y == h - 1)
+				{
 					dy_st = h - 3;
 					dy_en = h - 1;
 				}
 				for (int dx = dx_st; dx <= dx_en; ++dx)
 					for (int dy = dy_st; dy <= dy_en; ++dy)
-						{
-							if(!m_data->bad_pixels_img[dx + dy * w])
-								*pix++ = img[dx + dy * w];
-						}
+					{
+						if (!m_data->bad_pixels_img[dx + dy * w])
+							*pix++ = img[dx + dy * w];
+					}
 				int c = (int)(pix - pixels);
 				std::nth_element(pixels, pixels + c / 2, pixels + c);
 				img[x + y * w] = pixels[c / 2];
@@ -975,9 +981,9 @@ namespace rir
 		}
 
 		// no need to remove bad pixels of image already in temperature, it has already been done during compression
-		//if (!is_in_T)
-		//if(calibration == 1)
-		//removeBadPixels(pixels, imageSize().width, imageSize().height - 3);
+		// if (!is_in_T)
+		// if(calibration == 1)
+		// removeBadPixels(pixels, imageSize().width, imageSize().height - 3);
 
 		if ((int)m_data->img.size() != m_data->size.height * m_data->size.width)
 			m_data->img.resize(m_data->size.height * m_data->size.width);
@@ -1017,7 +1023,7 @@ namespace rir
 			else
 			{
 				// Check if current emissivity and optical/STEFI temperature are the same as movie (already in T) ones
-				if ( this->globalEmissivity() != 1.f || !m_data->calib->hasInitialParameters())
+				if (this->globalEmissivity() != 1.f || !m_data->calib->hasInitialParameters())
 				{
 					// switch back to DL without the last 3 lines
 					m_data->calib->applyInvert(pixels, m_data->file->h264.lastIt().data(), m_data->min_T_height * imageSize().width, pixels);
