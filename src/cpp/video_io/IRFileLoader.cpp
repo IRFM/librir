@@ -558,6 +558,7 @@ namespace rir
 		bool motionCorrectionEnabled;
 		std::vector<PointF> translation_points;
 		std::vector<unsigned short> img;
+		std::vector<bool> bad_pixels_img;
 		bool has_times;
 		bool saturate;
 		bool bp_enabled;
@@ -608,23 +609,15 @@ namespace rir
 			{
 				std::vector<unsigned short> img(imageSize().width * imageSize().height);
 				readImage(0, 0, img.data());
-				m_data->bad_pixels = badPixels(img.data(), imageSize().width, imageSize().height - 3, 3);
+				m_data->bad_pixels = badPixels(img.data(), imageSize().width, imageSize().height - 3, 5);
 
-				// This part (low clamping) depends on the applied calibration, remove it for now
-				/*if (m_data->median_value < 0) {
-					int size = imageSize().width*(imageSize().height - 3);
-					std::sort(img.data(), img.data() + size);
-					m_data->median_value = img[size / 2];
+				// fill map of bad pixels
+				m_data->bad_pixels_img.resize(imageSize().width * imageSize().height);
+				std::fill_n(m_data->bad_pixels_img.begin(), false, m_data->bad_pixels_img.size());
 
-					//compute std
-					double sum = 0;
-					int c = 0;
-					for (int i = 0; i < size; ++i, ++c)
-						sum += (img[i] - m_data->median_value)*(img[i] - m_data->median_value);
-					sum /= c;
-					sum = sqrt(sum);
-					m_data->median_value -= (int)(sum * 2);
-				}*/
+				int width = imageSize().width;
+				for (const Point& p : m_data->bad_pixels)
+					m_data->bad_pixels_img[width * p.y() + p.x()] = true;
 			}
 			m_data->bp_enabled = enable;
 
@@ -644,21 +637,61 @@ namespace rir
 		unsigned short pixels[9];
 		// unsigned short buff[10];
 
-		for (size_t i = 0; i < m_data->bad_pixels.size(); ++i)
-		{
-			int x = m_data->bad_pixels[i].x();
-			int y = m_data->bad_pixels[i].y();
+		if (w < 3 || h < 3) {
+			for (size_t i = 0; i < m_data->bad_pixels.size(); ++i)
+			{
+				int x = m_data->bad_pixels[i].x();
+				int y = m_data->bad_pixels[i].y();
 
-			unsigned short *pix = pixels;
-			for (int dx = x - 1; dx <= x + 1; ++dx)
-				for (int dy = y - 1; dy <= y + 1; ++dy)
-					if (dx >= 0 && dy >= 0 && dx < w && dy < h)
-					{
-						*pix++ = img[dx + dy * w];
-					}
-			int c = (int)(pix - pixels);
-			std::nth_element(pixels, pixels + c / 2, pixels + c);
-			img[x + y * w] = pixels[c / 2];
+				unsigned short* pix = pixels;
+				for (int dx = x - 1; dx <= x + 1; ++dx)
+					for (int dy = y - 1; dy <= y + 1; ++dy)
+						if (dx >= 0 && dy >= 0 && dx < w && dy < h)
+						{
+							*pix++ = img[dx + dy * w];
+						}
+				int c = (int)(pix - pixels);
+				std::nth_element(pixels, pixels + c / 2, pixels + c);
+				img[x + y * w] = pixels[c / 2];
+			}
+		}
+		else {
+			for (size_t i = 0; i < m_data->bad_pixels.size(); ++i)
+			{
+				int x = m_data->bad_pixels[i].x();
+				int y = m_data->bad_pixels[i].y();
+				unsigned short* pix = pixels;
+
+				int dx_st = x - 1;
+				int dx_en = x + 1;
+				if (x == 0) {
+					dx_st = 0;
+					dx_en = 2;
+				}
+				else if (x == w - 1) {
+					dx_st = w - 3;
+					dx_en = w - 1;
+				}
+				int dy_st = y - 1;
+				int dy_en = y + 1;
+				if (y == 0) {
+					dy_st = 0;
+					dy_en = 2;
+				}
+				else if (y == h - 1) {
+					dy_st = h - 3;
+					dy_en = h - 1;
+				}
+				for (int dx = dx_st; dx <= dx_en; ++dx)
+					for (int dy = dy_st; dy <= dy_en; ++dy)
+						{
+							if(!m_data->bad_pixels_img[dx + dy * w])
+								*pix++ = img[dx + dy * w];
+						}
+				int c = (int)(pix - pixels);
+				std::nth_element(pixels, pixels + c / 2, pixels + c);
+				img[x + y * w] = pixels[c / 2];
+			}
 		}
 
 		// remove low values
