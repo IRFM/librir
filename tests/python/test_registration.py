@@ -113,6 +113,7 @@ def test_set_registration_file_to_IRMovie(
     movie_with_polygon_drawn: IRMovie, reg: MaskedRegistratorECC
 ):
     images = movie_with_polygon_drawn.data
+    assert not movie_with_polygon_drawn.registration
 
     # Set the first image
     reg.start(images[0])
@@ -124,6 +125,8 @@ def test_set_registration_file_to_IRMovie(
     reg.to_reg_file(reg_file)
     movie_with_polygon_drawn.registration_file = reg_file
     movie_with_polygon_drawn[0]
+    assert movie_with_polygon_drawn.registration
+
     os.unlink(reg_file)
 
 
