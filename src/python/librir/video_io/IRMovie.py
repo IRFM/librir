@@ -565,6 +565,8 @@ class IRMovie(object):
             count = self.images
         if start_img + count > self.images:
             count = self.images - start_img
+        if count == 0:
+            raise RuntimeError("No images in selected range to save")
 
         logger.info(
             "Start saving in {} from {} to {}".format(
