@@ -608,8 +608,9 @@ namespace rir
 			{
 				std::vector<unsigned short> img(imageSize().width * imageSize().height);
 				readImage(0, 0, img.data());
-				m_data->bad_pixels = badPixels(img.data(), imageSize().width, imageSize().height - 3);
+				m_data->bad_pixels = badPixels(img.data(), imageSize().width, imageSize().height - 3, 3);
 
+				// This part (low clamping) depends on the applied calibration, remove it for now
 				/*if (m_data->median_value < 0) {
 					int size = imageSize().width*(imageSize().height - 3);
 					std::sort(img.data(), img.data() + size);
@@ -622,7 +623,7 @@ namespace rir
 						sum += (img[i] - m_data->median_value)*(img[i] - m_data->median_value);
 					sum /= c;
 					sum = sqrt(sum);
-					m_data->median_value -= (int)(sum * 3);
+					m_data->median_value -= (int)(sum * 2);
 				}*/
 			}
 			m_data->bp_enabled = enable;
@@ -941,8 +942,9 @@ namespace rir
 		}
 
 		// no need to remove bad pixels of image already in temperature, it has already been done during compression
-		if (!is_in_T)
-			removeBadPixels(pixels, imageSize().width, imageSize().height - 3);
+		//if (!is_in_T)
+		//if(calibration == 1)
+		//removeBadPixels(pixels, imageSize().width, imageSize().height - 3);
 
 		if ((int)m_data->img.size() != m_data->size.height * m_data->size.width)
 			m_data->img.resize(m_data->size.height * m_data->size.width);
@@ -961,6 +963,7 @@ namespace rir
 				m_data->calib->applyInvert(pixels, m_data->file->h264.lastIt().data(), m_data->min_T_height * imageSize().width, pixels);
 			}
 
+			removeBadPixels(pixels, imageSize().width, imageSize().height - 3);
 			// Remove motion if possible
 			removeMotion(pixels, imageSize().width, imageSize().height - 3, pos);
 
@@ -972,7 +975,25 @@ namespace rir
 			return false;
 		else
 		{
-
+			if (!is_in_T)
+			{
+				// Switch back to DL
+				if (!m_data->calib->apply(pixels, this->invEmissivities(), m_data->size.height * m_data->size.width, pixels, &m_data->saturate))
+					return false;
+			}
+			else
+			{
+				// Check if current emissivity and optical/STEFI temperature are the same as movie (already in T) ones
+				if ( this->globalEmissivity() != 1.f || !m_data->calib->hasInitialParameters())
+				{
+					// switch back to DL without the last 3 lines
+					m_data->calib->applyInvert(pixels, m_data->file->h264.lastIt().data(), m_data->min_T_height * imageSize().width, pixels);
+					// back to T for the full image
+					if (!m_data->calib->apply(pixels, this->invEmissivities(), m_data->size.height * m_data->size.width, pixels, &m_data->saturate))
+						return false;
+				}
+			}
+			removeBadPixels(pixels, imageSize().width, imageSize().height - 3);
 			// Remove motion if possible
 			removeMotion(pixels, imageSize().width, imageSize().height - 3, pos);
 
