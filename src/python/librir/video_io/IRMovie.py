@@ -4,7 +4,7 @@ import math
 import os
 import tempfile
 from pathlib import Path
-from typing import List, Union
+from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -145,6 +145,7 @@ class IRMovie(object):
         self._frame_attributes_d = {}
         self._file_attributes = FileAttributes(self.filename)
         self._file_attributes.attributes = get_global_attributes(self.handle)
+        self._registration_file = None
 
         self.calibration = "DL"
 
@@ -227,13 +228,13 @@ class IRMovie(object):
             self.__tempfile__ = None
 
     @property
-    def registration_file(self) -> Path:
+    def registration_file(self) -> Optional[Path]:
         """
         Returns the registration file name for this camera, and tries to download it
         from ARCADE if not already done.
         """
-
-        return self._registration_file
+        if self._registration_file:
+            return self._registration_file
 
     @registration_file.setter
     def registration_file(self, value) -> None:
@@ -249,7 +250,7 @@ class IRMovie(object):
         """
         Returns True is video registration is activated, false otherwise
         """
-        if self._registration_file.exists():
+        if self._registration_file is not None and self._registration_file.exists():
             return motion_correction_enabled(self.handle)
         return False
 

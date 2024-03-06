@@ -19,6 +19,17 @@ def test_IRMovie_with_filename_as_input(filename):
 
 
 @pytest.mark.instantiation
+def test_IRMovie_with_handle_as_input(array):
+    with IRMovie.from_numpy_array(array) as movie:
+        new_mov = IRMovie(movie.handle)
+        assert new_mov.handle == movie.handle
+        new_mov.__tempfile__ = None
+        movie.__tempfile__ = None
+        with pytest.raises(RuntimeError):
+            IRMovie(0)
+
+
+@pytest.mark.instantiation
 def test_IRMovie_instantiation_with_2D_numpy_array(valid_2D_array):
     mov = IRMovie.from_numpy_array(valid_2D_array)
     expected = valid_2D_array[np.newaxis, :]
