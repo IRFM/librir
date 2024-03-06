@@ -175,3 +175,11 @@ def test_flip_camera_calibration_when_no_calibration(movie: IRMovie):
         movie.flip_calibration(False, True)
     with pytest.raises(RuntimeError):
         movie.flip_calibration(True, True)
+
+
+def test_save_subset_of_movie_to_h264(movie: IRMovie):
+    dest_filename = f"{movie.filename}_subset.h264"
+
+    movie.to_h264(
+        dest_filename,
+    )
