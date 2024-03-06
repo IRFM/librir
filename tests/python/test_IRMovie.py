@@ -1,5 +1,6 @@
 from pathlib import Path
 import random
+from typing import Dict
 from librir.video_io.utils import is_ir_file_corrupted, split_rush
 
 import numpy as np
@@ -179,7 +180,7 @@ def test_flip_camera_calibration_when_no_calibration(movie: IRMovie):
 
 
 @pytest.mark.parametrize("attrs", ({}, {"additional": 123}), ids=("none", "additional"))
-def test_save_subset_of_movie_to_h264(movie: IRMovie, attrs: dict[str, int]):
+def test_save_subset_of_movie_to_h264(movie: IRMovie, attrs: Dict[str, int]):
     dest_filename = Path(f"{movie.filename}_subset.h264")
     count = 1 if movie.images == 1 else movie.images // 2
     frame_attributes = [{"additional_frame_attribute": i} for i in range(movie.images)]
