@@ -1,7 +1,7 @@
 #pragma once
 
 #include "rir_config.h"
-
+#include <string>
 #include <mutex>
 
 namespace rir
