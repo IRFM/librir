@@ -12,7 +12,6 @@ import pandas as pd
 from librir.tools.FileAttributes import FileAttributes
 from librir.tools._thermavip import init_thermavip, unbind_thermavip_shared_mem
 from librir.video_io.rir_video_io import (
-    FILE_FORMAT_H264,
     enable_motion_correction,
     load_motion_correction_file,
     motion_correction_enabled,
@@ -21,6 +20,7 @@ from librir.video_io.rir_video_io import (
 
 from .IRSaver import IRSaver
 from .rir_video_io import (
+    FileFormat,
     calibrate_image,
     calibration_files,
     close_camera,
@@ -536,7 +536,7 @@ class IRMovie(object):
         parent, basename = os.path.split(f)
         stem = basename.replace(suffix, "")
 
-        if self.video_file_format != FILE_FORMAT_H264:
+        if self.video_file_format != FileFormat.H264:
             return os.path.abspath((os.path.join(parent, (stem + ".h264"))))
 
         return self.filename
