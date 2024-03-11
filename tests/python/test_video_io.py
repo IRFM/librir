@@ -7,8 +7,7 @@ import numpy as np
 import pytest
 from librir.video_io import IRMovie, IRSaver
 from librir.video_io.rir_video_io import (
-    FILE_FORMAT_H264,
-    FILE_FORMAT_PCR,
+    FileFormat,
     camera_saturate,
     correct_PCR_file,
     get_emissivity,
@@ -141,7 +140,7 @@ def test_correct_PCR_file(pcr_filename, images):
     data = np.array(images, dtype=np.uint16)
     correct_PCR_file(pcr_filename, data.shape[0], data.shape[1], 50)
     with IRMovie.from_filename(pcr_filename) as mov:
-        assert mov.video_file_format == FILE_FORMAT_PCR
+        assert mov.video_file_format == FileFormat.PCR.value
 
 
 def test_pcr2h264(pcr_filename):
@@ -149,7 +148,7 @@ def test_pcr2h264(pcr_filename):
         res = mov.pcr2h264()
 
     with IRMovie.from_filename(res) as mov:
-        assert mov.video_file_format == FILE_FORMAT_H264
+        assert mov.video_file_format == FileFormat.H264.value
 
 
 def test_get_emissivity(movie: IRMovie):

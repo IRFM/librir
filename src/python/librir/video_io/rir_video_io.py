@@ -2,19 +2,26 @@ import ctypes as ct
 import logging
 
 import numpy as np
-
+import enum
 from ..low_level.misc import _video_io, toArray, toBytes, toString
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-
 FILE_FORMAT_PCR = 1
 FILE_FORMAT_WEST = 2
 FILE_FORMAT_PCR_ENCAPSULATED = 3
 FILE_FORMAT_ZSTD_COMPRESSED = 4
 FILE_FORMAT_H264 = 5
+
+
+class FileFormat(enum.Enum):
+    PCR = 1
+    WEST = 2
+    PCR_ENCAPSULATED = 3
+    ZSTD_COMPRESSED = 4
+    H264 = 5
 
 
 def open_camera_file(filename):
