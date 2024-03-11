@@ -1,6 +1,7 @@
 from pathlib import Path
 import random
 from typing import Dict
+from librir.video_io.rir_video_io import FileFormat
 from librir.video_io.utils import is_ir_file_corrupted, split_rush
 
 import numpy as np
@@ -8,7 +9,6 @@ import numpy.testing as npt
 import pytest
 from librir import IRMovie
 from librir.video_io.IRMovie import CalibrationNotFound
-from librir.video_io.rir_video_io import FILE_FORMAT_H264
 
 
 @pytest.mark.instantiation
@@ -152,7 +152,7 @@ def test_close(array):
 
 
 def test_video_file_format(movie: IRMovie):
-    assert movie.video_file_format == FILE_FORMAT_H264
+    assert movie.video_file_format == FileFormat.H264.value
 
 
 def test_split_rush(movie: IRMovie):
