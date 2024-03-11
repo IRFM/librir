@@ -9,6 +9,12 @@ logging.basicConfig()
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
+FILE_FORMAT_PCR = 1
+FILE_FORMAT_WEST = 2
+FILE_FORMAT_PCR_ENCAPSULATED = 3
+FILE_FORMAT_ZSTD_COMPRESSED = 4
+FILE_FORMAT_H264 = 5
+
 
 class FileFormat(enum.Enum):
     PCR = 1
