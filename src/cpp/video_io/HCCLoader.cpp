@@ -119,6 +119,7 @@ namespace rir
 		d_data->attributes["TemperatureFilterWheel (cC)"] = toString(d_data->header.TemperatureFilterWheel);
 		d_data->attributes["TemperatureCompressor (cC)"] = toString(d_data->header.TemperatureCompressor);
 		d_data->attributes["TemperatureColdFinger (cC)"] = toString(d_data->header.TemperatureColdFinger);
+		d_data->attributes["ExternalBlackBodyTemperature (cC)"] = toString(d_data->header.ExternalBlackBodyTemperature);
 
 		d_data->attributes["FileHeader"] = std::string((char *)&d_data->header, sizeof(d_data->header));
 
@@ -126,6 +127,11 @@ namespace rir
 		d_data->own = own;
 
 		return true;
+	}
+
+	void HCCLoader::setExternalBlackBodyTemperature(float temperature)
+	{
+		d_data->header.ExternalBlackBodyTemperature = temperature;
 	}
 
 	void HCCLoader::setBadPixelsEnabled(bool enable)
@@ -325,6 +331,7 @@ namespace rir
 		d_data->imageAttributes["TemperatureCompressor (cC)"] = toString(h.TemperatureCompressor);
 		d_data->imageAttributes["TemperatureColdFinger (cC)"] = toString(h.TemperatureColdFinger);
 		d_data->imageAttributes["FWPosition"] = toString(h.FWPosition);
+		d_data->imageAttributes["ExternalBlackBodyTemperature (cC)"] = toString(h.ExternalBlackBodyTemperature);
 
 		d_data->imageAttributes["Header"] = std::string((char *)&h, sizeof(h));
 

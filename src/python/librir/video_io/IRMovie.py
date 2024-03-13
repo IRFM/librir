@@ -283,7 +283,7 @@ class IRMovie(object):
     # def frame_attributes(self, frame_index):
     #     return self._file_attributes.frame_attributes(frame_index)
 
-    def load_pos(self, pos, calibration=None):
+    def load_pos(self, pos, calibration=None) -> np.ndarray:
         """
         Returns the image at given position using given calibration index (integer)
         """

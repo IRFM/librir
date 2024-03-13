@@ -7,7 +7,7 @@ extern "C"
 #include "Log.h"
 #include "IRFileLoader.h"
 #include "h264.h"
-
+#include "HCCLoader.h"
 using namespace rir;
 
 #include <fstream>
@@ -865,5 +865,33 @@ int correct_PCR_file(const char *filename, int width, int height, int freq)
 
 	fout.seekp(0);
 	fout.write((char *)&h, sizeof(h));
+	return 0;
+}
+
+int change_hcc_external_blackbody_temperature(const char *filename, float temperature)
+{
+	size_t fsize = file_size(filename);
+
+	std::fstream fout(filename, std::ios::in | std::ios::out | std::ios::binary);
+	if (!fout)
+		return -1;
+
+	// read image header
+	HCCImageHeader h;
+	fout.read((char *)&h, sizeof(h));
+
+	size_t frame_size = h.ImageHeaderLength + h.Width * h.Height * 2;
+	size_t count = fsize / frame_size;
+
+	for (size_t i = 0; i < count; ++i)
+	{
+		size_t pos = i * frame_size;
+		fout.seekg(pos);
+		fout.read((char *)&h, sizeof(h));
+		h.ExternalBlackBodyTemperature = temperature;
+		fout.seekp(pos);
+		fout.write((char *)&h, sizeof(h));
+	}
+	fout.close();
 	return 0;
 }
