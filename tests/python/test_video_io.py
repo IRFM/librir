@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 
 import numpy as np
+import numpy.testing as npt
 import pytest
 from librir.video_io import IRMovie, IRSaver
 from librir.video_io.rir_video_io import (
@@ -13,6 +14,8 @@ from librir.video_io.rir_video_io import (
     get_emissivity,
     h264_get_high_errors,
     h264_get_low_errors,
+    set_emissivity,
+    set_global_emissivity,
     support_emissivity,
     video_file_format,
 )
@@ -156,6 +159,26 @@ def test_pcr2h264(pcr_filename):
 
     with IRMovie.from_filename(res) as mov:
         assert mov.video_file_format == FileFormat.H264.value
+
+
+# @pytest.mark.parametrize("emi", [0.25, 0.5])
+# def test_set_global_emissivity(movie: IRMovie, emi):
+#     data = movie.data
+#     set_global_emissivity(movie.handle, emi)
+#     data_with_new_emissivity = movie.data
+#     npt.assert_array_equal(data_with_new_emissivity, data / 2)
+
+
+# def test_set_emissivity(movie: IRMovie):
+#     data = movie.data
+#     emi = np.ones(data.shape) * 0.25
+
+#     set_emissivity(movie.handle, emi)
+#     data_with_new_emissivity = movie.data
+#     data_with_new_emissivity == data / 2
+
+#     with pytest.raises(RuntimeError):
+#         get_emissivity(-1, 1)
 
 
 def test_get_emissivity(movie: IRMovie):
