@@ -14,6 +14,7 @@ from librir.video_io.rir_video_io import (
     h264_get_high_errors,
     h264_get_low_errors,
     support_emissivity,
+    video_file_format,
 )
 
 
@@ -134,6 +135,12 @@ def pcr_filename(images):
     correct_PCR_file(filename, data.shape[0], data.shape[1], 50)
     yield filename
     os.unlink(filename)
+
+
+def test_video_file_format(pcr_filename):
+    assert video_file_format(pcr_filename) == FileFormat.PCR.value
+    with pytest.raises(RuntimeError):
+        video_file_format("nothing")
 
 
 def test_correct_PCR_file(pcr_filename, images):
