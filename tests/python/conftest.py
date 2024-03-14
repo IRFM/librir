@@ -41,13 +41,13 @@ def generate_mock_movie_data_uniform(*shape):
 
     dl = np.zeros(shape, dtype=np.uint16)
     tis = np.zeros(shape, dtype=np.uint16)
-    step = 2**13
-    if n_images > 1:
-        step /= n_images - 2
+    # step = 2**13
+    # if n_images > 1:
+    #     step /= n_images - 2
 
     for i in range(n_images):
-        tis[i] = i % N_TIS
-        dl[i] = i * step
+        tis[i] = np.random.randint(0, N_TIS)
+        dl[i] = np.random.randint(0, 2**13 - 1)
 
     data = dl | (tis << 13)
 
