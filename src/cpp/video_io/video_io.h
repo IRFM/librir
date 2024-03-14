@@ -332,6 +332,8 @@ extern "C"
 	/*Internal use only*/
 	IO_EXPORT int correct_PCR_file(const char *filename, int width, int height, int freq);
 
+	IO_EXPORT int change_hcc_external_blackbody_temperature(const char *filename, float temperature);
+
 #ifdef __cplusplus
 }
 #endif

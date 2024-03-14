@@ -375,7 +375,7 @@ def get_attributes(camera):
             )
         if tmp < 0:
             raise RuntimeError("An error occured while calling 'get_attributes'")
-        res[toString(key)] = toString(value)[0 : vlen[0]]
+        res[toString(key)] = toBytes(value)[0 : vlen[0]]
 
     return res
 
@@ -759,3 +759,20 @@ def motion_correction_enabled(cam):
     if tmp == 0:
         return False
     return True
+
+
+def change_hcc_external_blackbody_temperature(filename: str, temperature: float):
+    """
+    Enable/disable registration for given camera
+    """
+    _video_io.change_hcc_external_blackbody_temperature.argtypes = [
+        ct.POINTER(ct.c_char),
+        ct.c_float,
+    ]
+
+    tmp = _video_io.change_hcc_external_blackbody_temperature(
+        str(filename).encode(), float(temperature)
+    )
+    if tmp < 0:
+        raise RuntimeError("An error occured while calling 'enable_motion_correction'")
+    return tmp

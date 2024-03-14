@@ -137,6 +137,8 @@ namespace rir
 		virtual bool extractAttributes(std::map<std::string, std::string> &) const;
 		virtual void close();
 
+		void setExternalBlackBodyTemperature(float temperature);
+
 	private:
 		class PrivateData;
 		PrivateData *d_data;
