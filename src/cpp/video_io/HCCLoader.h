@@ -137,7 +137,7 @@ namespace rir
 		virtual bool extractAttributes(std::map<std::string, std::string> &) const;
 		virtual void close();
 
-		void HCCLoader::setExternalBlackBodyTemperature(float temperature);
+		void setExternalBlackBodyTemperature(float temperature);
 
 	private:
 		class PrivateData;
