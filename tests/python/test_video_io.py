@@ -160,6 +160,8 @@ def test_pcr2h264(pcr_filename):
 
 def test_get_emissivity(movie: IRMovie):
     get_emissivity(movie.handle)
+    with pytest.raises(RuntimeError):
+        get_emissivity(-1)
 
 
 def test_support_emissivity(movie: IRMovie):
