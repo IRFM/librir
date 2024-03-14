@@ -55,7 +55,7 @@ def video_file_format(filename):
     Returns the video file format of given video file
     """
     res = _video_io.video_file_format(str(filename).encode())
-    if res == 0:
+    if res <= 0:
         raise RuntimeError("cannot open file " + filename)
     return res
 
