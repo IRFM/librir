@@ -216,6 +216,10 @@ namespace rir
 
 	std::string read_file(const char *filename, bool *ok)
 	{
+		if (!filename) {
+			if (ok) *ok = false;
+			return std::string();
+		}
 		size_t fsize = file_size(filename);
 		std::ifstream fin(filename, std::ios::binary);
 		if (!fin)

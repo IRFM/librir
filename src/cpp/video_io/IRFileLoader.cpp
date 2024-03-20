@@ -927,6 +927,11 @@ namespace rir
 			return true;
 		else if (calibration == 1)
 		{
+			if(m_data->calib->needPrepareCalibration()) {
+				dict_type d;
+				this->extractAttributes(d);
+				m_data->calib->prepareCalibration(d);
+			}
 			// apply the calibration
 			if (!m_data->calib->applyF(img, this->invEmissivities(), size, out, &m_data->saturate))
 				return false;
@@ -940,6 +945,11 @@ namespace rir
 			return true;
 		else if (calibration == 1)
 		{
+			if(m_data->calib->needPrepareCalibration()) {
+				dict_type d;
+				this->extractAttributes(d);
+				m_data->calib->prepareCalibration(d);
+			}
 			// apply the calibration
 			if (!m_data->calib->apply(img, this->invEmissivities(), size, img, &m_data->saturate))
 				return false;
@@ -959,6 +969,7 @@ namespace rir
 		// special case: other type with its own calibration
 		if (m_data->type == BIN_FILE_OTHER && m_data->calib && m_data->calib == m_data->file->other->calibration())
 		{
+			
 			if (bin_read_image(m_data->file, pos, pixels, &time, calibration) != 0)
 				return false;
 
@@ -978,6 +989,13 @@ namespace rir
 			int size = m_data->size.width * m_data->min_T_height;
 			for (int i = 0; i < size; ++i)
 				pixels[i] += m_data->min_T;
+		}
+		
+		if(m_data->calib && m_data->calib->needPrepareCalibration()) {
+			// prepare calibration
+			dict_type d;
+			this->extractAttributes(d);
+			m_data->calib->prepareCalibration(d);
 		}
 
 		// no need to remove bad pixels of image already in temperature, it has already been done during compression

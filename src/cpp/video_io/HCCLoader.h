@@ -106,7 +106,7 @@ namespace rir
 #pragma pack()
 
 	/// @brief Loader for HCC video files
-	class HCCLoader : public IRVideoLoader
+	class IO_EXPORT HCCLoader : public IRVideoLoader
 	{
 	public:
 		HCCLoader();

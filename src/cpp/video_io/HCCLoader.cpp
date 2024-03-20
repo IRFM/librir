@@ -164,7 +164,7 @@ namespace rir
 		return d_data->imSize;
 	}
 
-	bool HCCLoader::readImage(int pos, int /*calibration*/, unsigned short *pixels)
+	bool HCCLoader::readImage(int pos, int calibration, unsigned short *pixels)
 	{
 		if (!isValid())
 			return false;
@@ -307,7 +307,9 @@ namespace rir
 									}
 								}
 							}
+
 						}
+						pix[index] = p;
 					}
 				}
 		}
@@ -330,7 +332,7 @@ namespace rir
 		d_data->imageAttributes["TemperatureFilterWheel (cC)"] = toString(h.TemperatureFilterWheel);
 		d_data->imageAttributes["TemperatureCompressor (cC)"] = toString(h.TemperatureCompressor);
 		d_data->imageAttributes["TemperatureColdFinger (cC)"] = toString(h.TemperatureColdFinger);
-		d_data->imageAttributes["FWPosition"] = toString(h.FWPosition);
+		d_data->imageAttributes["FWPosition"] = toString((int)h.FWPosition);
 		d_data->imageAttributes["ExternalBlackBodyTemperature (cC)"] = toString(h.ExternalBlackBodyTemperature);
 
 		d_data->imageAttributes["Header"] = std::string((char *)&h, sizeof(h));

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include "rir_config.h"
 #include "Misc.h"
@@ -12,6 +13,8 @@
 namespace rir
 {
 	class IRVideoLoader;
+
+	typedef std::map<std::string, std::string> dict_type;
 
 	/**
 	 * Base class for IR image calibration in surface temperature
@@ -27,6 +30,11 @@ namespace rir
 
 		virtual ~BaseCalibration() {}
 		virtual std::string name() const = 0;
+		
+		/** Tells if this calibration object needs calls to prepareCalibration() before applying its calibraion through apply(). */
+		virtual bool needPrepareCalibration() const {return false;}
+		/** Configure the calibration (and next call to apply()) based on raw image attributes */
+		virtual bool prepareCalibration(const dict_type & attributes) {return true;}
 
 		/**Return supported features as a combination of Features enum*/
 		virtual int supportedFeatures() const = 0;
