@@ -13,6 +13,13 @@ def hcc_filename():
         return Path(p)
 
 
+def test_read_hcc_file(hcc_filename):
+    with IRMovie.from_filename(hcc_filename) as mov:
+        mov[0]
+        mov.frame_attributes
+        mov.attributes
+
+
 @pytest.mark.parametrize("temperature", [300])
 def test_change_hcc_external_blackbody_temperature(
     hcc_filename: Optional[Path], temperature
