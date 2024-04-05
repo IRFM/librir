@@ -12,59 +12,59 @@
 namespace rir
 {
 
-	void populate_map_with_header(rir::dict_type mapper, HCCImageHeader &h)
+	void populate_map_with_header(rir::dict_type &mapper, HCCImageHeader &h)
 	{
 		mapper.clear();
 
 		/* 0d000 */
 		mapper["Signature"] = toString(h.Signature);
-		mapper["DeviceXMLMinorVersion"] = toString(h.DeviceXMLMinorVersion);
-		mapper["DeviceXMLMajorVersion"] = toString(h.DeviceXMLMajorVersion);
+		mapper["DeviceXMLMinorVersion"] = toString((std::uint16_t)h.DeviceXMLMinorVersion);
+		mapper["DeviceXMLMajorVersion"] = toString((std::uint16_t)h.DeviceXMLMajorVersion);
 		mapper["ImageHeaderLength"] = toString(h.ImageHeaderLength);
 		mapper["FrameID"] = toString(h.FrameID);
 		mapper["DataOffset"] = toString(h.DataOffset);
-		mapper["DataExp"] = toString((int)h.DataExp);
+		mapper["DataExp"] = toString((std::uint16_t)h.DataExp);
 		mapper["ExposureTime"] = toString(h.ExposureTime * 1e-8);
-		mapper["CalibrationMode"] = toString(h.CalibrationMode);
-		mapper["BPRApplied"] = toString(h.BPRApplied);
-		mapper["FrameBufferMode"] = toString(h.FrameBufferMode);
-		mapper["CalibrationBlockIndex"] = toString((int)h.CalibrationBlockIndex);
+		mapper["CalibrationMode"] = toString((std::uint16_t)h.CalibrationMode);
+		mapper["BPRApplied"] = toString((std::uint16_t)h.BPRApplied);
+		mapper["FrameBufferMode"] = toString((std::uint16_t)h.FrameBufferMode);
+		mapper["CalibrationBlockIndex"] = toString((std::uint16_t)h.CalibrationBlockIndex);
 		mapper["Width"] = toString(h.Width);
 		mapper["Height"] = toString(h.Height);
 		mapper["OffsetX"] = toString(h.OffsetX);
 		mapper["OffsetY"] = toString(h.OffsetY);
-		mapper["ReverseX"] = toString(h.ReverseX);
-		mapper["ReverseY"] = toString(h.ReverseY);
-		mapper["TestImageSelector"] = toString(h.TestImageSelector);
-		mapper["SensorWellDepth"] = toString(h.SensorWellDepth);
+		mapper["ReverseX"] = toString((std::uint16_t)h.ReverseX);
+		mapper["ReverseY"] = toString((std::uint16_t)h.ReverseY);
+		mapper["TestImageSelector"] = toString((std::uint16_t)h.TestImageSelector);
+		mapper["SensorWellDepth"] = toString((std::uint16_t)h.SensorWellDepth);
 		mapper["AcquisitionFrameRate"] = toString(h.AcquisitionFrameRate);
 		mapper["TriggerDelay"] = toString(h.TriggerDelay);
-		mapper["TriggerMode"] = toString(h.TriggerMode);
-		mapper["TriggerSource"] = toString(h.TriggerSource);
-		mapper["IntegrationMode"] = toString(h.IntegrationMode);
-		mapper["AveragingNumber"] = toString(h.AveragingNumber);
-		mapper["ExposureAuto"] = toString(h.ExposureAuto);
+		mapper["TriggerMode"] = toString((std::uint16_t)h.TriggerMode);
+		mapper["TriggerSource"] = toString((std::uint16_t)h.TriggerSource);
+		mapper["IntegrationMode"] = toString((std::uint16_t)h.IntegrationMode);
+		mapper["AveragingNumber"] = toString((std::uint16_t)h.AveragingNumber);
+		mapper["ExposureAuto"] = toString((std::uint16_t)h.ExposureAuto);
 		mapper["AECResponseTime"] = toString(h.AECResponseTime);
 		mapper["AECImageFraction"] = toString(h.AECImageFraction);
 		mapper["AECTargetWellFilling"] = toString(h.AECTargetWellFilling);
-		mapper["FWMode"] = toString(h.FWMode);
+		mapper["FWMode"] = toString((std::uint16_t)h.FWMode);
 		mapper["FWSpeedSetpoint"] = toString(h.FWSpeedSetpoint);
 		mapper["FWSpeed"] = toString(h.FWSpeed);
 		mapper["POSIXTime"] = toString(h.POSIXTime);
 		mapper["SubSecondTime"] = toString(h.SubSecondTime);
-		mapper["TimeSource"] = toString(h.TimeSource);
-		mapper["GPSModeIndicator"] = toString(h.GPSModeIndicator);
+		mapper["TimeSource"] = toString((std::uint16_t)h.TimeSource);
+		mapper["GPSModeIndicator"] = toString((std::uint16_t)h.GPSModeIndicator);
 		mapper["GPSLongitude"] = toString(h.GPSLongitude);
 		mapper["GPSLatitude"] = toString(h.GPSLatitude);
 		mapper["GPSAltitude"] = toString(h.GPSAltitude);
 		mapper["FWEncoderAtExposureStart"] = toString(h.FWEncoderAtExposureStart);
 		mapper["FWEncoderAtExposureEnd"] = toString(h.FWEncoderAtExposureEnd);
-		mapper["FWPosition"] = toString(h.FWPosition);
-		mapper["ICUPosition"] = toString(h.ICUPosition);
-		mapper["NDFilterPosition"] = toString(h.NDFilterPosition);
-		mapper["EHDRIExposureIndex"] = toString(h.EHDRIExposureIndex);
-		mapper["FrameFlag"] = toString(h.FrameFlag);
-		mapper["PostProcessed"] = toString(h.PostProcessed);
+		mapper["FWPosition"] = toString((std::uint16_t)h.FWPosition);
+		mapper["ICUPosition"] = toString((std::uint16_t)h.ICUPosition);
+		mapper["NDFilterPosition"] = toString((std::uint16_t)h.NDFilterPosition);
+		mapper["EHDRIExposureIndex"] = toString((std::uint16_t)h.EHDRIExposureIndex);
+		mapper["FrameFlag"] = toString((std::uint16_t)h.FrameFlag);
+		mapper["PostProcessed"] = toString((std::uint16_t)h.PostProcessed);
 		mapper["SensorTemperatureRaw"] = toString(h.SensorTemperatureRaw);
 		mapper["AlarmVector"] = toString(h.AlarmVector);
 		mapper["ExternalBlackBodyTemperature"] = toString(h.ExternalBlackBodyTemperature);
@@ -79,17 +79,17 @@ namespace rir
 		mapper["CalibrationBlockPOSIXTime"] = toString(h.CalibrationBlockPOSIXTime);
 		mapper["ExternalLensSerialNumber"] = toString(h.ExternalLensSerialNumber);
 		mapper["ManualFilterSerialNumber"] = toString(h.ManualFilterSerialNumber);
-		mapper["SensorID"] = toString(h.SensorID);
-		mapper["PixelDataResolution"] = toString(h.PixelDataResolution);
-		mapper["DeviceCalibrationFilesMajorVersion"] = toString(h.DeviceCalibrationFilesMajorVersion);
-		mapper["DeviceCalibrationFilesMinorVersion"] = toString(h.DeviceCalibrationFilesMinorVersion);
-		mapper["DeviceCalibrationFilesSubMinorVersion"] = toString(h.DeviceCalibrationFilesSubMinorVersion);
-		mapper["DeviceDataFlowMajorVersion"] = toString(h.DeviceDataFlowMajorVersion);
-		mapper["DeviceDataFlowMinorVersion"] = toString(h.DeviceDataFlowMinorVersion);
-		mapper["DeviceFirmwareMajorVersion"] = toString(h.DeviceFirmwareMajorVersion);
-		mapper["DeviceFirmwareMinorVersion"] = toString(h.DeviceFirmwareMinorVersion);
-		mapper["DeviceFirmwareSubMinorVersion"] = toString(h.DeviceFirmwareSubMinorVersion);
-		mapper["DeviceFirmwareBuildVersion"] = toString(h.DeviceFirmwareBuildVersion);
+		mapper["SensorID"] = toString((std::uint16_t)h.SensorID);
+		mapper["PixelDataResolution"] = toString((std::uint16_t)h.PixelDataResolution);
+		mapper["DeviceCalibrationFilesMajorVersion"] = toString((std::uint16_t)h.DeviceCalibrationFilesMajorVersion);
+		mapper["DeviceCalibrationFilesMinorVersion"] = toString((std::uint16_t)h.DeviceCalibrationFilesMinorVersion);
+		mapper["DeviceCalibrationFilesSubMinorVersion"] = toString((std::uint16_t)h.DeviceCalibrationFilesSubMinorVersion);
+		mapper["DeviceDataFlowMajorVersion"] = toString((std::uint16_t)h.DeviceDataFlowMajorVersion);
+		mapper["DeviceDataFlowMinorVersion"] = toString((std::uint16_t)h.DeviceDataFlowMinorVersion);
+		mapper["DeviceFirmwareMajorVersion"] = toString((std::uint16_t)h.DeviceFirmwareMajorVersion);
+		mapper["DeviceFirmwareMinorVersion"] = toString((std::uint16_t)h.DeviceFirmwareMinorVersion);
+		mapper["DeviceFirmwareSubMinorVersion"] = toString((std::uint16_t)h.DeviceFirmwareSubMinorVersion);
+		mapper["DeviceFirmwareBuildVersion"] = toString((std::uint16_t)h.DeviceFirmwareBuildVersion);
 		mapper["ActualizationPOSIXTime"] = toString(h.ActualizationPOSIXTime);
 		mapper["DeviceSerialNumber"] = toString(h.DeviceSerialNumber);
 		mapper["ExposureTime (s)"] = toString(h.ExposureTime * 1e-8);
@@ -106,7 +106,7 @@ namespace rir
 		mapper["TemperatureFilterWheel (cC)"] = toString(h.TemperatureFilterWheel);
 		mapper["TemperatureCompressor (cC)"] = toString(h.TemperatureCompressor);
 		mapper["TemperatureColdFinger (cC)"] = toString(h.TemperatureColdFinger);
-		mapper["FWPosition"] = toString((int)h.FWPosition);
+		mapper["FWPosition"] = toString((std::uint16_t)h.FWPosition);
 		mapper["ExternalBlackBodyTemperature (cC)"] = toString(h.ExternalBlackBodyTemperature);
 
 		mapper["Header"] = std::string((char *)&h, sizeof(h));
@@ -214,6 +214,7 @@ namespace rir
 	void HCCLoader::setExternalBlackBodyTemperature(float temperature)
 	{
 		d_data->header.ExternalBlackBodyTemperature = temperature;
+		d_data->imageHeader.ExternalBlackBodyTemperature = temperature;
 	}
 
 	void HCCLoader::setBadPixelsEnabled(bool enable)
