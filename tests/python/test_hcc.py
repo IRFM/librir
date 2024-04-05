@@ -14,6 +14,8 @@ def hcc_filename():
 
 
 def test_read_hcc_file(hcc_filename):
+    if hcc_filename is None or not hcc_filename.exists():
+        pytest.skip("No HCC test file")
     with IRMovie.from_filename(hcc_filename) as mov:
         mov[0]
         mov.frame_attributes
