@@ -9,7 +9,10 @@ on:
       os:
         required: true
         type: string
-      
+      compiler:
+        required: false
+        type: string
+        default: "latest"
     # secrets:
     #   token:
     #     required: true

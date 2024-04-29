@@ -45,5 +45,5 @@ jobs:
         - name: Upload artifact
           uses: actions/upload-artifact@v3
           with:
-            name: install-librir-ubuntu-latest
+            name: install-librir-ubuntu-latest-${{ inputs.compiler || 'latest' }}
             path: build/install
