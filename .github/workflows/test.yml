@@ -35,7 +35,7 @@ jobs:
           - uses: actions/checkout@v3
           - uses: actions/download-artifact@v3
             with:
-              name: install-librir-${{ inputs.os }}
+              name: install-librir-${{ inputs.os }}-${{ inputs.compiler || 'latest' }}
               path: build/install
               
           - name: Install python dependencies
