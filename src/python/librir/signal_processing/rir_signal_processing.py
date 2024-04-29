@@ -329,57 +329,6 @@ def bad_pixels_correct(handle, img):
     return out
 
 
-def jpegls_encode(image, error=0):
-    """
-    Compress image using jpegls format
-    """
-    _signal_processing.jpegls_encode.argtypes = [
-        ct.POINTER(ct.c_uint16),
-        ct.c_int,
-        ct.c_int,
-        ct.c_int,
-        ct.POINTER(ct.c_char),
-        ct.c_int,
-    ]
-    image = np.array(image, dtype="H")
-    if sys.version_info[0] > 2:
-        out = bytes(image.size * 2)
-    else:
-        out = "\00" * image.size * 2
-    tmp = _signal_processing.jpegls_encode(
-        image.ctypes.data_as(ct.POINTER(ct.c_uint16)),
-        image.shape[1],
-        image.shape[0],
-        error,
-        out,
-        len(out),
-    )
-    if tmp < 0:
-        raise RuntimeError("An error occured while calling 'jpegls_encode'")
-    out = out[0:tmp]
-    return out
-
-
-def jpegls_decode(buff, width, height):
-    """
-    Decode a jpegls compressed image
-    """
-    _signal_processing.jpegls_decode.argtypes = [
-        ct.POINTER(ct.c_char),
-        ct.c_int,
-        ct.POINTER(ct.c_uint16),
-        ct.c_int,
-        ct.c_int,
-    ]
-    image = np.zeros((height, width), dtype="H")
-    tmp = _signal_processing.jpegls_decode(
-        buff, len(buff), image.ctypes.data_as(ct.POINTER(ct.c_uint16)), width, height
-    )
-    if tmp < 0:
-        raise RuntimeError("An error occured while calling 'jpegls_decode'")
-    return image
-
-
 def label_image(image: np.ndarray, background_value=0):
     """
     Closed Component Labelling algorithm
