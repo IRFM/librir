@@ -52,4 +52,5 @@ jobs:
       uses: ./.github/workflows/test.yml
       with:
         python-version: ${{ matrix.python-version }} 
+        compiler: ${{ matrix.compiler }}
         os: windows-latest
