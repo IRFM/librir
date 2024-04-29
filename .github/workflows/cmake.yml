@@ -17,7 +17,7 @@ jobs:
         needs: build-ffmpeg
         strategy:
           matrix:
-            compiler: [ latest, gcc-latest, gcc-9, gcc-10, g++-11, clang, clang-10, clang-11, clang++-12 ]
+            compiler: [ latest, gcc-latest, gcc-9, gcc-5.3.1, gcc-10, g++-11, clang, clang-10, clang-11, clang++-12 ]
         uses: ./.github/workflows/build-linux.yml
         with:
           compiler: ${{ matrix.compiler }}
