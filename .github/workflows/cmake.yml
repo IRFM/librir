@@ -47,6 +47,7 @@ jobs:
       strategy:
         matrix:
           python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
+          compiler: [ latest, gcc-latest, gcc-6.4.0, gcc-10.2.0, g++-11.2.0, clang, clang-8.0.0, clang-11.1.0, clang++-12.0.1 ]
       needs: build-windows
       uses: ./.github/workflows/test.yml
       with:
