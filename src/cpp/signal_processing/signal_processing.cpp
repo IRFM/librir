@@ -1,7 +1,7 @@
 #include "signal_processing.h"
 #include "Filters.h"
 #include "tools.h"
-#include "charls.h"
+// #include "charls.h"
 
 extern "C"
 {
@@ -195,57 +195,7 @@ int resample_time_serie(double *sample_x, double *sample_y, int size, double *ti
 	return 0;
 }
 
-int jpegls_encode(unsigned short *img, int width, int height, int err, char *out, int out_size)
-{
-
-	charls_jpegls_encoder *enc = charls_jpegls_encoder_create();
-
-	charls_frame_info infos;
-	infos.width = width;
-	infos.height = height;
-	infos.bits_per_sample = 16;
-	infos.component_count = 1;
-
-	charls_jpegls_errc err1 = charls_jpegls_encoder_set_frame_info(enc, &infos);
-	if (err1 != charls::ApiResult::success)
-		return -1;
-	charls_jpegls_errc err2 = charls_jpegls_encoder_set_near_lossless(enc, err);
-	if (err2 != charls::ApiResult::success)
-		return -1;
-	charls_jpegls_errc err3 = charls_jpegls_encoder_set_destination_buffer(enc, out, out_size);
-	if (err3 != charls::ApiResult::success)
-		return -1;
-	charls_jpegls_errc err4 = charls_jpegls_encoder_encode_from_buffer(enc, img, width * height * 2, width * 2);
-	if (err4 != charls::ApiResult::success)
-		return -1;
-	size_t written = 0;
-	charls_jpegls_errc err5 = charls_jpegls_encoder_get_bytes_written(enc, &written);
-	if (err5 != charls::ApiResult::success)
-		return -1;
-
-	charls_jpegls_encoder_destroy(enc);
-	return (int)written;
-}
-
-int jpegls_decode(char *in, int in_size, unsigned short *img, int width, int height)
-{
-
-	charls_jpegls_decoder *dec = charls_jpegls_decoder_create();
-
-	charls_jpegls_errc err1 = charls_jpegls_decoder_set_source_buffer(dec, in, in_size);
-	if (err1 != charls::ApiResult::success)
-		return -1;
-	err1 = charls_jpegls_decoder_read_header(dec);
-	if (err1 != charls::ApiResult::success)
-		return -1;
-	err1 = charls_jpegls_decoder_decode_to_buffer(dec, img, width * height * 2, width * 2);
-	if (err1 != charls::ApiResult::success)
-		return -1;
-
-	charls_jpegls_decoder_destroy(dec);
-	return 0;
-}
-
+ 
 extern "C"
 {
 #include <jpeglib.h>

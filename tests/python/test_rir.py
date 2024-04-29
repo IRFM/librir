@@ -142,20 +142,6 @@ def img():
     return img
 
 
-@pytest.fixture
-def jpegls_encoded(img):
-    return sp.jpegls_encode(img)
-
-
-def test_jpegls_encode(img):
-    c = sp.jpegls_encode(img)
-    print(len(c))
-
-
-def test_jpegls_decode(img, jpegls_encoded):
-    _img = sp.jpegls_decode(jpegls_encoded, 12, 20)
-    assert (_img == img).all()
-    print(img)
 
 
 def test_bad_pixels():
