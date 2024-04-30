@@ -35,7 +35,7 @@ _video_io = None
 
 
 __groups = {}
-
+disable_cache_folder = os.getenv("LIBRIR_DISABLE_JOBLIB", False)
 
 def get_memory_folder(_memory_folder: Path = None):
     _memory_folder = (
@@ -51,8 +51,8 @@ def get_memory_folder(_memory_folder: Path = None):
 
     return _memory_folder
 
-
-memory = Memory(get_memory_folder(), verbose=0)
+default_folder = None if disable_cache_folder else get_memory_folder()
+memory = Memory(default_folder, verbose=0)
 
 
 def toString(ar):
