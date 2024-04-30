@@ -50,5 +50,5 @@ jobs:
         - name: Upload artifact
           uses: actions/upload-artifact@v3
           with:
-            name: install-librir-windows-latest
+            name: install-librir-windows-latest-${{ inputs.compiler || 'clang' }}
             path: build/install
