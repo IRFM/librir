@@ -28,7 +28,7 @@ namespace rir
 			else
 			{
 #pragma omp parallel for num_threads(4)
-				for (size_t i = 0; i < end; i += 8)
+				for (int i = 0; i < (int)end; i += 8)
 				{
 					__m128i val = _mm_loadu_si128((const __m128i *)(img + i));
 					val = _mm_max_epu16(val, med_val);
@@ -43,7 +43,7 @@ namespace rir
 		else
 		{
 #pragma omp parallel for num_threads(4)
-			for (size_t i = 0; i < size; ++i)
+			for (int i = 0; i < (int)size; ++i)
 				if (img[i] < min_value)
 					img[i] = min_value;
 		}
