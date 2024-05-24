@@ -126,6 +126,21 @@ namespace rir
 							// fread(&pcr_enc, 1, sizeof(pcr_enc), f);
 		memcpy(&pcr_enc, buf + 128 + 5, sizeof(pcr_enc));
 
+		// special case: IR lab videos
+		if (pcr_header.Bits == 16 && pcr_header.X == 640 && pcr_header.Y == 512 && pcr_header.Frequency == 50) {
+			if (infos) {
+				*infos = pcr_header;
+				infos->TransfertSize = pcr_header.X * pcr_header.Y * 2;
+			}
+			if (start_images)
+				*start_images = sizeof(PCR_HEADER);
+			if (start_time)
+				*start_time = 0;
+			if (frame_count)
+				*frame_count = pcr_header.NbImages;
+			return BIN_FILE_PCR;
+		}
+
 		// test PCR file
 		if (pcr_header.Bits == 16 && ((abs(pcr_header.TransfertSize - (pcr_header.X * pcr_header.Y * 2)) < 2000) /*|| pcr_header.Frequency == 50 || pcr_header.Frequency == 25*/) && pcr_header.X > 0 && pcr_header.Y > 0 && pcr_header.X < 2000 && pcr_header.Y < 2000)
 		{
@@ -544,6 +559,19 @@ namespace rir
 		return f->times.data();
 	}
 
+
+	static void removeMotionGeneric( std::vector<PointF> * upper, unsigned short* img, int w, int h, int pos)
+	{
+		if ((*upper).size())
+		{
+
+			// Apply on the full image
+			std::vector<float> tmp(w * h);
+			translate(img, tmp.data(), 0.f, w, h, -(*upper)[pos].x(), -(*upper)[pos].y(), rir::TranslateNearest);
+			std::copy(tmp.begin(), tmp.end(), img);
+		}
+	}
+
 	class IRFileLoader::PrivateData
 	{
 	public:
@@ -565,10 +593,18 @@ namespace rir
 		int median_value;
 		Polygon bad_pixels;
 		BaseCalibration *calib;
+		std::map<std::string, std::string> attributes;
+
+		std::function<void(unsigned short* , int , int , int )> removeMotion;
+
+		std::vector<PointF> upper; // upper divertor or full view
 
 		PrivateData()
 			: file(NULL), type(0), min_T(0), min_T_height(0), store_it(false), motionCorrectionEnabled(false), saturate(false), bp_enabled(false), median_value(-1), calib(NULL)
 		{
+			removeMotion = [this](unsigned short* img, int w, int h, int pos) {
+				removeMotionGeneric(&upper, img, w, h, pos);
+			};
 		}
 	};
 	IRFileLoader::IRFileLoader()
@@ -633,6 +669,15 @@ namespace rir
 	{
 		if (!m_data->bp_enabled)
 			return;
+
+		// Disable bad pixels with HCC files
+		if (isHCC())
+			return;
+		if (isH264()) {
+			auto it = fileAttributes()->globalAttributes().find("Type");
+			if (it != fileAttributes()->globalAttributes().end() && it->second == "HCC")
+				return;
+		}
 
 		unsigned short pixels[9];
 		// unsigned short buff[10];
@@ -708,7 +753,12 @@ namespace rir
 
 	void IRFileLoader::removeMotion(unsigned short *img, int w, int h, int pos)
 	{
-		// TODO
+		if (!m_data->motionCorrectionEnabled)
+			return;
+
+		if (m_data->removeMotion) {
+			m_data->removeMotion(img, w, h, pos);
+		}
 	}
 
 	bool IRFileLoader::loadTranslationFile(const char *filename)
@@ -718,7 +768,7 @@ namespace rir
 		FileFloatStream str(filename);
 		str.readLine();
 		Array2D<float> ar = readFileFast<float>(str, &err);
-		if (err.size() || (ar.width != 4 && ar.width != 7))
+		if (err.size() || ar.width != 4 )
 		{
 			logError(("error while loading motion correction file: " + err).c_str());
 			return false;
@@ -729,15 +779,13 @@ namespace rir
 			return false;
 		}
 
-		m_data->translation_points.resize(ar.height);
-
+		m_data->upper.resize(ar.height);
+		
 		for (size_t i = 0; i < ar.height; ++i)
 		{
-			m_data->translation_points[i] = PointF(ar(i, 1), ar(i, 2));
+			m_data->upper[i] = PointF(ar(i, 1), ar(i, 2));
 		}
 		return true;
-
-		return false;
 	}
 	void IRFileLoader::enableMotionCorrection(bool enable)
 	{
@@ -746,6 +794,27 @@ namespace rir
 	bool IRFileLoader::motionCorrectionEnabled() const
 	{
 		return m_data->motionCorrectionEnabled;
+	}
+
+	IRFileLoader::motion_correction_function IRFileLoader::motionCorrectionFunction() const
+	{
+		return m_data->removeMotion;
+	}
+	void IRFileLoader::setMotionCorrectionFunction(const motion_correction_function& fun)
+	{
+		m_data->removeMotion = fun;
+	}
+
+	void IRFileLoader::setAttributes(const dict_type& attrs)
+	{
+		m_data->attributes = attrs;
+	}
+
+	const FileAttributes* IRFileLoader::fileAttributes() const
+	{
+		if (isH264())
+			return m_data->file->h264.fileAttributes();
+		return nullptr;
 	}
 
 	bool IRFileLoader::open(const char *filename)
@@ -910,7 +979,7 @@ namespace rir
 		else if (m_data->type == BIN_FILE_OTHER)
 			res = m_data->file->other->extractAttributes(attrs);
 
-		for (std::map<std::string, std::string>::const_iterator it = attributes.begin(); it != attributes.end(); ++it)
+		for (std::map<std::string, std::string>::const_iterator it = m_data->attributes.begin(); it != m_data->attributes.end(); ++it)
 			attrs.insert(*it);
 
 		return res;

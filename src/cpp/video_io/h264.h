@@ -230,6 +230,8 @@ namespace rir
 		/// @brief Reimplemented from IRVideoLoader
 		virtual bool extractAttributes(std::map<std::string, std::string> &) const;
 
+		const FileAttributes* fileAttributes() const;
+
 		bool readImageInternal(int pos, unsigned short *pixels);
 
 	private:

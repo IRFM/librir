@@ -3374,6 +3374,11 @@ namespace rir
 		return open(m_data->file_reader);
 	}
 
+	const FileAttributes* H264_Loader::fileAttributes() const
+	{
+		return &m_data->attrs;
+	}
+
 	bool H264_Loader::open(void *file_reader)
 	{
 		int threads = m_data->readThreadCount;

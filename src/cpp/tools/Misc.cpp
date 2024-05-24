@@ -436,7 +436,7 @@ namespace rir
 	{
 		std::string res = dname;
 		replace(res, "\\", "/");
-		if (res[res.size() - 1] != '/')
+		if (res[res.size() - 1] != '/') 
 			res += "/";
 		return res;
 	}

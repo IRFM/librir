@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <istream>
+#include <functional>
 
 #include "IRVideoLoader.h"
 #include "BaseCalibration.h"
@@ -32,6 +33,8 @@
 
 namespace rir
 {
+	class FileAttributes;
+
 	/**
 	File header for PCR files (old Tore Supra video file format)
 	*/
@@ -67,6 +70,10 @@ namespace rir
 	class IO_EXPORT IRFileLoader : public IRVideoLoader
 	{
 	public:
+		// typedef for motion correction function.
+		// Signature: void(unsigned short * in_out_pixels, int width, int height, int im_pos)
+		using motion_correction_function = std::function<void(unsigned short*, int, int, int)>;
+
 		static int findFileType(std::istream *f, PCR_HEADER *infos, int64_t *start_images, int64_t *start_time, int *frame_count = NULL);
 		static int findFileType(char *buf, PCR_HEADER *infos, int64_t *start_images, int64_t *start_time, int *frame_count = NULL);
 
@@ -112,11 +119,17 @@ namespace rir
 		virtual void enableMotionCorrection(bool);
 		virtual bool motionCorrectionEnabled() const;
 
+		motion_correction_function motionCorrectionFunction() const;
+		void setMotionCorrectionFunction(const motion_correction_function& fun);
+
+		void setAttributes(const dict_type& attrs);
+
+		const FileAttributes* fileAttributes() const;
+
 		void removeBadPixels(unsigned short *img, int w, int h);
 		void removeMotion(unsigned short *img, int w, int h, int pos);
 
-		// protected:
-		std::map<std::string, std::string> attributes;
+		
 
 	private:
 		class PrivateData;
@@ -124,5 +137,7 @@ namespace rir
 	};
 
 }
+
+
 
 #endif

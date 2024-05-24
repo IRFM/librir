@@ -116,35 +116,6 @@ extern "C"
 	IO_EXPORT int support_emissivity(int camera);
 
 	/**
-	Set the optical temperature for given camera in degree Celsius.
-	This should be the temperature of the B30.
-	Returns 0 on success, -1 on failure (if the camera does not support this feature).
-	*/
-	IO_EXPORT int set_optical_temperature(int camera, unsigned short temp_C);
-	/**
-	Returns the optical temperature (temperature of the B30).
-	Returns 0 on failure.
-	*/
-	IO_EXPORT unsigned short get_optical_temperature(int camera);
-
-	/**
-	Set the STEFI temperature for given camera in degree Celsius.
-	Returns 0 on success, -1 on failure (if the camera does not support this feature).
-	*/
-	IO_EXPORT int set_STEFI_temperature(int cam, unsigned short temp_C);
-	/**
-	Returns the STEFI temperature.
-	Returns 0 on failure.
-	*/
-	IO_EXPORT unsigned short get_STEFI_temperature(int cam);
-
-	/**
-	Returns 1 if the camera supports setting a custom optical temperature (temperature of the B30),
-	0 otherwise.
-	*/
-	IO_EXPORT int support_optical_temperature(int camera);
-
-	/**
 	Enable/disable bad pixels removal for given camera.
 	*/
 	IO_EXPORT int enable_bad_pixels(int cam, int enable);

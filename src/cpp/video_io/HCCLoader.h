@@ -131,8 +131,8 @@ namespace rir
 		virtual bool getRawValue(int x, int y, unsigned short *value) const;
 		virtual bool calibrate(unsigned short *img, float *out, int size, int calibration);
 		virtual bool calibrateInplace(unsigned short *img, int size, int calibration);
-		virtual BaseCalibration *calibration() const { return NULL; }
 		virtual bool setCalibration(BaseCalibration *calibration) { return false; }
+		virtual BaseCalibration* calibration() const { return nullptr; }
 		virtual const std::map<std::string, std::string> &globalAttributes() const;
 		virtual bool extractAttributes(std::map<std::string, std::string> &) const;
 		virtual void close();
@@ -144,4 +144,8 @@ namespace rir
 		PrivateData *d_data;
 	};
 
+
+	class IRFileLoader;
+	IO_EXPORT bool HCC_extractTimesAndFWPos(const IRFileLoader* loader, std::int64_t* times, int* pos);
+	IO_EXPORT bool HCC_extractAllFWPos(const IRFileLoader* loader, int* pos, int* pos_count);
 }

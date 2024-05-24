@@ -95,6 +95,8 @@ extern "C"
 
     SIGNAL_PROCESSING_EXPORT int keep_largest_area(int type, void *src, int *dst, int w, int h, void *background, int foreground);
 
+    SIGNAL_PROCESSING_EXPORT size_t hash_bytes(void* _ptr, size_t len);
+
 #ifdef __cplusplus
 }
 #endif

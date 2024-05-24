@@ -3,11 +3,14 @@
 #include <cstdint>
 #include <chrono>
 #include <iomanip>
+#include <fstream>
 
 #include "ReadFileChunk.h"
 #include "HCCLoader.h"
 #include "Log.h"
 #include "Misc.h"
+#include "IRFileLoader.h"
+#include "FileAttributes.h"
 
 namespace rir
 {
@@ -321,7 +324,24 @@ namespace rir
 		unsigned short *pix = (unsigned short *)d_data->image.data();
 		const bool little_endian = is_little_endian();
 
-		if (correct_bad_pixels || !little_endian)
+		if (correct_bad_pixels || !little_endian) {
+			size_t size = (size_t)d_data->header.Height * (size_t)d_data->header.Width;
+			unsigned short max = 0;
+			for (size_t i = 0; i < size; ++i) {
+				if (!little_endian)
+					pix[i] = swap_uint16(pix[i]);
+				if (pix[i] < 0xFFF1)
+					max = std::max(max, pix[i]);
+			}
+
+			//replace bad pixels by the maximum value
+			for (size_t i = 0; i < size; ++i) {
+				if (pix[i] >= 0xFFF1)
+					pix[i] = max;
+			}
+		}
+
+		/*if (correct_bad_pixels || !little_endian)
 		{
 
 			for (int y = 0; y < d_data->header.Height; ++y)
@@ -390,11 +410,12 @@ namespace rir
 									}
 								}
 							}
+
 						}
 						pix[index] = p;
 					}
 				}
-		}
+		}*/
 
 		memcpy(pixels, pix, d_data->header.Height * d_data->header.Width * 2);
 
@@ -479,4 +500,100 @@ namespace rir
 		d_data = new PrivateData();
 	}
 
+
+	bool HCC_extractTimesAndFWPos(const IRFileLoader* loader, std::int64_t* times, int* pos)
+	{
+		std::string fname = loader->filename();
+		if (fname.empty())
+			return false;
+
+		if (loader->isH264() ) {
+			const FileAttributes* attrs = loader->fileAttributes();
+			
+			size_t count = attrs->size();
+			for (size_t i = 0; i < count; ++i) {
+				times[i] = attrs->timestamp(i);
+
+				const auto& dict = attrs->attributes(i);
+				auto it = dict.find("FWPosition");
+				if (it == dict.end())
+					return false;
+				pos[i] = fromString<int>(it->second);
+			}
+			return true;
+		}
+
+		if (loader->isHCC()) {
+
+			std::ifstream fin(fname.c_str(), std::ios::binary);
+			HCCImageHeader h;
+			fin.read((char*)&h, sizeof(h));
+
+			size_t frame_size = h.ImageHeaderLength + h.Width * h.Height * 2;
+			double sampling = 1 / (h.AcquisitionFrameRate / 1000.0);
+			sampling *= 1000000000;
+
+			for (int i = 0; i < loader->size(); ++i) {
+				fin.seekg((std::uint64_t)i * frame_size);
+				fin.read((char*)&h, sizeof(h));
+				times[i] = (std::int64_t)(i * sampling);
+				pos[i] = h.FWPosition;
+			}
+			return true;
+		}
+		return false;
+	}
+
+	bool HCC_extractAllFWPos(const IRFileLoader* loader, int* pos, int* pos_count)
+	{
+		*pos_count = 0;
+		std::string fname = loader->filename();
+		if (fname.empty())
+			return false;
+
+		if (loader->isH264()) {
+
+			const FileAttributes* attrs = loader->fileAttributes();
+			
+			size_t count = attrs->size();
+			for (size_t i = 0; i < count; ++i) {
+
+				const auto& dict = attrs->attributes(i);
+				auto it = dict.find("FWPosition");
+				if (it == dict.end())
+					return false;
+				pos[(*pos_count)] = fromString<int>(it->second);
+				if (*pos_count && pos[(*pos_count)] == pos[0])
+					break;
+				else
+					++(*pos_count);
+			}
+			std::sort(pos, pos + *pos_count);
+			return true;
+		}
+		if (loader->isHCC()) {
+
+			std::ifstream fin(fname.c_str(), std::ios::binary);
+			HCCImageHeader h;
+			fin.read((char*)&h, sizeof(h));
+
+			size_t frame_size = h.ImageHeaderLength + h.Width * h.Height * 2;
+			double sampling = 1 / (h.AcquisitionFrameRate / 1000.0);
+			sampling *= 1000000000;
+			*pos_count = 0;
+			for (int i = 0; i < loader->size(); ++i) {
+				fin.seekg((std::uint64_t)i * frame_size);
+				fin.read((char*)&h, sizeof(h));
+				pos[(*pos_count)] = h.FWPosition;
+				if (*pos_count && pos[(*pos_count)] == pos[0])
+					break;
+				else
+					++(*pos_count);
+			}
+			return true;
+		}
+		return false;
+	}
+
 }
+

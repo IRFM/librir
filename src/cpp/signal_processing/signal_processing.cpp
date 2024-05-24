@@ -348,3 +348,80 @@ int keep_largest_area(int type, void *src, int *dst, int w, int h, void *backgro
 	}
 	return 0;
 }
+
+
+
+
+// fallthrough
+#ifndef __has_cpp_attribute 
+#    define __has_cpp_attribute(x) 0
+#endif
+#if __has_cpp_attribute(clang::fallthrough)
+#    define SEQ_FALLTHROUGH() [[clang::fallthrough]]
+#elif __has_cpp_attribute(gnu::fallthrough)
+#    define SEQ_FALLTHROUGH() [[gnu::fallthrough]]
+#else
+#    define SEQ_FALLTHROUGH()
+#endif
+
+
+static std::uint64_t read_64(const void* p)
+{
+	std::uint64_t r;
+	memcpy(&r, p, sizeof(r));
+	return r;
+}
+size_t hash_bytes(void* _ptr, size_t len)
+{
+	static constexpr std::uint64_t m = 14313749767032793493ULL;
+	static constexpr std::uint64_t seed = 3782874213ULL;
+	static constexpr std::uint64_t r = 47ULL;
+
+	const unsigned char* ptr = static_cast<const unsigned char*>(_ptr);
+	std::uint64_t h = seed ^ (len * m);
+	const std::uint8_t* end = ptr + len - (sizeof(std::uint64_t) - 1);
+	while (ptr < end) {
+		auto k = read_64(ptr);
+
+		k *= m;
+		k ^= k >> r;
+		k *= m;
+
+		h ^= k;
+		h *= m;
+
+		ptr += sizeof(std::uint64_t);
+	}
+
+	switch (len & 7U) {
+	case 7U:
+		h ^= static_cast<std::uint64_t>(ptr[6U]) << 48U;
+		SEQ_FALLTHROUGH();
+	case 6U:
+		h ^= static_cast<std::uint64_t>(ptr[5U]) << 40U;
+		SEQ_FALLTHROUGH();
+	case 5U:
+		h ^= static_cast<std::uint64_t>(ptr[4U]) << 32U;
+		SEQ_FALLTHROUGH();
+	case 4U:
+		h ^= static_cast<std::uint64_t>(ptr[3U]) << 24U;
+		SEQ_FALLTHROUGH();
+	case 3U:
+		h ^= static_cast<std::uint64_t>(ptr[2U]) << 16U;
+		SEQ_FALLTHROUGH();
+	case 2U:
+		h ^= static_cast<std::uint64_t>(ptr[1U]) << 8U;
+		SEQ_FALLTHROUGH();
+	case 1U:
+		h ^= static_cast<std::uint64_t>(ptr[0U]);
+		h *= m;
+		SEQ_FALLTHROUGH();
+	default:
+		break;
+	}
+
+	h ^= h >> r;
+	h *= m;
+	h ^= h >> r;
+	return static_cast<size_t>(h);
+}
