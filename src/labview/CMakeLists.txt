@@ -1,1 +1,40 @@
 # TODO: some packaging to make it installable
+
+
+
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+	DESTINATION ${CMAKE_INSTALL_PREFIX}/labview
+	FILES_MATCHING PATTERN "*"
+)
+
+if(MSVC OR WIN32)
+set(SHARED_LIBRARY_SUFFIX_PATTERN "*.dll")
+else()
+set(SHARED_LIBRARY_SUFFIX_PATTERN "*.so*")
+endif()
+
+
+# install(TARGETS ${LIBRIR_TARGETS} RUNTIME 
+# 		DESTINATION ${CMAKE_INSTALL_PREFIX}/python/${PROJECT_NAME}/libs
+# )
+install(CODE "set(FFMPEG_LIB_DIR \"${FFMPEG_LIB_DIR}\")")
+install(CODE "set(FFMPEG_INCLUDE_DIR \"${FFMPEG_INCLUDE_DIR}\")")
+install(CODE "set(FFMPEG_LIBS \"${FFMPEG_LIBS}\")")
+install(CODE "set(ADDITIONAL_FFMPEG_LIBS \"${ADDITIONAL_FFMPEG_LIBS}\")")
+install(CODE "set(FFMPEG_PREFIX \"${FFMPEG_PREFIX}\")")
+install(CODE "set(FFMPEG_SUFFIX \"${FFMPEG_SUFFIX}\")")
+install(CODE "set(COMPLETE_FFMPEG_LIBS \"${COMPLETE_FFMPEG_LIBS}\")")
+install(CODE "set(FFMPEG_INSTALL_DIR \"${CMAKE_INSTALL_PREFIX}/labview/libs\")")
+install(SCRIPT ../cpp/video_io/InstallFfmpeg.cmake)
+
+install(IMPORTED_RUNTIME_ARTIFACTS ${LIBRIR_TARGETS} DESTINATION ${CMAKE_INSTALL_PREFIX}/labview/libs)
+
+
+
+# for development purposes
+install(IMPORTED_RUNTIME_ARTIFACTS ${LIBRIR_TARGETS} 
+	DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/libs
+)
+
+install(CODE "set(FFMPEG_INSTALL_DIR \"${CMAKE_CURRENT_SOURCE_DIR}/libs\")")
+install(SCRIPT ../cpp/video_io/InstallFfmpeg.cmake) 
