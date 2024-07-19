@@ -376,6 +376,13 @@ def get_attributes(camera):
         if tmp < 0:
             raise RuntimeError("An error occured while calling 'get_attributes'")
         _val = toBytes(value)[0 : vlen[0]]
+
+        # some data cleaning on badly encoded attributes
+        if _val.startswith(b"b'") and _val.endswith(b"'"):
+            _s = _val.decode()
+            _s = _s.replace("'", "")[1:]
+            _val = _s.encode()
+
         try:
             res[toString(key)] = _val.decode()
         except UnicodeDecodeError:
