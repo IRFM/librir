@@ -86,8 +86,8 @@ done
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DCMAKE_BUILD_TYPE=$CMAKE_BUILD"
 
 # From within IRFM only, but does not prevent script to work elsewhere
-module load anaconda/python38
-module load gcc/6.4.0
+module load mamba/python39
+module load gcc/13.2.0
 module load cmake
 
 
