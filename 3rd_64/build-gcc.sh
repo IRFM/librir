@@ -229,15 +229,17 @@ if [ -d $FILE ]; then
 else
    echo "Dir $FILE does not exist."
    git clone https://git.ffmpeg.org/ffmpeg.git
-
+   cd ffmpeg
+   git checkout n$FFMPEG_VERSION
+   cd ..
 fi
 #FFMPEG_VERSION="4.4"
-cd ffmpeg
-git checkout n$FFMPEG_VERSION
-FILE=config.h
+
+FILE=ffmpeg/config.h
 if [ -f $FILE ]; then
    echo "File $FILE exists."
 else
+   cd ffmpeg
    echo 'Configuring ffmpeg...'
    ./configure --arch=native --enable-asm --disable-libvpx --disable-libaom --disable-static --enable-shared --enable-libx264 --enable-libkvazaar --extra-cflags=-DKVZ_STATIC_LIB --prefix=$PWD/install --enable-gpl --enable-rpath --extra-ldflags="-L/usr/local/lib -ldl $ffmeg_extra_ldflags -fPIC -m64 -Wl,-rpath='$ORIGIN'" --enable-pic --disable-debug
    #~ if [[ $1 == "gpl" ]]; then
@@ -249,19 +251,20 @@ else
    #~ echo $PKG_CONFIG_PATH
       #~ ./configure --arch=$ARCH --enable-asm --enable-libvpx --enable-libaom --disable-static --enable-shared --enable-libkvazaar --prefix=$PWD/install --disable-gpl --enable-rpath --extra-ldflags="-L/usr/local/lib -ldl -fPIC -m64" --enable-pic
    #~ fi
-
+   cd ..
 fi
 
-FILE=install/include
+FILE=ffmpeg/install/include
 if [ -d $FILE ]; then
     echo "Dir $FILE exists."
 else
+   cd ffmpeg
     echo 'Building ffmpeg...'
     #make clean
     make -j
     make install
+   cd ..
 fi
-cd ..
 
 
 # copy kvazaar shared lib to ffmpeg, x264 has been built statically
