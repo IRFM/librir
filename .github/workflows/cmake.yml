@@ -17,7 +17,7 @@ jobs:
         needs: build-ffmpeg
         strategy:
           matrix:
-            compiler: [ latest, gcc-latest, clang]
+            compiler: [ latest, gcc-latest, clang, gcc-6.4.0, gcc-13.2.0]
         uses: ./.github/workflows/build-linux.yml
         with:
           compiler: ${{ matrix.compiler }}
@@ -35,7 +35,7 @@ jobs:
         strategy:
           matrix:
             python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
-            compiler:  [ latest, gcc-latest, gcc-9, gcc-5.3.1, gcc-10, g++-11, clang, clang-10, clang-11, clang++-12 ]
+            compiler:  [ latest, gcc-latest, clang, gcc-6.4.0, gcc-13.2.0]
         needs: build-linux
         uses: ./.github/workflows/test.yml
         with:
@@ -47,7 +47,7 @@ jobs:
       strategy:
         matrix:
           python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
-          compiler: [ latest, gcc-latest, gcc-6.4.0, gcc-10.2.0, g++-11.2.0, clang, clang-8.0.0, clang-11.1.0, clang++-12.0.1 ]
+          compiler: [ latest, gcc-latest, gcc-6.4.0, gcc-13.2.0, clang]
       needs: build-windows
       uses: ./.github/workflows/test.yml
       with:
