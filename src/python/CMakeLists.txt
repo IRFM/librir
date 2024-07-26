@@ -1,8 +1,5 @@
 
 
-
-
-
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}
 	DESTINATION ${CMAKE_INSTALL_PREFIX}/python
 	FILES_MATCHING PATTERN "*.py"
@@ -70,3 +67,11 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pyproject.toml ${PROJECT_SOURCE_DIR}/R
 )
 install(CODE "set(FFMPEG_INSTALL_DIR \"${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}/libs\")")
 install(SCRIPT ../cpp/video_io/InstallFfmpeg.cmake) 
+
+
+if(BUILD_WHEEL)
+	message(STATUS "Building wheel after installation")
+	install (SCRIPT BuildWheel.cmake)
+endif()
+
+ 
