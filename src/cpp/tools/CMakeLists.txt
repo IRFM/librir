@@ -3,22 +3,44 @@ include(FetchContent)
 
 set(TOOLS_DEP_LIBS)
 message(STATUS "fetching ZSTD")
+set(ZSTD_BUILD_TESTS OFF CACHE INTERNAL "")  # Forces the value
+set(ZSTD_BUILD_PROGRAMS OFF CACHE INTERNAL "")  # Forces the value
+set(ZSTD_BUILD_SHARED OFF CACHE INTERNAL "")  # Forces the value
 FetchContent_Declare(
-	ZSTD
+	zstd
 	GIT_REPOSITORY 	"https://github.com/facebook/zstd.git"
 	GIT_TAG			v1.5.5
 	# URL "https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.5.5.tar.gz"
 	SOURCE_SUBDIR build/cmake
-	OVERRIDE_FIND_PACKAGE
 	)
 
-find_package(zstd REQUIRED)
-add_library(zstd::libzstd_shared ALIAS libzstd_shared)
-add_library(zstd::libzstd_static ALIAS libzstd_static)
+FetchContent_MakeAvailable(zstd)
 
 set(ZSTD_INCLUDE_DIR ${zstd_SOURCE_DIR}/lib)
+list(APPEND TOOLS_DEP_LIBS libzstd_static)
+ 
 
-list(APPEND TOOLS_DEP_LIBS zstd::libzstd_static)
+# Find or fetch ZSTD
+#include(FetchContent)
+
+#set(TOOLS_DEP_LIBS)
+#message(STATUS "fetching ZSTD")
+#FetchContent_Declare(
+#	ZSTD
+#	GIT_REPOSITORY 	"https://github.com/facebook/zstd.git"
+#	GIT_TAG			v1.5.5
+#	# URL "https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.5.5.tar.gz"
+#	SOURCE_SUBDIR build/cmake
+#	OVERRIDE_FIND_PACKAGE
+#	)
+
+#find_package(zstd REQUIRED)
+#add_library(zstd::libzstd_shared ALIAS libzstd_shared)
+#add_library(zstd::libzstd_static ALIAS libzstd_static)
+
+#set(ZSTD_INCLUDE_DIR ${zstd_SOURCE_DIR}/lib)
+
+#list(APPEND TOOLS_DEP_LIBS zstd::libzstd_static)
  
 add_definitions("-DBUILD_TOOLS_LIB")
 SET(LIBRIR_TOOLS_SRC
