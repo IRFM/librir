@@ -1,37 +1,11 @@
 # Find or fetch ZSTD
-#include(FetchContent)
-
-#set(TOOLS_DEP_LIBS)
-#message(STATUS "fetching ZSTD")
-#set(ZSTD_BUILD_TESTS OFF CACHE INTERNAL "")  # Forces the value
-#set(ZSTD_BUILD_SHARED ON CACHE INTERNAL "")  # Forces the value
-#set(ZSTD_BUILD_PROGRAMS OFF CACHE INTERNAL "")  # Forces the value
-#set(ZSTD_BUILD_SHARED OFF CACHE INTERNAL "")  # Forces the value
-#FetchContent_Declare(
-#	zstd
-#	GIT_REPOSITORY 	"https://github.com/facebook/zstd.git"
-#	GIT_TAG			v1.5.6
-#	# URL "https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.5.5.tar.gz"
-#	SOURCE_SUBDIR build/cmake
-#	#OVERRIDE_FIND_PACKAGE
-#	)
-
-#FetchContent_MakeAvailable(zstd)
-
-#find_package(zstd REQUIRED)
-
-#set(ZSTD_INCLUDE_DIR ${zstd_SOURCE_DIR}/lib)
-#list(APPEND TOOLS_DEP_LIBS zstd::libzstd_shared)
-#get_target_property(ZSTD_INCLUDE_DIR zstd::libzstd_shared INCLUDE_DIRECTORIES) 
-#message(STATUS "zstd::libzstd_shared works!")
-
-# Find or fetch ZSTD
 include(FetchContent)
 
 set(TOOLS_DEP_LIBS)
+set(ZSTD_BUILD_SHARED ON CACHE INTERNAL "")  # Mandatory, at least on linux (otherwise shared zstd is not built)
 message(STATUS "fetching ZSTD")
 FetchContent_Declare(
-	ZSTD
+	zstd
 	GIT_REPOSITORY 	"https://github.com/facebook/zstd.git"
 	GIT_TAG			v1.5.5
 	# URL "https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.5.5.tar.gz"
@@ -41,8 +15,9 @@ FetchContent_Declare(
 
 
 find_package(zstd REQUIRED)
-add_library(zstd::libzstd_shared ALIAS libzstd_shared)
+
 add_library(zstd::libzstd_static ALIAS libzstd_static)
+add_library(zstd::libzstd_shared ALIAS libzstd_shared)
 
 set(ZSTD_INCLUDE_DIR ${zstd_SOURCE_DIR}/lib)
 
