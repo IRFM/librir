@@ -26,37 +26,35 @@ ExternalProject_Add(nasm
                     # INSTALL_COMMAND $(MAKE) install
                     BUILD_IN_SOURCE true
 )
-# ExternalProject_Add_Step(nasm build BYPRODUCTS <INSTALL_DIR>/nasm)
-# ExternalProject_Add_StepTargets(nasm build)
-# ExternalProject_Add_StepTargets(nasm install)
+
 
 list(APPEND ffmpeg_DEPENDS nasm)
-
+set(KVAZAAR_CONFIGURE_CMD sed -i "/AM_PROG_AR/c\\m4_ifdef([AM_PROG_AR], [AM_PROG_AR])" ./configure.ac  && ./autogen.sh &&  ./configure --enable-static=yes --enable-shared=no CFLAGS=-fPIC )#--extra-ldflags="-Wl,-rpath='$ORIGIN'")
+set(KVAZAAR_INSTALL_CMD $(MAKE) install && bash -c export line=$(grep lkvazaar ${3RD_64_INSTALL_DIR}/lib/pkgconfig/kvazaar.pc) && export line="${line} -lm -lpthread" && sed -i "/lkvazaar/c ${line}" ${3RD_64_INSTALL_DIR}/lib/pkgconfig/kvazaar.pc)
 ExternalProject_Add(kvazaar
                     GIT_REPOSITORY https://github.com/ultravideo/kvazaar.git
                     GIT_TAG v2.2.0
                     # PREFIX deps
                     INSTALL_DIR ${3RD_64_INSTALL_DIR}
-                    CONFIGURE_COMMAND ./autogen.sh && ./configure --enable-static=yes --enable-shared=no CFLAGS=-fPIC --prefix=<INSTALL_DIR> #--extra-ldflags="-Wl,-rpath='$ORIGIN'"
+                    CONFIGURE_COMMAND ${KVAZAAR_CONFIGURE_CMD} --prefix=<INSTALL_DIR>
                     BUILD_COMMAND $(MAKE) --silent
-                    # INSTALL_COMMAND $(MAKE) install
+                    # INSTALL_COMMAND ${KVAZAAR_INSTALL_CMD}
                     BUILD_IN_SOURCE 1
                     )
 
+add_custom_command(
+                        TARGET kvazaar
+                        POST_BUILD 
+                        COMMAND bash -c "sed -i \"/lkvazaar/c $(grep lkvazaar ${3RD_64_INSTALL_DIR}/lib/pkgconfig/kvazaar.pc) -lm -lpthread\" ${3RD_64_INSTALL_DIR}/lib/pkgconfig/kvazaar.pc"
+                        VERBATIM
+                      )
 
-
-# add_executable(nasm-exec IMPORTED)
-# set_property(
-#             TARGET nasm-exec
-#             PROPERTY
-#                 IMPORTED_LOCATION "${3RD_64_INSTALL_DIR}/bin/nasm"
-#         )
 set(_PATH $ENV{PATH})
 set(X264_CONFIGURE_CMD  export PATH=${3RD_64_INSTALL_DIR}/bin:${_PATH} && ./configure --enable-static --enable-pic --enable-strip )
 set(X264_BUILD_CMD  export PATH=${3RD_64_INSTALL_DIR}/bin:${_PATH} && $(MAKE) )
 ExternalProject_Add(x264
                     GIT_REPOSITORY https://code.videolan.org/videolan/x264.git
-                    # GIT_TAG v2.2.0
+                    GIT_TAG stable
                     INSTALL_DIR ${3RD_64_INSTALL_DIR}
                     CONFIGURE_COMMAND ${X264_CONFIGURE_CMD} --prefix=<INSTALL_DIR>
                     BUILD_COMMAND ${X264_BUILD_CMD}
@@ -69,18 +67,27 @@ ExternalProject_Add(x264
 # ExternalProject_Add_Step(x264 configure DEPENDEES nasm-install)
 list(APPEND ffmpeg_DEPENDS x264)
 
-# # )
-set(FFMPEG_CONFIGURE_CMD  export PATH=${3RD_64_INSTALL_DIR}/bin:${_PATH} && export OPENSSL_LIBS="-L /usr/lib64 -llibeay32 -lssleay32 -llibcrypto -luser32 -lgdi32 -lwsock32 -lws2_32" && ./configure --arch=native --enable-asm --disable-libvpx --disable-libaom --disable-static --enable-shared --enable-libx264 --enable-libkvazaar --extra-cflags=-DKVZ_STATIC_LIB --prefix=$PWD/install --enable-gpl --enable-rpath --extra-ldflags="-L/usr/local/lib -ldl $ffmeg_extra_ldflags -fPIC -m64 -Wl,-rpath='$ORIGIN'" --enable-pic --disable-debug)
+set(_PKG_CONFIG_PATH $ENV{PKG_CONFIG_PATH})
 
+# # )
+set(FFMPEG_CONFIGURE_CMD    
+                            export PATH=${3RD_64_INSTALL_DIR}/bin:$ENV{PATH}  && 
+                            export LD_LIBRARY_PATH=${3RD_64_INSTALL_DIR}/lib:$ENV{LD_LIBRARY_PATH}  && 
+                            export PKG_CONFIG_PATH=${3RD_64_INSTALL_DIR}/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}   &&
+                            export OPENSSL_LIBS="-L/usr/lib64 -llibeay32 -lssleay32 -llibcrypto -luser32 -lgdi32 -lwsock32 -lws2_32" && 
+                            # export LDFLAGS="-lm":$ENV{LDFLAGS} && 
+                            ./configure --arch=native --enable-asm --disable-libvpx --disable-libaom --disable-static --enable-shared --enable-libx264 --enable-libkvazaar --extra-cflags=-DKVZ_STATIC_LIB  --enable-gpl --enable-rpath --enable-pic --disable-debug)
 
 ExternalProject_Add(ffmpeg
                     GIT_REPOSITORY https://git.ffmpeg.org/ffmpeg.git
                     GIT_TAG n4.3
-                    CONFIGURE_COMMAND ${FFMPEG_CONFIGURE_CMD}
+                    CONFIGURE_COMMAND ${FFMPEG_CONFIGURE_CMD} --prefix=<INSTALL_DIR>
                     BUILD_COMMAND $(MAKE)
                     INSTALL_COMMAND make install
                     INSTALL_DIR ${3RD_64_INSTALL_DIR}
                     BUILD_IN_SOURCE 1
+                    DEPENDS kvazaar
+                    DEPENDS x264
                     # BUILD_ALWAYS 1
 )
 
