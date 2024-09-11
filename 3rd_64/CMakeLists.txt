@@ -7,14 +7,15 @@ project(ffmpeg_librir
     LANGUAGES CXX C
 )
 
-
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(ExternalProject)
-
-
-set(3RD_64_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/install)
+set(3RD_64_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
+option(LOCAL_INSTALL "Install locally" ON)
+IF(LOCAL_INSTALL)
+    set(3RD_64_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/install)
+endif()
 
 ExternalProject_Add(nasm
                     URL https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/nasm-2.15.05.tar.bz2
@@ -27,10 +28,7 @@ ExternalProject_Add(nasm
                     BUILD_IN_SOURCE true
 )
 
-
-list(APPEND ffmpeg_DEPENDS nasm)
 set(KVAZAAR_CONFIGURE_CMD sed -i "/AM_PROG_AR/c\\m4_ifdef([AM_PROG_AR], [AM_PROG_AR])" ./configure.ac  && ./autogen.sh &&  ./configure --enable-static=yes --enable-shared=no CFLAGS=-fPIC )#--extra-ldflags="-Wl,-rpath='$ORIGIN'")
-set(KVAZAAR_INSTALL_CMD $(MAKE) install && bash -c export line=$(grep lkvazaar ${3RD_64_INSTALL_DIR}/lib/pkgconfig/kvazaar.pc) && export line="${line} -lm -lpthread" && sed -i "/lkvazaar/c ${line}" ${3RD_64_INSTALL_DIR}/lib/pkgconfig/kvazaar.pc)
 ExternalProject_Add(kvazaar
                     GIT_REPOSITORY https://github.com/ultravideo/kvazaar.git
                     GIT_TAG v2.2.0
@@ -63,13 +61,8 @@ ExternalProject_Add(x264
                     BUILD_IN_SOURCE 1
 )
 
-# ExternalProject_Add_StepDependencies(x264 configure ${3RD_64_INSTALL_DIR}/bin/nasm)
-# ExternalProject_Add_Step(x264 configure DEPENDEES nasm-install)
-list(APPEND ffmpeg_DEPENDS x264)
-
 set(_PKG_CONFIG_PATH $ENV{PKG_CONFIG_PATH})
 
-# # )
 set(FFMPEG_CONFIGURE_CMD    
                             export PATH=${3RD_64_INSTALL_DIR}/bin:$ENV{PATH}  && 
                             export LD_LIBRARY_PATH=${3RD_64_INSTALL_DIR}/lib:$ENV{LD_LIBRARY_PATH}  && 
@@ -90,6 +83,3 @@ ExternalProject_Add(ffmpeg
                     DEPENDS x264
                     # BUILD_ALWAYS 1
 )
-
-
-# ExternalProject_Add_StepDependencies(ffmpeg build nasm kvazaar x264)
