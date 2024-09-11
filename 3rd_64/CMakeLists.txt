@@ -12,8 +12,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(ExternalProject)
 set(3RD_64_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
-option(LOCAL_INSTALL "Install locally" ON)
-IF(LOCAL_INSTALL)
+option(FFMPEG_LOCAL_INSTALL "Install locally" OFF)
+IF(FFMPEG_LOCAL_INSTALL)
     set(3RD_64_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/install)
 endif()
 
@@ -27,6 +27,8 @@ ExternalProject_Add(nasm
                     # INSTALL_COMMAND $(MAKE) install
                     BUILD_IN_SOURCE true
 )
+ExternalProject_Add_StepTargets(nasm install)
+
 
 set(KVAZAAR_CONFIGURE_CMD sed -i "/AM_PROG_AR/c\\m4_ifdef([AM_PROG_AR], [AM_PROG_AR])" ./configure.ac  && ./autogen.sh &&  ./configure --enable-static=yes --enable-shared=no CFLAGS=-fPIC )#--extra-ldflags="-Wl,-rpath='$ORIGIN'")
 ExternalProject_Add(kvazaar
@@ -48,6 +50,7 @@ add_custom_command(
                         COMMAND bash -c "sed -i \"/lkvazaar/c $(grep lkvazaar ${3RD_64_INSTALL_DIR}/lib/pkgconfig/kvazaar.pc) -lm -lpthread\" ${3RD_64_INSTALL_DIR}/lib/pkgconfig/kvazaar.pc"
                         VERBATIM
                       )
+ExternalProject_Add_StepTargets(kvazaar install)
 
 set(_PATH $ENV{PATH})
 set(X264_CONFIGURE_CMD  export PATH=${3RD_64_INSTALL_DIR}/bin:${_PATH} && ./configure --enable-static --enable-pic --enable-strip )
@@ -60,9 +63,10 @@ ExternalProject_Add(x264
                     INSTALL_DIR ${3RD_64_INSTALL_DIR}
                     CONFIGURE_COMMAND ${X264_CONFIGURE_CMD} --prefix=<INSTALL_DIR>
                     BUILD_COMMAND ${X264_BUILD_CMD}
-                    DEPENDS nasm
+                    DEPENDS nasm-install
                     BUILD_IN_SOURCE true
 )
+ExternalProject_Add_StepTargets(x264 install)
 
 set(_PKG_CONFIG_PATH $ENV{PKG_CONFIG_PATH})
 
@@ -83,7 +87,7 @@ ExternalProject_Add(ffmpeg
                     INSTALL_COMMAND make install
                     INSTALL_DIR ${3RD_64_INSTALL_DIR}
                     BUILD_IN_SOURCE true
-                    DEPENDS kvazaar
-                    DEPENDS x264
+                    DEPENDS kvazaar-install
+                    DEPENDS x264-install
                     # BUILD_ALWAYS 1
 )
