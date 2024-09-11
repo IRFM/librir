@@ -50,7 +50,7 @@ add_custom_command(
                         COMMAND bash -c "sed -i \"/lkvazaar/c $(grep lkvazaar ${3RD_64_INSTALL_DIR}/lib/pkgconfig/kvazaar.pc) -lm -lpthread\" ${3RD_64_INSTALL_DIR}/lib/pkgconfig/kvazaar.pc"
                         VERBATIM
                       )
-ExternalProject_Add_StepTargets(kvazaar install)
+ExternalProject_Add_StepTargets(kvazaar build)
 
 set(_PATH $ENV{PATH})
 set(X264_CONFIGURE_CMD  export PATH=${3RD_64_INSTALL_DIR}/bin:${_PATH} && ./configure --enable-static --enable-pic --enable-strip )
@@ -59,14 +59,14 @@ ExternalProject_Add(x264
                     GIT_REPOSITORY https://code.videolan.org/videolan/x264.git
                     GIT_TAG stable
                     UPDATE_DISCONNECTED true
-                    DOWNLOAD_EXTRACT_TIMESTAMP true
+                    # DOWNLOAD_EXTRACT_TIMESTAMP true
                     INSTALL_DIR ${3RD_64_INSTALL_DIR}
                     CONFIGURE_COMMAND ${X264_CONFIGURE_CMD} --prefix=<INSTALL_DIR>
                     BUILD_COMMAND ${X264_BUILD_CMD}
-                    DEPENDS nasm-install
+                    DEPENDS nasm
                     BUILD_IN_SOURCE true
 )
-ExternalProject_Add_StepTargets(x264 install)
+ExternalProject_Add_StepTargets(x264 build)
 
 set(_PKG_CONFIG_PATH $ENV{PKG_CONFIG_PATH})
 
@@ -87,7 +87,7 @@ ExternalProject_Add(ffmpeg
                     INSTALL_COMMAND make install
                     INSTALL_DIR ${3RD_64_INSTALL_DIR}
                     BUILD_IN_SOURCE true
-                    DEPENDS kvazaar-install
-                    DEPENDS x264-install
+                    DEPENDS kvazaar
+                    DEPENDS x264
                     # BUILD_ALWAYS 1
 )
