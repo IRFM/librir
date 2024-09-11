@@ -9,12 +9,8 @@ on:
   workflow_call:
 
 
-jobs:
-    build-ffmpeg:
-      uses: ./.github/workflows/build-ffmpeg.yml
-      
+jobs: 
     build-linux:
-        needs: build-ffmpeg
         strategy:
           matrix:
             compiler: [ latest, gcc-latest, clang, gcc-6.4.0, gcc-13.2.0]
