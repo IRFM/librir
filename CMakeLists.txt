@@ -36,11 +36,12 @@ IF (UNIX)
 ENDIF()
 
 IF (NOT MSVC)
+	add_subdirectory(3rd_64)
 	# Create a dummy target to build ffmpeg as a prebuild step
-	add_custom_target(ffmpeg BYPRODUCTS "${PROJECT_SOURCE_DIR}/build_ffmpeg.h"
-	COMMAND ${PROJECT_SOURCE_DIR}/configure_ffmpeg)
-	add_executable(dummy ${PROJECT_SOURCE_DIR}/dummy.c "${PROJECT_SOURCE_DIR}/build_ffmpeg.h")
-	target_include_directories(dummy PRIVATE "${PROJECT_SOURCE_DIR}")
+	# add_custom_target(ffmpeg_librir BYPRODUCTS "${PROJECT_SOURCE_DIR}/build_ffmpeg.h"
+	# 					COMMAND ${PROJECT_SOURCE_DIR}/configure_ffmpeg)
+	# add_executable(dummy ${PROJECT_SOURCE_DIR}/dummy.c "${PROJECT_SOURCE_DIR}/build_ffmpeg.h")
+	# target_include_directories(dummy PRIVATE "${PROJECT_SOURCE_DIR}")
 	
 ENDIF()
 

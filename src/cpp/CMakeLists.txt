@@ -7,7 +7,7 @@ add_subdirectory(video_io)
 
 IF (NOT MSVC)
     # some dependency to prevent from making librir before building ffmpeg
-    add_dependencies(video_io dummy)
+    add_dependencies(video_io ffmpeg)
 ENDIF()
 
 
