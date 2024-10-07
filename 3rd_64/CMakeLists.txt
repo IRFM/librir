@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(ffmpeg_librir
-    VERSION 4.3
+    VERSION 	4.3
     DESCRIPTION "ffmpeg_librir"
     
     LANGUAGES CXX C
@@ -79,7 +79,7 @@ set(FFMPEG_CONFIGURE_CMD
 
 ExternalProject_Add(ffmpeg
                     GIT_REPOSITORY https://git.ffmpeg.org/ffmpeg.git
-                    GIT_TAG n4.3
+                    GIT_TAG 	release/${PROJECT_VERSION}
                     DOWNLOAD_EXTRACT_TIMESTAMP true
                     UPDATE_DISCONNECTED true
                     CONFIGURE_COMMAND ${FFMPEG_CONFIGURE_CMD} --prefix=<INSTALL_DIR>
