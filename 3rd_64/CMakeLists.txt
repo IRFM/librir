@@ -109,7 +109,7 @@ FetchContent_Declare(
     GIT_REPOSITORY https://git.ffmpeg.org/ffmpeg.git
     GIT_TAG release/${PROJECT_VERSION}
     )
-FetchContent_MakeAvailable(x264)
+FetchContent_MakeAvailable(ffmpeg)
 set(FFMPEG_CONFIGURE_CMD    
                             export PATH=${3RD_64_INSTALL_DIR}/bin:$ENV{PATH}  && 
                             export LD_LIBRARY_PATH=${3RD_64_INSTALL_DIR}/lib:$ENV{LD_LIBRARY_PATH}  && 
