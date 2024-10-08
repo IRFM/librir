@@ -14,6 +14,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
 option(LOCAL_INSTALL "Install locally" ON)
+option(BUILD_WHEEL "building wheel file while installing" OFF)
+
 
 IF(LOCAL_INSTALL)
 	SET(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR}/install) 
