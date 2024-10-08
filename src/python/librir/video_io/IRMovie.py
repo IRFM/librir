@@ -353,9 +353,10 @@ class IRMovie(object):
         statinfo = os.stat(self.filename)
         filesize = statinfo.st_size
         theoritical_uncompressed = (
-            self.images * self.image_size[1] * (self.image_size[0]) * 2 + 1024
+            self.images * ((self.image_size[1] * self.image_size[0] * 2) / 1e9)
+            + 1024 / 1e9
         )
-        return filesize == theoritical_uncompressed
+        return (filesize / 1e9) == theoritical_uncompressed
 
     @property
     def width(self):
