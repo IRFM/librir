@@ -8,6 +8,8 @@ extern "C"
 #include "IRFileLoader.h"
 #include "h264.h"
 #include "HCCLoader.h"
+#include "ReadFileChunk.h"
+
 using namespace rir;
 
 #include <fstream>
