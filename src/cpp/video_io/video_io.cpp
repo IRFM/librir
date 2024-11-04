@@ -112,7 +112,7 @@ int open_camera_from_memory(void *ptr, int64_t size, int *file_format)
 		*file_format = 0;
 
 	IRFileLoader *loader = new IRFileLoader();
-	void *reader = createFileReader(createMemoryAccess(ptr,size));
+	void *reader = createFileReader(createMemoryAccess(ptr,size)); 
 
 	if (loader->openFileReader(reader))
 	{
