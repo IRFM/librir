@@ -393,7 +393,7 @@ FileAccess createFileAccess(const char *filename, int64_t chunk_size)
 struct MemBlock
 {
 	void * ptr;
-	int64_t fize;
+	int64_t size;
 };
 
 void destroyOpaqueMemoryHandle(void *opaque)
@@ -416,7 +416,7 @@ int64_t readMemoryChunk(void *opaque, int64_t chunk, uint8_t *buf)
 void memoryInfos(void *opaque, int64_t *fileSize, int64_t *chunkCount, int64_t *chunkSize)
 {
 	MemBlock *f = (MemBlock *)opaque;
-	*fileSize = f->fsize;
+	*fileSize = f->size;
 	*chunkCount = f->size / MEM_BLOCK_CHUNK + (f->size % MEM_BLOCK_CHUNK ? 1 : 0);
 	*chunkSize = MEM_BLOCK_CHUNK;
 }
