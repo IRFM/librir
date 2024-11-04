@@ -104,7 +104,7 @@ int open_camera_file_reader(void *file_reader, int *file_format)
 	}
 }
 
-int open_camera_from_memory(void *ptr, int64_t size, int *file_format);
+int open_camera_from_memory(void *ptr, int64_t size, int *file_format)
 {
 	if (file_format)
 		*file_format = 0;
