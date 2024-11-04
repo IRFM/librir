@@ -18,6 +18,7 @@ from .rir_tools import (
     attrs_global_attribute_value,
     attrs_frame_attribute_name,
     attrs_frame_attribute_value,
+    attrs_read_file_reader,
     attrs_timestamps,
     attrs_set_times,
     attrs_set_frame_attributes,
@@ -44,7 +45,11 @@ class FileAttributes(object):
         Create a FileAttributes object from a filename.
         """
         self.handle = 0
-        self.handle = attrs_open_file(filename)
+        self.handle = (
+            attrs_read_file_reader(filename)
+            if (isinstance(filename, bytes) or (filename == ""))
+            else attrs_open_file(filename)
+        )
 
         # read timestamps and attributes
         self._timestamps = attrs_timestamps(self.handle)

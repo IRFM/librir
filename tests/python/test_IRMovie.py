@@ -136,9 +136,9 @@ def test_from_filename(filename):
     assert mov.filename == filename
 
 
-def test_from_bytes_with_timestamps(movie_as_bytes, timestamps):
-    mov2 = IRMovie.from_bytes(movie_as_bytes, times=timestamps)
-    npt.assert_array_equal(mov2.timestamps, timestamps[: mov2.images])
+# def test_from_bytes_with_timestamps(movie_as_bytes, timestamps):
+#     mov2 = IRMovie.from_bytes(movie_as_bytes)
+#     npt.assert_array_equal(mov2.timestamps, timestamps[: mov2.images])
 
 
 @pytest.mark.io
@@ -248,3 +248,14 @@ def test_save_subset_of_movie_to_h264(movie: IRMovie, attrs: Dict[str, int]):
         assert len(subset_movie.frames_attributes) == subset_movie.images
 
     # dest_filename.unlink()
+
+
+def test_ir_movie_from_buffer(filename: Path):
+    data = filename.read_bytes()
+    original_movie = IRMovie.from_filename(filename)
+
+    with IRMovie.from_bytes(data) as mov:
+        npt.assert_array_equal(mov.data, original_movie.data)
+        assert mov.times == original_movie.times
+        assert mov.frames_attributes.compare(original_movie.frames_attributes).empty
+        assert mov.attributes == original_movie.attributes

@@ -36,6 +36,7 @@ from .rir_video_io import (
     get_image_time,
     load_image,
     open_camera_file,
+    open_camera_memory,
     set_emissivity,
     set_global_emissivity,
     support_emissivity,
@@ -77,7 +78,7 @@ class IRMovie(object):
         return IRMovie(handle)
 
     @classmethod
-    def from_bytes(cls, data: bytes, times: List[float] = None, cthreads: int = 8):
+    def from_bytes(cls, data: bytes):
         """_summary_
 
         Args:
@@ -87,20 +88,14 @@ class IRMovie(object):
         Returns:
             _type_: _description_
         """
-        with tempfile.NamedTemporaryFile("wb", delete=False) as f:
-            filename = Path(f.name)
-            f.write(data)
 
-        with cls.from_filename(filename) as _instance:
-            _instance.__tempfile__ = filename
-            dst = Path(filename).parent / (f"{filename.stem}.h264")
-            _instance.to_h264(dst, times=times, cthreads=cthreads)
-
-        instance = cls.from_filename(dst)
-        return instance
+        handle = open_camera_memory(data)
+        return cls(handle)
 
     @classmethod
-    def from_numpy_array(cls, arr, attrs=None, times=None, cthreads: int = 8):
+    def from_numpy_array(
+        cls, arr: np.ndarray, attrs=None, times=None, cthreads: int = 8
+    ):
         """
         Create a IRMovie object via numpy arrays. It creates non-pulse indexed IRMovie
         object.
@@ -117,7 +112,17 @@ class IRMovie(object):
         else:
             raise ValueError("mismatch array shape. Must be 2D or 3D")
         data = header.astype(np.uint32).tobytes() + arr.astype(np.uint16).tobytes()
-        instance = cls.from_bytes(data, times=times, cthreads=cthreads)
+
+        with tempfile.NamedTemporaryFile("wb", delete=False) as f:
+            filename = Path(f.name)
+            f.write(data)
+
+        with cls.from_filename(filename) as _instance:
+            _instance.__tempfile__ = filename
+            dst = Path(filename).parent / (f"{filename.stem}.h264")
+            _instance.to_h264(dst, times=times, cthreads=cthreads)
+
+        instance = cls.from_filename(dst)
 
         if attrs is not None:
             instance.attributes = attrs
@@ -143,7 +148,12 @@ class IRMovie(object):
         self._timestamps = None
         self._camstatus = None
         self._frame_attributes_d = {}
-        self._file_attributes = FileAttributes(self.filename)
+
+        self._file_attributes = (
+            FileAttributes(self.filename)
+            if self.filename is not None
+            else FileAttributes(self.handle)
+        )
         self._file_attributes.attributes = get_global_attributes(self.handle)
         self._registration_file = None
 
@@ -323,7 +333,8 @@ class IRMovie(object):
 
     @property
     def filename(self):
-        return Path(get_filename(self.handle))  # local filename
+        _f = get_filename(self.handle)
+        return Path(_f) if _f else None  # local filename
 
     @property
     def calibration_files(self) -> List[str]:
@@ -350,6 +361,9 @@ class IRMovie(object):
 
     @property
     def is_file_uncompressed(self):
+        if self.filename is None:
+            return False
+
         statinfo = os.stat(self.filename)
         filesize = statinfo.st_size
         theoritical_uncompressed = (
@@ -479,10 +493,13 @@ class IRMovie(object):
     @property
     def timestamps(self):
         if self._timestamps is None:
-            self._timestamps = np.array(
-                [get_image_time(self.handle, i) * 1e-9 for i in range(self.images)],
-                dtype=np.float64,
-            )
+            try:
+                self._timestamps = np.array(
+                    [get_image_time(self.handle, i) * 1e-9 for i in range(self.images)],
+                    dtype=np.float64,
+                )
+            except RuntimeError as e:
+                logger.warning(f"No timestamps in {self}")
         return self._timestamps
 
     @timestamps.setter
@@ -605,7 +622,11 @@ class IRMovie(object):
 
         h, w = self.image_size
         if times is None:
-            times = list(self.timestamps)
+            times = (
+                list(t * 1e9 for t in self.timestamps)
+                if self.timestamps is not None
+                else range(start_img, start_img + count)
+            )
         with IRSaver(dst_filename, w, h, h, clevel) as s:
             s.set_global_attributes(attrs)
             s.set_parameter("threads", cthreads)
@@ -619,7 +640,7 @@ class IRMovie(object):
                     else frame_attributes[saved]
                 )
 
-                s.add_image(img, times[i] * 1e9, attributes=_frame_attributes)
+                s.add_image(img, times[i], attributes=_frame_attributes)
 
                 saved += 1
                 if saved % 100 == 0:
