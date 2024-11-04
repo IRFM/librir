@@ -410,7 +410,7 @@ int64_t readMemoryChunk(void *opaque, int64_t chunk, uint8_t *buf)
 		size = 0;
 	else if(pos + size >= f->size)
 		size = f->size - pos;
-	memcpy(buf,f->ptr+pos,size);
+	memcpy(buf,(char*)f->ptr + pos,size);
 	return size;
 }
 void memoryInfos(void *opaque, int64_t *fileSize, int64_t *chunkCount, int64_t *chunkSize)
