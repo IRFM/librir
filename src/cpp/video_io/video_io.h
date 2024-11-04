@@ -44,6 +44,18 @@ extern "C"
 	\sa createFileReader
 	*/
 	IO_EXPORT int open_camera_file_reader(void *file_reader, int *file_format);
+
+	/**
+	Opens a camera video file from a memory reader (created with #createMemoryReader()) object and returns
+	the camera descriptor on success, NULL otherwise.
+	If \a file_format is not NULL, it will be set to the file type: FILE_FORMAT_PCR, FILE_FORMAT_WEST,
+	FILE_FORMAT_PCR_ENCAPSULATED, FILE_FORMAT_ZSTD_COMPRESSED, FILE_FORMAT_H264 or 0 on error.
+	The created camera object will take ownership of the file reader and will destroy it with #destroyMemoryReader()
+	on closing.
+	\sa createMemoryReader
+	*/
+	IO_EXPORT int open_camera_from_memory(void *ptr, int64_t size, int *file_format);
+
 	/**
 	Closes a previously opened camera or video file.
 	*/

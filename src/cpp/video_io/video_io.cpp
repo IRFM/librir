@@ -104,6 +104,43 @@ int open_camera_file_reader(void *file_reader, int *file_format)
 	}
 }
 
+int open_camera_from_memory(void *ptr, int64_t size, int *file_format);
+{
+	if (file_format)
+		*file_format = 0;
+
+	IRFileLoader *loader = new IRFileLoader();
+	void *reader = createFileReader(createMemoryAccess(ptr,size));
+
+	if (loader->openFileReader(reader))
+	{
+		if (file_format)
+		{
+			if (loader->isPCR())
+				*file_format = FILE_FORMAT_PCR;
+			else if (loader->isBIN())
+				*file_format = FILE_FORMAT_WEST;
+			else if (loader->isPCREncapsulated())
+				*file_format = FILE_FORMAT_PCR_ENCAPSULATED;
+			else if (loader->isZCompressed())
+				*file_format = FILE_FORMAT_ZSTD_COMPRESSED;
+			else if (loader->isHCC())
+				*file_format = FILE_FORMAT_HCC;
+			else if (loader->isH264())
+				*file_format = FILE_FORMAT_H264;
+			else
+				*file_format = FILE_FORMAT_OTHER;
+		}
+		return set_void_ptr(loader);
+	}
+	else
+	{
+		delete loader;
+		logError(("Unable to open camera file: wrong file format"));
+		return 0;
+	}
+}
+
 int close_camera(int cam)
 {
 	void *camera = get_void_ptr(cam);

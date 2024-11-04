@@ -216,6 +216,7 @@ void *createFileReader(FileAccess access)
 	return reader;
 }
 
+
 void destroyFileReader(void *r)
 {
 	if (!r)
@@ -384,3 +385,53 @@ FileAccess createFileAccess(const char *filename, int64_t chunk_size)
 	res.opaque = f;
 	return res;
 }
+
+
+#define MEM_BLOCK_CHUNK 4096
+
+
+struct MemBlock
+{
+	void * ptr;
+	int64_t fize;
+};
+
+void destroyOpaqueMemoryHandle(void *opaque)
+{
+	MemBlock *f = (MemBlock *)opaque;
+	delete f;
+}
+int64_t readMemoryChunk(void *opaque, int64_t chunk, uint8_t *buf)
+{
+	MemBlock *f = (MemBlock *)opaque;
+	int64_t pos = chunk * MEM_BLOCK_CHUNK;
+	int64_t size = MEM_BLOCK_CHUNK;
+	if(pos >= f->size)
+		size = 0;
+	else if(pos + size >= f->size)
+		size = f->size - pos;
+	memcpy(buf,f->ptr+pos,size);
+	return size;
+}
+void memoryInfos(void *opaque, int64_t *fileSize, int64_t *chunkCount, int64_t *chunkSize)
+{
+	MemBlock *f = (MemBlock *)opaque;
+	*fileSize = f->fsize;
+	*chunkCount = f->size / MEM_BLOCK_CHUNK + (f->size % MEM_BLOCK_CHUNK ? 1 : 0);
+	*chunkSize = MEM_BLOCK_CHUNK;
+}
+
+FileAccess createMemoryAccess( void *data, int64_t size)
+{
+	MemBlock *f = new MemBlock();
+	f->ptr = data;
+	f->size  = size;
+
+	FileAccess res;
+	res.destroy = &destroyOpaqueMemoryHandle;
+	res.infos = &memoryInfos;
+	res.read = &readMemoryChunk;
+	res.opaque = f;
+	return res;
+}
+
