@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(ffmpeg_librir
-    VERSION 	4.3
+    VERSION 	7.1
     DESCRIPTION "ffmpeg_librir"
     
     LANGUAGES CXX C
@@ -49,13 +49,13 @@ ExternalProject_Add(nasm
 ExternalProject_Add_StepTargets(nasm install)
 
 FetchContent_Declare(
-    kvazaar
+    kvazaar-librir
     GIT_REPOSITORY https://github.com/ultravideo/kvazaar.git
-    GIT_TAG v2.2.0
+    GIT_TAG v2.3.1
     )
-FetchContent_MakeAvailable(kvazaar)
+FetchContent_MakeAvailable(kvazaar-librir)
 set(KVAZAAR_CONFIGURE_CMD sed -i "/AM_PROG_AR/c\\m4_ifdef([AM_PROG_AR], [AM_PROG_AR])" ./configure.ac  && ./autogen.sh &&  ./configure --enable-static=yes --enable-shared=no CFLAGS=-fPIC )#--extra-ldflags="-Wl,-rpath='$ORIGIN'")
-ExternalProject_Add(kvazaar
+ExternalProject_Add(kvazaar-librir
                     SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/kvazaar-src
                     UPDATE_DISCONNECTED true
                     DOWNLOAD_EXTRACT_TIMESTAMP true
@@ -70,12 +70,12 @@ ExternalProject_Add(kvazaar
                     )
 
 add_custom_command(
-                        TARGET kvazaar
+                        TARGET kvazaar-librir
                         POST_BUILD 
                         COMMAND bash -c "sed -i \"/lkvazaar/c $(grep lkvazaar ${3RD_64_INSTALL_DIR}/lib/pkgconfig/kvazaar.pc) -lm -lpthread\" ${3RD_64_INSTALL_DIR}/lib/pkgconfig/kvazaar.pc"
                         VERBATIM
                       )
-ExternalProject_Add_StepTargets(kvazaar build)
+ExternalProject_Add_StepTargets(kvazaar-librir build)
 
 
 FetchContent_Declare(
@@ -124,7 +124,7 @@ ExternalProject_Add(ffmpeg
                     INSTALL_COMMAND make install
                     INSTALL_DIR ${3RD_64_INSTALL_DIR}
                     BUILD_IN_SOURCE true
-                    DEPENDS kvazaar
+                    DEPENDS kvazaar-librir
                     DEPENDS x264
                     DOWNLOAD_COMMAND ""
                     # BUILD_ALWAYS 1

@@ -75,15 +75,38 @@ extern "C"
 
 #include "BadPixels.h"
 
+static int decode(AVCodecContext *dec_ctx, AVFrame *frame, int *got_frame, AVPacket *pkt)
+{
+	int used = 0;
+	if (dec_ctx->codec_type == AVMEDIA_TYPE_VIDEO ||
+		dec_ctx->codec_type == AVMEDIA_TYPE_AUDIO)
+	{
+		int used = avcodec_send_packet(dec_ctx, pkt);
+		if (used < 0 && used != AVERROR(EAGAIN) && used != AVERROR_EOF)
+		{
+		}
+		else
+		{
+			if (used >= 0)
+				pkt->size = 0;
+			used = avcodec_receive_frame(dec_ctx, frame);
+			if (used >= 0)
+				*got_frame = 1;
+			//             if (used == AVERROR(EAGAIN) || used == AVERROR_EOF)
+			//                 used = 0;
+		}
+	}
+	return used;
+}
 namespace rir
 {
 
-	static double std_dev_diff(const unsigned short* p1, const unsigned short* p2, int size)
+	static double std_dev_diff(const unsigned short *p1, const unsigned short *p2, int size)
 	{
 		double x = 0.0;
 		double x_squared = 0.0;
 
-		for (int i= 0; i < size; ++i)
+		for (int i = 0; i < size; ++i)
 		{
 			int diff = (int)p1[i] - (int)p2[i];
 			diff = (diff < 0 ? -diff : diff);
@@ -92,13 +115,12 @@ namespace rir
 		}
 
 		return std::sqrt((x_squared - (x * x) / size) /
-			(size - 1)
-		);
+						 (size - 1));
 	}
 
-	static double mean_image(const unsigned short* p, int size)
+	static double mean_image(const unsigned short *p, int size)
 	{
-		std::int64_t sum1 = 0, sum2=0;
+		std::int64_t sum1 = 0, sum2 = 0;
 
 		int size2 = size / 2;
 		for (int i = 0; i < size2; ++i)
@@ -110,7 +132,7 @@ namespace rir
 		return (double)sum1 / size;
 	}
 
-	static std::pair<double,double> mean_std(const double* p, int size)
+	static std::pair<double, double> mean_std(const double *p, int size)
 	{
 		double x = 0.0;
 		double x_squared = 0.0;
@@ -121,24 +143,24 @@ namespace rir
 			x_squared += p[i] * p[i];
 		}
 
-		return {x/size, std::sqrt((x_squared - (x * x) / size) /
-			(size - 1)
-		) };
+		return {x / size, std::sqrt((x_squared - (x * x) / size) /
+									(size - 1))};
 	}
 
-	static void max_image(unsigned short* dst, const unsigned short* im, int width, int height, int lossy_height)
+	static void max_image(unsigned short *dst, const unsigned short *im, int width, int height, int lossy_height)
 	{
 		int lossy_size = width * lossy_height;
 		for (int i = 0; i < lossy_size; ++i)
 			dst[i] = std::max(dst[i], im[i]);
 
 		// forward last lines
-		if (height != lossy_height) {
+		if (height != lossy_height)
+		{
 			memcpy(dst + lossy_size, im + lossy_size, (height - lossy_height) * width * 2);
 		}
 	}
 
-	class VideoDownsampler::PrivateData 
+	class VideoDownsampler::PrivateData
 	{
 	public:
 		int width;
@@ -149,33 +171,35 @@ namespace rir
 		callback_type callback;
 
 		std::vector<double> std_dev;
-		std::vector <unsigned short> prev;
-		std::vector <unsigned short> last_saved;
+		std::vector<unsigned short> prev;
+		std::vector<unsigned short> last_saved;
 		int buffer_size;
-			
+
 		int part;
 		std::vector<double> std_dev_copy;
 		int last_added;
 		int count;
-		std::vector <unsigned short> max_im;
+		std::vector<unsigned short> max_im;
 		std::int64_t max_im_time;
-		std::vector <std::int64_t> timestamps;
+		std::vector<std::int64_t> timestamps;
 		int i;
 		std::map<std::string, std::string> attributes;
 
-		PrivateData(int _width, int _height, int _lossy_height, int _factor, double _factor_std,  callback_type _callback)
-			:width(_width), height(_height), lossy_height(_lossy_height), factor(_factor), factor_std(_factor_std), callback(_callback)
+		PrivateData(int _width, int _height, int _lossy_height, int _factor, double _factor_std, callback_type _callback)
+			: width(_width), height(_height), lossy_height(_lossy_height), factor(_factor), factor_std(_factor_std), callback(_callback)
 		{
 			prev.resize(width * height);
 			last_saved.resize(width * height);
 			buffer_size = 96;
 
-			//factor_std = (1. - (1. / factor));
-			//double factor2 = (factor * 1.);
-			//part = (int)((buffer_size / factor2) * (factor2 - 1));
+			// factor_std = (1. - (1. / factor));
+			// double factor2 = (factor * 1.);
+			// part = (int)((buffer_size / factor2) * (factor2 - 1));
 			part = (int)(factor_std * buffer_size);
-			if (part < 0) part = 0;
-			else if (part >= buffer_size) part = buffer_size - 1;
+			if (part < 0)
+				part = 0;
+			else if (part >= buffer_size)
+				part = buffer_size - 1;
 			std_dev_copy.resize(buffer_size);
 			last_added = 0;
 			count = 0;
@@ -187,12 +211,12 @@ namespace rir
 	};
 
 	VideoDownsampler::VideoDownsampler()
-		:d_data(nullptr)
+		: d_data(nullptr)
 	{
 	}
 	VideoDownsampler::~VideoDownsampler()
 	{
-		if(d_data)
+		if (d_data)
 			delete d_data;
 	}
 
@@ -201,7 +225,8 @@ namespace rir
 		if (width <= 0 || height <= 0 || lossy_height > height || factor < 1 || factor_std < 0 || factor_std > 1 || !callback)
 			return false;
 
-		if (d_data) {
+		if (d_data)
+		{
 			delete d_data;
 			d_data = nullptr;
 		}
@@ -219,7 +244,7 @@ namespace rir
 		return res;
 	}
 
-	bool VideoDownsampler::addImage2(const unsigned short* img, std::int64_t timestamp, const std::map<std::string, std::string>& attributes)
+	bool VideoDownsampler::addImage2(const unsigned short *img, std::int64_t timestamp, const std::map<std::string, std::string> &attributes)
 	{
 		if (!d_data)
 			return false;
@@ -229,15 +254,17 @@ namespace rir
 
 		d_data->timestamps.push_back(timestamp);
 
-		if (d_data->factor == 1) {
+		if (d_data->factor == 1)
+		{
 			d_data->callback(img, timestamp, attributes);
 			d_data->i++;
 			d_data->count++;
 			return true;
 		}
 
-		if (d_data->i == 0) {
-			//update prev image
+		if (d_data->i == 0)
+		{
+			// update prev image
 			memcpy(d_data->prev.data(), img, d_data->width * d_data->height * 2);
 			d_data->i++;
 			d_data->callback(img, timestamp, attributes);
@@ -247,28 +274,30 @@ namespace rir
 		}
 
 		double current_std = std_dev_diff(img, d_data->prev.data(), d_data->width * d_data->lossy_height);
-		if (d_data->std_dev.size() < 10) {
+		if (d_data->std_dev.size() < 10)
+		{
 			d_data->std_dev.push_back(current_std);
 			// compute maximum image
 			max_image(d_data->max_im.data(), img, d_data->width, d_data->height, d_data->lossy_height);
 			d_data->max_im_time = timestamp;
 			d_data->attributes = attributes;
 
-			if (d_data->i % d_data->factor == 0) {
+			if (d_data->i % d_data->factor == 0)
+			{
 				// add image
 				d_data->callback(d_data->max_im.data(), d_data->max_im_time, d_data->attributes);
 				d_data->last_added = d_data->i;
 				d_data->count++;
-				//memcpy(d_data->last_saved.data(), img, d_data->width * d_data->height*2);
-				// reset max image
+				// memcpy(d_data->last_saved.data(), img, d_data->width * d_data->height*2);
+				//  reset max image
 				std::fill_n(d_data->max_im.data(), d_data->max_im.size(), 0);
 			}
-			//update prev image
+			// update prev image
 			memcpy(d_data->prev.data(), img, d_data->width * d_data->height * 2);
 			d_data->i++;
 			return true;
 		}
-		
+
 		auto tmp = mean_std(d_data->std_dev.data(), d_data->std_dev.size());
 		double mean = tmp.first;
 		double std = tmp.second;
@@ -281,12 +310,13 @@ namespace rir
 		double std_ratio = std / mean;
 		bool nothing = std_ratio < 0.1;
 		if (nothing)
-			nothing = nothing && (current_std < mean + 2*std);
-		//if (nothing == true && current_std > mean + 0.5 * std)
+			nothing = nothing && (current_std < mean + 2 * std);
+		// if (nothing == true && current_std > mean + 0.5 * std)
 		//	printf("nothing %i\n", d_data->i);
 
-		if (d_data->i % d_data->factor == 0 || (!nothing && current_std > mean + 0.5*std)) {
-			//add image
+		if (d_data->i % d_data->factor == 0 || (!nothing && current_std > mean + 0.5 * std))
+		{
+			// add image
 			d_data->callback(d_data->max_im.data(), d_data->max_im_time, attributes);
 			d_data->last_added = d_data->i;
 			d_data->count++;
@@ -294,65 +324,70 @@ namespace rir
 			// reset max image
 			std::fill_n(d_data->max_im.data(), d_data->max_im.size(), 0);
 		}
-		if ((current_std < mean + 5 * std && current_std > mean -  std) || d_data->i % d_data->factor == 0)
+		if ((current_std < mean + 5 * std && current_std > mean - std) || d_data->i % d_data->factor == 0)
 		{
-			if(d_data->std_dev.size() < d_data->buffer_size)
+			if (d_data->std_dev.size() < d_data->buffer_size)
 				d_data->std_dev.push_back(current_std);
-			else {
+			else
+			{
 				// update array of standard deviation ONLY if current image is not completely different from previous one
 				memmove(d_data->std_dev.data(), d_data->std_dev.data() + 1, (d_data->std_dev.size() - 1) * sizeof(double));
 				d_data->std_dev.back() = current_std;
 			}
 		}
 
-		//update prev image
+		// update prev image
 		memcpy(d_data->prev.data(), img, d_data->width * d_data->height * 2);
 		d_data->i++;
 		return true;
 	}
 
-	bool VideoDownsampler::addImage(const unsigned short* img, std::int64_t timestamp, const std::map<std::string, std::string>& attributes)
+	bool VideoDownsampler::addImage(const unsigned short *img, std::int64_t timestamp, const std::map<std::string, std::string> &attributes)
 	{
 		if (!d_data)
 			return false;
-		
+
 		if (!d_data->timestamps.empty() && timestamp <= d_data->timestamps.back())
 			return false;
-		
+
 		d_data->timestamps.push_back(timestamp);
 
-		if (d_data->factor == 1) {
+		if (d_data->factor == 1)
+		{
 			d_data->callback(img, timestamp, attributes);
 			d_data->i++;
 			d_data->count++;
 			return true;
 		}
 
+		if (d_data->std_dev.size() < d_data->buffer_size)
+		{
 
-		if (d_data->std_dev.size() < d_data->buffer_size) {
-
-			if (d_data->i > 0) {
+			if (d_data->i > 0)
+			{
 				// Add standardd eviation of difference of 2 consecutive images
 				double std = std_dev_diff(img, d_data->prev.data(), d_data->width * d_data->lossy_height);
 				d_data->std_dev.push_back(std);
 			}
-			
+
 			// compute maximum image
 			max_image(d_data->max_im.data(), img, d_data->width, d_data->height, d_data->lossy_height);
 			d_data->max_im_time = timestamp;
 			d_data->attributes = attributes;
 
-			if (d_data->i % d_data->factor == 0) {
+			if (d_data->i % d_data->factor == 0)
+			{
 				// add image
-				d_data->callback(d_data->max_im.data(),  d_data->max_im_time, d_data->attributes);
+				d_data->callback(d_data->max_im.data(), d_data->max_im_time, d_data->attributes);
 				d_data->last_added = d_data->i;
 				d_data->count++;
-				//memcpy(d_data->last_saved.data(), img, d_data->width * d_data->height*2);
-				// reset max image
+				// memcpy(d_data->last_saved.data(), img, d_data->width * d_data->height*2);
+				//  reset max image
 				std::fill_n(d_data->max_im.data(), d_data->max_im.size(), 0);
 			}
 		}
-		else {
+		else
+		{
 
 			std::copy(d_data->std_dev.begin(), d_data->std_dev.end(), d_data->std_dev_copy.begin());
 			std::nth_element(d_data->std_dev_copy.begin(), d_data->std_dev_copy.begin() + d_data->part, d_data->std_dev_copy.end());
@@ -365,30 +400,30 @@ namespace rir
 			double current_std = std_dev_diff(img, d_data->prev.data(), d_data->width * d_data->lossy_height);
 
 			double nothing_factor = 0.5;
-			bool nothing = current_std < tmp.first - nothing_factor *tmp.second;
+			bool nothing = current_std < tmp.first - nothing_factor * tmp.second;
 			if ((d_data->i - d_data->last_added) >= (d_data->factor * 2))
 				nothing = false;
-			
+
 			// compute maximum image
 			max_image(d_data->max_im.data(), img, d_data->width, d_data->height, d_data->lossy_height);
 			d_data->max_im_time = timestamp;
 
-			if ((current_std > val || (d_data->i - d_data->last_added) >= (d_data->factor)) && !nothing) {
+			if ((current_std > val || (d_data->i - d_data->last_added) >= (d_data->factor)) && !nothing)
+			{
 				// Something new that must be recorded
 
-				//d_data->attributes = attributes;
+				// d_data->attributes = attributes;
 
-				//add image
-				d_data->callback(d_data->max_im.data(),  d_data->max_im_time, attributes);
+				// add image
+				d_data->callback(d_data->max_im.data(), d_data->max_im_time, attributes);
 				d_data->last_added = d_data->i;
 				d_data->count++;
 
 				// reset max image
 				std::fill_n(d_data->max_im.data(), d_data->max_im.size(), 0);
 			}
-			
-			
-			if ( current_std < mean + 10 * std) 
+
+			if (current_std < mean + 10 * std)
 			{
 				// update array of standard deviation ONLY if current image is not completely different from previous one
 				memmove(d_data->std_dev.data(), d_data->std_dev.data() + 1, (d_data->std_dev.size() - 1) * sizeof(double));
@@ -396,29 +431,18 @@ namespace rir
 			}
 		}
 
-		//update prev image
+		// update prev image
 		memcpy(d_data->prev.data(), img, d_data->width * d_data->height * 2);
 		d_data->i++;
 		return true;
 	}
 
-
-
-
-
-
-
-
-
-
-
-
 	int init_libavcodec()
 	{
-		av_register_all();
-		avcodec_register_all();
+		// av_register_all();
+		// avcodec_register_all();
 		avdevice_register_all();
-		avfilter_register_all();
+		// avfilter_register_all();
 		// avcodec_init ();
 		return 0;
 	}
@@ -513,12 +537,12 @@ namespace rir
 		std::string fname;
 		std::string tmp_name;
 		std::string threadCount;
-		AVOutputFormat *oformat;
+		const AVOutputFormat *oformat;
 		AVFormatContext *ofctx;
 		AVStream *videoStream;
 		AVFrame *videoFrame;
-		AVCodec *codec;
-		AVCodec *kvazaar;
+		const AVCodec *codec;
+		const AVCodec *kvazaar;
 		AVCodecContext *cctx;
 		SwsContext *swsCtx;
 		std::vector<uint8_t> img;
@@ -590,12 +614,12 @@ namespace rir
 		kvazaar = NULL;
 		if (codec_name == "h265")
 		{
-			kvazaar = av_codec_next(NULL);
+			kvazaar = av_codec_iterate(NULL);
 			while (kvazaar)
 			{
 				if (kvazaar->id == AV_CODEC_ID_HEVC && strcmp(kvazaar->name, "libkvazaar") == 0)
 					break;
-				kvazaar = av_codec_next(kvazaar);
+				kvazaar = av_codec_iterate((void **)kvazaar);
 			}
 		}
 
@@ -1045,8 +1069,8 @@ namespace rir
 
 		videoFrame->pts = frameCounter;		// *videoStream->time_base.den;
 		videoFrame->pkt_dts = frameCounter; // *videoStream->time_base.den;
-		videoFrame->pkt_pts = frameCounter; // *videoStream->time_base.den;
-		videoFrame->pkt_duration = 1;		// videoStream->time_base.den;
+		videoFrame->pts = frameCounter;		// *videoStream->time_base.den;
+		videoFrame->duration = 1;			// videoStream->time_base.den;
 		// videoFrame->pkt_pos = frameCounter;
 		frameCounter++;
 
@@ -1150,8 +1174,8 @@ namespace rir
 
 		videoFrame->pts = frameCounter;		// *videoStream->time_base.den;
 		videoFrame->pkt_dts = frameCounter; // *videoStream->time_base.den;
-		videoFrame->pkt_pts = frameCounter; // *videoStream->time_base.den;
-		videoFrame->pkt_duration = 1;		// videoStream->time_base.den;
+		videoFrame->pts = frameCounter;		// *videoStream->time_base.den;
+		videoFrame->duration = 1;			// videoStream->time_base.den;
 		// videoFrame->pkt_pos = frameCounter;
 		frameCounter++;
 
@@ -1259,7 +1283,7 @@ namespace rir
 		int ts = 0;
 		AVStream *inVideoStream = 0;
 		AVStream *outVideoStream = 0;
-		AVCodec *c = 0;
+		const AVCodec *c = 0;
 		std::string outtmp = fname + ".mp4";
 
 		if ((err = avformat_open_input(&ifmt_ctx, tmp_name.c_str(), 0, 0)) < 0)
@@ -2624,7 +2648,7 @@ namespace rir
 		AVFormatContext *pFormatCtx;
 		int videoStream;
 		AVCodecContext *pCodecCtx;
-		AVCodec *pCodec;
+		const AVCodec *pCodec;
 		AVFrame *pFrame;
 		AVFrame *pFrameRGB;
 		SwsContext *pSWSCtx;
@@ -2754,7 +2778,7 @@ namespace rir
 			videoStream = -1;
 			for (i = 0; i < pFormatCtx->nb_streams; i++)
 #if LIBAVFORMAT_VERSION_MAJOR > 52
-				if (pFormatCtx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
+				if (pFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
 #else
 				if (pFormatCtx->streams[i]->codec->codec_type == CODEC_TYPE_VIDEO)
 #endif
@@ -2768,10 +2792,13 @@ namespace rir
 			// pFormatCtx->cur_st = pFormatCtx->streams[0];
 
 			// Get a pointer to the codec context for the video stream
-			pCodecCtx = pFormatCtx->streams[videoStream]->codec;
+
+			// avcodec_find_decoder(pFormatCtx->streams[videoStream]->codecpar->codec_id);
 
 			// Find the decoder for the video stream
 			pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
+			pCodecCtx = avcodec_alloc_context3(pCodec);
+
 			if (pCodec == NULL)
 				goto error;
 
@@ -2804,14 +2831,15 @@ namespace rir
 				goto error;
 
 			// Determine required buffer size and allocate buffer
-			numBytes = avpicture_get_size(AV_PIX_FMT_RGB24, pCodecCtx->width,
-										  pCodecCtx->height);
+			numBytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, pCodecCtx->width,
+												pCodecCtx->height, 1);
 
 			buffer = (uint8_t *)av_malloc(numBytes);
 
 			// Assign appropriate parts of buffer to image planes in pFrameRGB
-			avpicture_fill((AVPicture *)pFrameRGB, buffer, AV_PIX_FMT_RGB24,
-						   pCodecCtx->width, pCodecCtx->height);
+			av_image_fill_arrays(pFrameRGB->data, pFrameRGB->linesize,
+								 buffer, AV_PIX_FMT_RGB24, pCodecCtx->width, pCodecCtx->height, 1);
+
 			// Initialize Context
 			if (pCodecCtx->pix_fmt == AV_PIX_FMT_NONE)
 				pCodecCtx->pix_fmt = AV_PIX_FMT_YUV420P;
@@ -2894,19 +2922,21 @@ namespace rir
 			// Free the DRGBPixel image
 			if (pFrameRGB != NULL)
 			{
-				av_free((AVPicture *)pFrameRGB);
+				av_free(pFrameRGB);
 			}
 
 			// Free the YUV frame
 			if (pFrame != NULL)
 			{
-				av_free((AVPicture *)pFrame);
+				av_free(pFrame);
 			}
 
 			// Close the codec
 			if (pCodecCtx != NULL && pCodec != NULL)
+			{
 				avcodec_close(pCodecCtx);
-
+				avcodec_free_context(&pCodecCtx);
+			}
 			// Close the video file
 			if (pFormatCtx != NULL)
 				avformat_close_input(&pFormatCtx);
@@ -2915,7 +2945,7 @@ namespace rir
 				sws_freeContext(pSWSCtx);
 
 			if (packet.data)
-				av_free_packet(&packet);
+				av_packet_unref(&packet);
 		}
 
 		pFormatCtx = NULL;
@@ -2991,19 +3021,19 @@ namespace rir
 			{
 				if (p.buf)
 				{
-					av_free_packet(&p);
+					av_packet_unref(&p);
 				}
 				if (av_read_frame(pFormatCtx, &p) < 0)
 				{
 					av_init_packet(&p);
 				}
 
-				int ret = avcodec_decode_video2(pCodecCtx, pFrame, &finish, &p);
+				int ret = decode(pCodecCtx, pFrame, &finish, &p);
 				if (ret <= 0 && pFrame->data[0] == NULL)
 				{
 					if (p.buf)
 					{
-						av_free_packet(&p);
+						av_packet_unref(&p);
 					}
 					return false;
 				}
@@ -3013,7 +3043,7 @@ namespace rir
 			}
 			if (p.buf)
 			{
-				av_free_packet(&p);
+				av_packet_unref(&p);
 			}
 			toArray(pFrame);
 			m_frame_pos = 0;
@@ -3040,15 +3070,15 @@ namespace rir
 			for (int i = 0; i < diff; ++i)
 			{
 				if (p.buf)
-					av_free_packet(&p);
+					av_packet_unref(&p);
 				if (av_read_frame(pFormatCtx, &p) < 0)
 					av_init_packet(&p);
 				int finish = 0;
-				int ret = avcodec_decode_video2(pCodecCtx, pFrame, &finish, &p);
+				int ret = decode(pCodecCtx, pFrame, &finish, &p);
 				if (finish == 0 || (ret <= 0 && pFrame->data[0] == NULL))
 				{
 					if (p.buf)
-						av_free_packet(&p);
+						av_packet_unref(&p);
 					m_frame_pos = -1; // in case of error, invalidate m_frame_pos to be sure to call av_seek_frame next time
 					return null_image;
 				}
@@ -3056,7 +3086,7 @@ namespace rir
 			toArray(pFrame);
 			m_frame_pos = num;
 			if (p.buf)
-				av_free_packet(&p);
+				av_packet_unref(&p);
 			int value = m_image[0];
 			return m_image;
 		}
@@ -3065,21 +3095,21 @@ namespace rir
 		{
 			// first frames: restart from the first one. This is mandatory for movies with a size of m_skip_packets.
 			int ret = av_seek_frame(pFormatCtx, videoStream, 0, AVSEEK_FLAG_BACKWARD);
-			avcodec_flush_buffers(pFormatCtx->streams[videoStream]->codec);
+			avcodec_flush_buffers(pCodecCtx);
 
 			int count = 0;
 			while (true)
 			{
 				if (p.buf)
-					av_free_packet(&p);
+					av_packet_unref(&p);
 				if (av_read_frame(pFormatCtx, &p) < 0)
 					av_init_packet(&p);
 				int finish = 0;
-				int ret = avcodec_decode_video2(pCodecCtx, pFrame, &finish, &p);
+				int ret = decode(pCodecCtx, pFrame, &finish, &p);
 				if (ret <= 0 && pFrame->data[0] == NULL)
 				{
 					if (p.buf)
-						av_free_packet(&p);
+						av_packet_unref(&p);
 					m_frame_pos = -1; // in case of error, invalidate m_frame_pos to be sure to call av_seek_frame next time
 					return null_image;
 				}
@@ -3090,7 +3120,7 @@ namespace rir
 						m_frame_pos = num;
 						toArray(pFrame);
 						if (p.buf)
-							av_free_packet(&p);
+							av_packet_unref(&p);
 						int value = m_image[0];
 						return m_image;
 					}
@@ -3110,7 +3140,8 @@ namespace rir
 		}
 
 		int ret = av_seek_frame(pFormatCtx, videoStream, (num) * 12800, AVSEEK_FLAG_BACKWARD);
-		avcodec_flush_buffers(pFormatCtx->streams[videoStream]->codec);
+
+		avcodec_flush_buffers(pCodecCtx);
 		if (ret < 0)
 			return null_image;
 
@@ -3123,19 +3154,19 @@ namespace rir
 			{
 				if (p.buf)
 				{
-					av_free_packet(&p);
+					av_packet_unref(&p);
 				}
 				if (av_read_frame(pFormatCtx, &p) < 0)
 				{
 					av_init_packet(&p);
 				}
 
-				int ret = avcodec_decode_video2(pCodecCtx, pFrame, &finish, &p);
+				int ret = decode(pCodecCtx, pFrame, &finish, &p);
 				if (ret <= 0 && pFrame->data[0] == NULL)
 				{
 					if (p.buf)
 					{
-						av_free_packet(&p);
+						av_packet_unref(&p);
 					}
 					m_frame_pos = -1; // in case of error, invalidate m_frame_pos to be sure to call av_seek_frame next time
 					return null_image;
@@ -3150,7 +3181,7 @@ namespace rir
 		toArray(pFrame);
 		m_frame_pos = num;
 		if (p.buf)
-			av_free_packet(&p);
+			av_packet_unref(&p);
 		int value = m_image[0];
 		return m_image;
 	}
@@ -3171,7 +3202,7 @@ namespace rir
 			{
 				if (p.buf)
 				{
-					av_free_packet(&p);
+					av_packet_unref(&p);
 					// av_init_packet(&p);
 				}
 				if (av_read_frame(pFormatCtx, &p) < 0)
@@ -3179,10 +3210,10 @@ namespace rir
 					av_init_packet(&p);
 				}
 
-				int ret = avcodec_decode_video2(pCodecCtx,
-												pFrame,
-												&finish,
-												&p);
+				int ret = decode(pCodecCtx,
+								 pFrame,
+								 &finish,
+								 &p);
 				if (ret < 0)
 					bool stop = true;
 			}
@@ -3374,7 +3405,7 @@ namespace rir
 		return open(m_data->file_reader);
 	}
 
-	const FileAttributes* H264_Loader::fileAttributes() const
+	const FileAttributes *H264_Loader::fileAttributes() const
 	{
 		return &m_data->attrs;
 	}
