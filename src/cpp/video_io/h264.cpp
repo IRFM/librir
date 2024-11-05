@@ -88,7 +88,7 @@ static int decode(AVCodecContext *dec_ctx, AVFrame *frame, int *got_frame, AVPac
 		}
 		else
 		{
-			//if (used >= 0)
+			// if (used >= 0)
 			//	pkt->size = 0;
 			used = avcodec_receive_frame(dec_ctx, frame);
 			if (used >= 0)
@@ -564,7 +564,7 @@ namespace rir
 
 		fname = filename;
 		fps = fpsrate;
-		codec_name = "h264_nvenc";//codecn;
+		codec_name = "h264_nvenc"; // codecn;
 		std::string ext = codec_name;
 		frame_width = width;
 		frame_height = height;
@@ -589,7 +589,7 @@ namespace rir
 		tmp_name = fname + "." + ext;
 		threadCount = toString(_threads);
 
-		const AVCodec* h264_nvenc = nullptr;
+		const AVCodec *h264_nvenc = nullptr;
 		if (codec_name == "h264_nvenc")
 		{
 			h264_nvenc = avcodec_find_encoder_by_name("h264_nvenc");
@@ -619,7 +619,6 @@ namespace rir
 				return false;
 			}
 		}
-
 
 		// detect kvazaar video codec
 		kvazaar = NULL;
@@ -773,16 +772,21 @@ namespace rir
 			cctx->height = height;
 
 			// cctx->thread_type = FF_THREAD_SLICE;
-			av_opt_set(cctx->priv_data, "preset", preset, AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx->priv_data, "profile", "high444", AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx->priv_data, "crf", "0", AV_OPT_SEARCH_CHILDREN);
+			av_opt_set(cctx->priv_data, "preset", "p1", AV_OPT_SEARCH_CHILDREN);
+			av_opt_set(cctx->priv_data, "profile", "high444p", AV_OPT_SEARCH_CHILDREN);
+			av_opt_set(cctx->priv_data, "tune", "lossless", AV_OPT_SEARCH_CHILDREN);
+			av_opt_set(cctx->priv_data, "rc", "constqp", AV_OPT_SEARCH_CHILDREN);
+			// av_opt_set(cctx->priv_data, "gpu", "any", 0);
+			// av_opt_set(cctx->priv_data, "crf", "0", AV_OPT_SEARCH_CHILDREN);
 			av_opt_set(cctx->priv_data, "qp", "0", AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx, "preset", preset, AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx, "crf", "0", AV_OPT_SEARCH_CHILDREN);
+			av_opt_set(cctx, "preset", "p1", AV_OPT_SEARCH_CHILDREN);
+			av_opt_set(cctx, "tune", "lossless", AV_OPT_SEARCH_CHILDREN);
+			av_opt_set(cctx, "rc", "constqp", AV_OPT_SEARCH_CHILDREN);
+			// av_opt_set(cctx, "crf", "0", AV_OPT_SEARCH_CHILDREN);
 			av_opt_set(cctx, "qp", "0", AV_OPT_SEARCH_CHILDREN);
 
-			av_opt_set(cctx->priv_data, "threads", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx, "threads", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
+			// av_opt_set(cctx->priv_data, "threads", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
+			// av_opt_set(cctx, "threads", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
 
 			if (slices < 1)
 				slices = 1;
@@ -2806,26 +2810,25 @@ namespace rir
 
 			// Get a pointer to the codec context for the video stream
 
-			//avcodec_find_decoder(pFormatCtx->streams[videoStream]->codecpar->codec_id);
+			// avcodec_find_decoder(pFormatCtx->streams[videoStream]->codecpar->codec_id);
 
 			// Find the decoder for the video stream
-			//pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
-			//pCodecCtx = avcodec_alloc_context3(pCodec);
+			// pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
+			// pCodecCtx = avcodec_alloc_context3(pCodec);
 
 			// Get a pointer to the codec context for the video stream
 			pCodec = avcodec_find_decoder(pFormatCtx->streams[videoStream]->codecpar->codec_id);
 			pCodecCtx = avcodec_alloc_context3(pCodec);
 			avcodec_parameters_to_context(pCodecCtx, pFormatCtx->streams[videoStream]->codecpar);
-			//pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
-			// avcodec_find_decoder(pFormatCtx->streams[videoStream]->codecpar->codec_id);
+			// pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
+			//  avcodec_find_decoder(pFormatCtx->streams[videoStream]->codecpar->codec_id);
 
 			// Find the decoder for the video stream
-			//pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
-			//pCodecCtx = avcodec_alloc_context3(pCodec);
+			// pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
+			// pCodecCtx = avcodec_alloc_context3(pCodec);
 
 			if (pCodec == NULL)
 				goto error;
-
 
 			// Open codec
 			pCodecCtx->thread_count = m_thread_count;
