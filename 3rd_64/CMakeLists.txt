@@ -112,6 +112,28 @@ ExternalProject_Add_StepTargets(x264 build)
 set(_PKG_CONFIG_PATH $ENV{PKG_CONFIG_PATH})
 
 FetchContent_Declare(
+    ffnvcodec
+    GIT_REPOSITORY https://git.videolan.org/git/ffmpeg/nv-codec-headers.git
+    # GIT_TAG stable
+    )
+FetchContent_MakeAvailable(ffnvcodec)
+ExternalProject_Add(ffnvcodec
+                SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/ffnvcodec-src
+                CONFIGURE_COMMAND ""
+                INSTALL_COMMAND $(MAKE) install
+                UPDATE_DISCONNECTED true
+                INSTALL_DIR ${3RD_64_INSTALL_DIR}
+                BUILD_IN_SOURCE true
+                DOWNLOAD_COMMAND ""
+
+)
+ExternalProject_Add_StepTargets(ffnvcodec install)
+
+
+
+set(NVCC_FLAGS "-gencode arch=compute_52,code=sm_52 -O2")
+set(CUDA_CONFIGURE_ARGS --enable-nonfree --enable-cuda-nvcc --enable-libnpp --extra-cflags=-I/usr/local/cuda/include --extra-cflags=-I${3RD_64_INSTALL_DIR}/include --extra-ldflags=-L/usr/local/cuda/lib64 --disable-static --enable-shared --nvccflags=${NVCC_FLAGS} --enable-nvenc --enable-nvdec)
+FetchContent_Declare(
     ffmpeg
     GIT_REPOSITORY https://git.ffmpeg.org/ffmpeg.git
     GIT_TAG release/${PROJECT_VERSION}
@@ -122,19 +144,20 @@ set(FFMPEG_CONFIGURE_CMD
                             export LD_LIBRARY_PATH=${3RD_64_INSTALL_DIR}/lib:$ENV{LD_LIBRARY_PATH}  && 
                             export PKG_CONFIG_PATH=${3RD_64_INSTALL_DIR}/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}   &&
                             export OPENSSL_LIBS="-L/usr/lib64 -llibeay32 -lssleay32 -llibcrypto -luser32 -lgdi32 -lwsock32 -lws2_32" && 
-                            ./configure --arch=native --enable-asm --disable-libvpx --disable-libaom --disable-static --enable-shared --enable-libx264 --enable-libkvazaar --extra-cflags=-DKVZ_STATIC_LIB  --enable-gpl --enable-rpath --enable-pic --disable-debug)
+                            ./configure --enable-asm --disable-libvpx --disable-libaom --disable-static --enable-shared --enable-libx264 --enable-libkvazaar --extra-cflags=-DKVZ_STATIC_LIB  --enable-gpl --enable-rpath --enable-pic --disable-debug)
 
 ExternalProject_Add(ffmpeg
                     SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/ffmpeg-src
                     DOWNLOAD_EXTRACT_TIMESTAMP true
                     UPDATE_DISCONNECTED true
-                    CONFIGURE_COMMAND ${FFMPEG_CONFIGURE_CMD} --prefix=<INSTALL_DIR>
+                    CONFIGURE_COMMAND ${FFMPEG_CONFIGURE_CMD} ${CUDA_CONFIGURE_ARGS} --prefix=<INSTALL_DIR> 
                     BUILD_COMMAND $(MAKE)
                     INSTALL_COMMAND make install
                     INSTALL_DIR ${3RD_64_INSTALL_DIR}
                     BUILD_IN_SOURCE true
                     DEPENDS kvazaar-librir
                     DEPENDS x264
+                    DEPENDS ffnvcodec-install
                     DOWNLOAD_COMMAND ""
                     # BUILD_ALWAYS 1
 )
