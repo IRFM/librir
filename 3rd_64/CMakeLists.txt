@@ -59,14 +59,14 @@ ExternalProject_Add(kvazaar-librir
                     SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/kvazaar-librir-src
                     UPDATE_DISCONNECTED true
                     DOWNLOAD_EXTRACT_TIMESTAMP true
-                    CMAKE_ARGS 
+                    CMAKE_CACHE_ARGS  
                         -DBUILD_KVAZAAR_BINARY=OFF
                         -DBUILD_TESTS=OFF
                         -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
                         -DCMAKE_INSTALL_LIBDIR=<INSTALL_DIR>/lib
-                        # -DCMAKE_INSTALL_BINDIR=<INSTALL_DIR>
-                        # -DCMAKE_INSTALL_INCLUDEDIR=<INSTALL_DIR>
-                        # -DCMAKE_INSTALL_MANDIR=<INSTALL_DIR>
+                        # -DCMAKE_INSTALL_BINDIR=<INSTALL_DIR>/bin
+                        # -DCMAKE_INSTALL_INCLUDEDIR=<INSTALL_DIR>/include
+                        # -DCMAKE_INSTALL_MANDIR=<INSTALL_DIR>/man
                         -DKVZ_DEFAULT_BUILD_TYPE=Release
                     # PREFIX deps
                     INSTALL_DIR ${3RD_64_INSTALL_DIR}
@@ -85,7 +85,7 @@ add_custom_command(
                         VERBATIM
                       )
 ExternalProject_Add_StepTargets(kvazaar-librir build)
-
+list( APPEND CMAKE_INSTALL_RPATH "../../out" )
 
 FetchContent_Declare(
     x264
