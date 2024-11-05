@@ -60,14 +60,14 @@ ExternalProject_Add(kvazaar-librir
                     UPDATE_DISCONNECTED true
                     DOWNLOAD_EXTRACT_TIMESTAMP true
                     CMAKE_ARGS  
-                        -DBUILD_KVAZAAR_BINARY=OFF
-                        -DBUILD_TESTS=OFF
-                        -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-                        -DCMAKE_INSTALL_LIBDIR=<INSTALL_DIR>/lib
+                        -DBUILD_KVAZAAR_BINARY:BOOL=OFF
+                        -DBUILD_TESTS:BOOL=OFF
+                        -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+                        -DCMAKE_INSTALL_LIBDIR:PATH=<INSTALL_DIR>/lib
                         # -DCMAKE_INSTALL_BINDIR=<INSTALL_DIR>/bin
                         # -DCMAKE_INSTALL_INCLUDEDIR=<INSTALL_DIR>/include
                         # -DCMAKE_INSTALL_MANDIR=<INSTALL_DIR>/man
-                        -DKVZ_DEFAULT_BUILD_TYPE=Release
+                        -DKVZ_DEFAULT_BUILD_TYPE:STRING=Release
                     # PREFIX deps
                     INSTALL_DIR ${3RD_64_INSTALL_DIR}
                     # CONFIGURE_COMMAND ${KVAZAAR_CONFIGURE_CMD} --prefix=<INSTALL_DIR>
