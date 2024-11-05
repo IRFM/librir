@@ -59,7 +59,7 @@ ExternalProject_Add(kvazaar-librir
                     SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/kvazaar-librir-src
                     UPDATE_DISCONNECTED true
                     DOWNLOAD_EXTRACT_TIMESTAMP true
-                    CMAKE_CACHE_ARGS  
+                    CMAKE_ARGS  
                         -DBUILD_KVAZAAR_BINARY=OFF
                         -DBUILD_TESTS=OFF
                         -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
