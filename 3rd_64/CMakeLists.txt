@@ -51,7 +51,7 @@ ExternalProject_Add_StepTargets(nasm install)
 FetchContent_Declare(
     kvazaar-librir
     GIT_REPOSITORY https://github.com/ultravideo/kvazaar.git
-    GIT_TAG v2.3.1
+    GIT_TAG 6b7f065
     )
 FetchContent_MakeAvailable(kvazaar-librir)
 set(KVAZAAR_CONFIGURE_CMD sed -i "/AM_PROG_AR/c\\m4_ifdef([AM_PROG_AR], [AM_PROG_AR])" ./configure.ac  && ./autogen.sh &&  ./configure --enable-static=yes --enable-shared=no CFLAGS=-fPIC )#--extra-ldflags="-Wl,-rpath='$ORIGIN'")
@@ -64,7 +64,7 @@ ExternalProject_Add(kvazaar-librir
                         -DBUILD_TESTS:BOOL=OFF
                         -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
                         -DCMAKE_INSTALL_LIBDIR:PATH=<INSTALL_DIR>/lib
-                        # -DCMAKE_INSTALL_BINDIR=<INSTALL_DIR>/bin
+                        # -DCMAKE_INSTALL_BINDIR:PATH=<INSTALL_DIR>/bin
                         # -DCMAKE_INSTALL_INCLUDEDIR=<INSTALL_DIR>/include
                         # -DCMAKE_INSTALL_MANDIR=<INSTALL_DIR>/man
                         -DKVZ_DEFAULT_BUILD_TYPE:STRING=Release
