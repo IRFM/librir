@@ -6,6 +6,7 @@
 #endif
 
 #include <functional>
+#include <iostream>
 
 #include "h264.h"
 #include "tools.h"
@@ -563,7 +564,7 @@ namespace rir
 
 		fname = filename;
 		fps = fpsrate;
-		codec_name = codecn;
+		codec_name = "h264_nvenc";//codecn;
 		std::string ext = codec_name;
 		frame_width = width;
 		frame_height = height;
@@ -588,6 +589,15 @@ namespace rir
 		tmp_name = fname + "." + ext;
 		threadCount = toString(_threads);
 
+		const AVCodec* h264_nvenc = nullptr;
+		if (codec_name == "h264_nvenc")
+		{
+			h264_nvenc = avcodec_find_encoder_by_name("h264_nvenc");
+			codec_name = "h264";
+			tmp_name = fname + ".h264";
+			ext = "h264";
+		}
+
 		int err;
 		if (!(oformat = av_guess_format(NULL, tmp_name.c_str(), NULL)))
 		{
@@ -609,6 +619,7 @@ namespace rir
 				return false;
 			}
 		}
+
 
 		// detect kvazaar video codec
 		kvazaar = NULL;
@@ -638,6 +649,8 @@ namespace rir
 
 		if (kvazaar)
 			codec = kvazaar;
+		if (h264_nvenc)
+			codec = h264_nvenc;
 		else if (!(codec = avcodec_find_encoder(/*oformat->video_codec*/ id)))
 		{
 			RIR_LOG_ERROR("Failed to find encoder for id %i", (int)id);
