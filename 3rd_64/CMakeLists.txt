@@ -62,10 +62,11 @@ ExternalProject_Add(kvazaar-librir
                     CMAKE_ARGS 
                         -DBUILD_KVAZAAR_BINARY=OFF
                         -DBUILD_TESTS=OFF
-                        -DCMAKE_INSTALL_LIBDIR=<INSTALL_DIR>
-                        -DCMAKE_INSTALL_BINDIR=<INSTALL_DIR>
-                        -DCMAKE_INSTALL_INCLUDEDIR=<INSTALL_DIR>
-                        -DCMAKE_INSTALL_MANDIR=<INSTALL_DIR>
+                        -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+                        -DCMAKE_INSTALL_LIBDIR=<INSTALL_DIR>/lib
+                        # -DCMAKE_INSTALL_BINDIR=<INSTALL_DIR>
+                        # -DCMAKE_INSTALL_INCLUDEDIR=<INSTALL_DIR>
+                        # -DCMAKE_INSTALL_MANDIR=<INSTALL_DIR>
                         -DKVZ_DEFAULT_BUILD_TYPE=Release
                     # PREFIX deps
                     INSTALL_DIR ${3RD_64_INSTALL_DIR}
