@@ -81,14 +81,14 @@ static int decode(AVCodecContext *dec_ctx, AVFrame *frame, int *got_frame, AVPac
 	if (dec_ctx->codec_type == AVMEDIA_TYPE_VIDEO ||
 		dec_ctx->codec_type == AVMEDIA_TYPE_AUDIO)
 	{
-		int used = avcodec_send_packet(dec_ctx, pkt);
+		used = avcodec_send_packet(dec_ctx, pkt);
 		if (used < 0 && used != AVERROR(EAGAIN) && used != AVERROR_EOF)
 		{
 		}
 		else
 		{
-			if (used >= 0)
-				pkt->size = 0;
+			//if (used >= 0)
+			//	pkt->size = 0;
 			used = avcodec_receive_frame(dec_ctx, frame);
 			if (used >= 0)
 				*got_frame = 1;
@@ -2793,14 +2793,26 @@ namespace rir
 
 			// Get a pointer to the codec context for the video stream
 
+			//avcodec_find_decoder(pFormatCtx->streams[videoStream]->codecpar->codec_id);
+
+			// Find the decoder for the video stream
+			//pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
+			//pCodecCtx = avcodec_alloc_context3(pCodec);
+
+			// Get a pointer to the codec context for the video stream
+			pCodec = avcodec_find_decoder(pFormatCtx->streams[videoStream]->codecpar->codec_id);
+			pCodecCtx = avcodec_alloc_context3(pCodec);
+			avcodec_parameters_to_context(pCodecCtx, pFormatCtx->streams[videoStream]->codecpar);
+			//pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
 			// avcodec_find_decoder(pFormatCtx->streams[videoStream]->codecpar->codec_id);
 
 			// Find the decoder for the video stream
-			pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
-			pCodecCtx = avcodec_alloc_context3(pCodec);
+			//pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
+			//pCodecCtx = avcodec_alloc_context3(pCodec);
 
 			if (pCodec == NULL)
 				goto error;
+
 
 			// Open codec
 			pCodecCtx->thread_count = m_thread_count;
@@ -2922,13 +2934,13 @@ namespace rir
 			// Free the DRGBPixel image
 			if (pFrameRGB != NULL)
 			{
-				av_free(pFrameRGB);
+				av_frame_free(&pFrameRGB);
 			}
 
 			// Free the YUV frame
 			if (pFrame != NULL)
 			{
-				av_free(pFrame);
+				av_frame_free(&pFrame);
 			}
 
 			// Close the codec
@@ -2946,6 +2958,9 @@ namespace rir
 
 			if (packet.data)
 				av_packet_unref(&packet);
+
+			if (buffer)
+				av_free(buffer);
 		}
 
 		pFormatCtx = NULL;
@@ -2953,7 +2968,7 @@ namespace rir
 		pCodec = NULL;
 		pFrame = NULL;
 		pFrameRGB = NULL;
-		// buffer = NULL;
+		buffer = NULL;
 		pSWSCtx = NULL;
 		m_file_open = false;
 		m_is_packet = false;
