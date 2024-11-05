@@ -49,14 +49,14 @@ ExternalProject_Add(nasm
 ExternalProject_Add_StepTargets(nasm install)
 
 FetchContent_Declare(
-    kvazaar
+    kvazaar-librir
     GIT_REPOSITORY https://github.com/ultravideo/kvazaar.git
     GIT_TAG v2.3.1
     )
-FetchContent_MakeAvailable(kvazaar)
+FetchContent_MakeAvailable(kvazaar-librir)
 set(KVAZAAR_CONFIGURE_CMD sed -i "/AM_PROG_AR/c\\m4_ifdef([AM_PROG_AR], [AM_PROG_AR])" ./configure.ac  && ./autogen.sh &&  ./configure --enable-static=yes --enable-shared=no CFLAGS=-fPIC )#--extra-ldflags="-Wl,-rpath='$ORIGIN'")
 ExternalProject_Add(kvazaar-librir
-                    SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/kvazaar-src
+                    SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/kvazaar-librir-src
                     UPDATE_DISCONNECTED true
                     DOWNLOAD_EXTRACT_TIMESTAMP true
                     # PREFIX deps
