@@ -85,15 +85,6 @@ done
 
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DCMAKE_BUILD_TYPE=$CMAKE_BUILD"
 
-# From within IRFM only, but does not prevent script to work elsewhere
-module load mamba/python39
-module load gcc/13.2.0
-module load cmake
-
-
-# Make ffmpeg build script executable
-chmod 777 configure_ffmpeg
-
 # Build
 
 mkdir -p build
