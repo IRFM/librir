@@ -111,6 +111,9 @@ ExternalProject_Add(x264
 ExternalProject_Add_StepTargets(x264 build)
 
 set(_PKG_CONFIG_PATH $ENV{PKG_CONFIG_PATH})
+
+set(FFMPEG_DEPENDENCIES kvazaar-librir x264)
+
 if(ENABLE_CUDA_FFMPEG)
     find_package(CUDAToolkit REQUIRED)
     if (CUDAToolkit_FOUND)
@@ -138,18 +141,19 @@ if(ENABLE_CUDA_FFMPEG)
 
         set(NVCC_FLAGS "-gencode arch=compute_52,code=sm_52 -O2")
         set(CUDA_CONFIGURE_ARGS --enable-nonfree --enable-cuda-nvcc --enable-libnpp --extra-cflags=-I/usr/local/cuda/include --extra-cflags=-I${3RD_64_INSTALL_DIR}/include --extra-ldflags=-L/usr/local/cuda/lib64 --disable-static --enable-shared --nvccflags=${NVCC_FLAGS} --enable-nvenc --enable-nvdec  --enable-opencl)
-        FetchContent_Declare(
-            ffmpeg
-            GIT_REPOSITORY https://git.ffmpeg.org/ffmpeg.git
-            GIT_TAG release/${PROJECT_VERSION}
-            )
+
 
     else()
         message(STATUS "CUDA not found ! No GPU acceleration")
         set(CUDA_CONFIGURE_ARGS )
+        set(FFMPEG_DEPENDENCIES kvazaar-librir x264 ffnvcodec-install)
     endif()
 endif()
-
+FetchContent_Declare(
+    ffmpeg
+    GIT_REPOSITORY https://git.ffmpeg.org/ffmpeg.git
+    GIT_TAG release/${PROJECT_VERSION}
+    )
 FetchContent_MakeAvailable(ffmpeg)
 set(FFMPEG_CONFIGURE_CMD    
                             export PATH=${3RD_64_INSTALL_DIR}/bin:$ENV{PATH}  && 
@@ -167,9 +171,9 @@ ExternalProject_Add(ffmpeg
                     INSTALL_COMMAND make install
                     INSTALL_DIR ${3RD_64_INSTALL_DIR}
                     BUILD_IN_SOURCE true
-                    DEPENDS kvazaar-librir
-                    DEPENDS x264
-                    DEPENDS ffnvcodec-install
+                    DEPENDS ${FFMPEG_DEPENDENCIES}
+                    # DEPENDS x264
+                    # DEPENDS ffnvcodec-install
                     DOWNLOAD_COMMAND ""
                     # BUILD_ALWAYS 1
 )
