@@ -111,33 +111,42 @@ ExternalProject_Add_StepTargets(x264 build)
 
 set(_PKG_CONFIG_PATH $ENV{PKG_CONFIG_PATH})
 
-FetchContent_Declare(
-    ffnvcodec
-    GIT_REPOSITORY https://git.videolan.org/git/ffmpeg/nv-codec-headers.git
-    # GIT_TAG stable
+find_package(CUDAToolkit REQUIRED)
+if (CUDAToolkit_FOUND)
+
+    FetchContent_Declare(
+        ffnvcodec
+        GIT_REPOSITORY https://git.videolan.org/git/ffmpeg/nv-codec-headers.git
+        GIT_TAG sdk/12.0
+        )
+    FetchContent_MakeAvailable(ffnvcodec)
+
+    set(NVCODEC_PREFIX_MODIFICATION_CMD sed -i "s#PREFIX = /usr/local#PREFIX = ${3RD_64_INSTALL_DIR}#g" ${CMAKE_BINARY_DIR}/_deps/ffnvcodec-src/Makefile)
+
+
+    ExternalProject_Add(ffnvcodec
+                    SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/ffnvcodec-src
+                    CONFIGURE_COMMAND ""
+                    INSTALL_COMMAND ${NVCODEC_PREFIX_MODIFICATION_CMD} && $(MAKE) install
+                    UPDATE_DISCONNECTED true
+                    INSTALL_DIR ${3RD_64_INSTALL_DIR}
+                    BUILD_IN_SOURCE true
+                    DOWNLOAD_COMMAND ""
     )
-FetchContent_MakeAvailable(ffnvcodec)
-ExternalProject_Add(ffnvcodec
-                SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/ffnvcodec-src
-                CONFIGURE_COMMAND ""
-                INSTALL_COMMAND $(MAKE) install
-                UPDATE_DISCONNECTED true
-                INSTALL_DIR ${3RD_64_INSTALL_DIR}
-                BUILD_IN_SOURCE true
-                DOWNLOAD_COMMAND ""
+    ExternalProject_Add_StepTargets(ffnvcodec install)
 
-)
-ExternalProject_Add_StepTargets(ffnvcodec install)
+    set(NVCC_FLAGS "-gencode arch=compute_52,code=sm_52 -O2")
+    set(CUDA_CONFIGURE_ARGS --enable-nonfree --enable-cuda-nvcc --enable-libnpp --extra-cflags=-I/usr/local/cuda/include --extra-cflags=-I${3RD_64_INSTALL_DIR}/include --extra-ldflags=-L/usr/local/cuda/lib64 --disable-static --enable-shared --nvccflags=${NVCC_FLAGS} --enable-nvenc --enable-nvdec)
+    FetchContent_Declare(
+        ffmpeg
+        GIT_REPOSITORY https://git.ffmpeg.org/ffmpeg.git
+        GIT_TAG release/${PROJECT_VERSION}
+        )
 
+else()
+    set(CUDA_CONFIGURE_ARGS )
+endif()
 
-
-set(NVCC_FLAGS "-gencode arch=compute_52,code=sm_52 -O2")
-set(CUDA_CONFIGURE_ARGS --enable-nonfree --enable-cuda-nvcc --enable-libnpp --extra-cflags=-I/usr/local/cuda/include --extra-cflags=-I${3RD_64_INSTALL_DIR}/include --extra-ldflags=-L/usr/local/cuda/lib64 --disable-static --enable-shared --nvccflags=${NVCC_FLAGS} --enable-nvenc --enable-nvdec)
-FetchContent_Declare(
-    ffmpeg
-    GIT_REPOSITORY https://git.ffmpeg.org/ffmpeg.git
-    GIT_TAG release/${PROJECT_VERSION}
-    )
 FetchContent_MakeAvailable(ffmpeg)
 set(FFMPEG_CONFIGURE_CMD    
                             export PATH=${3RD_64_INSTALL_DIR}/bin:$ENV{PATH}  && 
