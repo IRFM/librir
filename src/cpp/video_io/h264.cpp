@@ -564,7 +564,7 @@ namespace rir
 
 		fname = filename;
 		fps = fpsrate;
-		codec_name = "h264_nvenc";//codecn;// "libx264"; // codecn;
+		codec_name = "h264_nvenc"; // codecn;// "libx264"; // codecn;
 		std::string ext = codec_name;
 		frame_width = width;
 		frame_height = height;
@@ -648,8 +648,8 @@ namespace rir
 
 		if (kvazaar)
 			codec = kvazaar;
-		if (libx264)
-			codec = libx264;
+		if (h264_nvenc)
+			codec = h264_nvenc;
 		else if (!(codec = avcodec_find_encoder(/*oformat->video_codec*/ id)))
 		{
 			RIR_LOG_ERROR("Failed to find encoder for id %i", (int)id);
@@ -763,7 +763,7 @@ namespace rir
 			av_dict_set(&av_dict_opts, "g", "0", AV_DICT_MATCH_CASE);*/
 		}
 		else if (videoStream->codecpar->codec_id == AV_CODEC_ID_H264)
-		{ 
+		{
 
 			avcodec_parameters_to_context(cctx, videoStream->codecpar);
 			cctx->time_base = {1, fps};
@@ -772,31 +772,30 @@ namespace rir
 			cctx->height = height;
 
 			// cctx->thread_type = FF_THREAD_SLICE;
-			//av_opt_set(cctx->priv_data, "x264opts", "opencl", AV_OPT_SEARCH_CHILDREN);
-			//av_opt_set(cctx, "x264opts", "opencl", AV_OPT_SEARCH_CHILDREN);
+			// av_opt_set(cctx->priv_data, "x264opts", "opencl", AV_OPT_SEARCH_CHILDREN);
+			// av_opt_set(cctx, "x264opts", "opencl", AV_OPT_SEARCH_CHILDREN);
 
-			//av_opt_set(cctx->priv_data, "preset", preset, AV_OPT_SEARCH_CHILDREN);
-			//av_opt_set(cctx, "preset", preset, AV_OPT_SEARCH_CHILDREN);
+			// av_opt_set(cctx->priv_data, "preset", preset, AV_OPT_SEARCH_CHILDREN);
+			// av_opt_set(cctx, "preset", preset, AV_OPT_SEARCH_CHILDREN);
 
 			av_opt_set(cctx->priv_data, "preset", "p1", AV_OPT_SEARCH_CHILDREN);
 			av_opt_set(cctx, "preset", "p1", AV_OPT_SEARCH_CHILDREN);
 			av_opt_set(cctx->priv_data, "tune", "lossless", AV_OPT_SEARCH_CHILDREN);
 			av_opt_set(cctx, "tune", "lossless", AV_OPT_SEARCH_CHILDREN);
-			//av_opt_set(cctx->priv_data, "profile", "main", AV_OPT_SEARCH_CHILDREN);
-			//av_opt_set(cctx, "profile", "main", AV_OPT_SEARCH_CHILDREN);
+			// av_opt_set(cctx->priv_data, "profile", "main", AV_OPT_SEARCH_CHILDREN);
+			// av_opt_set(cctx, "profile", "main", AV_OPT_SEARCH_CHILDREN);
 
-			//av_opt_set(cctx->priv_data, "profile", "high444", AV_OPT_SEARCH_CHILDREN);
-			//av_opt_set(cctx, "profile", "high444", AV_OPT_SEARCH_CHILDREN);
+			// av_opt_set(cctx->priv_data, "profile", "high444", AV_OPT_SEARCH_CHILDREN);
+			// av_opt_set(cctx, "profile", "high444", AV_OPT_SEARCH_CHILDREN);
 
 			av_opt_set(cctx->priv_data, "crf", "0", AV_OPT_SEARCH_CHILDREN);
 			av_opt_set(cctx->priv_data, "qp", "0", AV_OPT_SEARCH_CHILDREN);
-			
+
 			av_opt_set(cctx, "crf", "0", AV_OPT_SEARCH_CHILDREN);
 			av_opt_set(cctx, "qp", "0", AV_OPT_SEARCH_CHILDREN);
-			
 
-			//av_opt_set(cctx->priv_data, "threads", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
-			//av_opt_set(cctx, "threads", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
+			// av_opt_set(cctx->priv_data, "threads", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
+			// av_opt_set(cctx, "threads", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
 
 			if (slices < 1)
 				slices = 1;
@@ -2855,15 +2854,15 @@ namespace rir
 			pFrame = av_frame_alloc();
 			if (pFrame == NULL)
 				goto error;
-			
+
 			// Determine required buffer size and allocate buffer
-			//numBytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, pCodecCtx->width,
+			// numBytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, pCodecCtx->width,
 			//									pCodecCtx->height, 1);
 
-			//buffer = (uint8_t *)av_malloc(numBytes);
+			// buffer = (uint8_t *)av_malloc(numBytes);
 
 			// Assign appropriate parts of buffer to image planes in pFrameRGB
-			//av_image_fill_arrays(pFrameRGB->data, pFrameRGB->linesize,
+			// av_image_fill_arrays(pFrameRGB->data, pFrameRGB->linesize,
 			//					 buffer, AV_PIX_FMT_RGB24, pCodecCtx->width, pCodecCtx->height, 1);
 
 			// Initialize Context
