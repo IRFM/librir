@@ -564,7 +564,7 @@ namespace rir
 
 		fname = filename;
 		fps = fpsrate;
-		codec_name = "libx264"; // codecn;
+		codec_name = "h264_nvenc";//codecn;// "libx264"; // codecn;
 		std::string ext = codec_name;
 		frame_width = width;
 		frame_height = height;
@@ -590,9 +590,9 @@ namespace rir
 		threadCount = toString(_threads);
 
 		const AVCodec *libx264 = nullptr;
-		if (codec_name == "libx264")
+		if (codec_name == "h264_nvenc")
 		{
-			libx264 = avcodec_find_encoder_by_name("libx264");
+			libx264 = avcodec_find_encoder_by_name("h264_nvenc");
 			codec_name = "h264";
 			tmp_name = fname + ".h264";
 			ext = "h264";
@@ -763,7 +763,7 @@ namespace rir
 			av_dict_set(&av_dict_opts, "g", "0", AV_DICT_MATCH_CASE);*/
 		}
 		else if (videoStream->codecpar->codec_id == AV_CODEC_ID_H264)
-		{
+		{ 
 
 			avcodec_parameters_to_context(cctx, videoStream->codecpar);
 			cctx->time_base = {1, fps};
@@ -772,20 +772,31 @@ namespace rir
 			cctx->height = height;
 
 			// cctx->thread_type = FF_THREAD_SLICE;
-			av_opt_set(cctx->priv_data, "x264opts", "opencl", AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx->priv_data, "preset", preset, AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx->priv_data, "profile", "high444", AV_OPT_SEARCH_CHILDREN);
+			//av_opt_set(cctx->priv_data, "x264opts", "opencl", AV_OPT_SEARCH_CHILDREN);
+			//av_opt_set(cctx, "x264opts", "opencl", AV_OPT_SEARCH_CHILDREN);
+
+			//av_opt_set(cctx->priv_data, "preset", preset, AV_OPT_SEARCH_CHILDREN);
+			//av_opt_set(cctx, "preset", preset, AV_OPT_SEARCH_CHILDREN);
+
+			av_opt_set(cctx->priv_data, "preset", "p1", AV_OPT_SEARCH_CHILDREN);
+			av_opt_set(cctx, "preset", "p1", AV_OPT_SEARCH_CHILDREN);
+			av_opt_set(cctx->priv_data, "tune", "lossless", AV_OPT_SEARCH_CHILDREN);
+			av_opt_set(cctx, "tune", "lossless", AV_OPT_SEARCH_CHILDREN);
+			//av_opt_set(cctx->priv_data, "profile", "main", AV_OPT_SEARCH_CHILDREN);
+			//av_opt_set(cctx, "profile", "main", AV_OPT_SEARCH_CHILDREN);
+
+			//av_opt_set(cctx->priv_data, "profile", "high444", AV_OPT_SEARCH_CHILDREN);
+			//av_opt_set(cctx, "profile", "high444", AV_OPT_SEARCH_CHILDREN);
+
 			av_opt_set(cctx->priv_data, "crf", "0", AV_OPT_SEARCH_CHILDREN);
 			av_opt_set(cctx->priv_data, "qp", "0", AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx, "preset", preset, AV_OPT_SEARCH_CHILDREN);
+			
 			av_opt_set(cctx, "crf", "0", AV_OPT_SEARCH_CHILDREN);
 			av_opt_set(cctx, "qp", "0", AV_OPT_SEARCH_CHILDREN);
+			
 
-			av_opt_set(cctx->priv_data, "threads", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx, "threads", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
-
-			// av_opt_set(cctx->priv_data, "threads", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
-			// av_opt_set(cctx, "threads", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
+			//av_opt_set(cctx->priv_data, "threads", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
+			//av_opt_set(cctx, "threads", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
 
 			if (slices < 1)
 				slices = 1;
@@ -2666,8 +2677,6 @@ namespace rir
 		AVCodecContext *pCodecCtx;
 		const AVCodec *pCodec;
 		AVFrame *pFrame;
-		AVFrame *pFrameRGB;
-		SwsContext *pSWSCtx;
 		uint8_t *buffer;
 		int numBytes;
 		AVPacket packet;
@@ -2708,9 +2717,7 @@ namespace rir
 		pCodecCtx = NULL;
 		pCodec = NULL;
 		pFrame = NULL;
-		pSWSCtx = NULL;
 		buffer = NULL;
-		pFrameRGB = NULL;
 		m_GOP = -1;
 		m_thread_count = H264_READ_THREADS;
 	}
@@ -2720,8 +2727,6 @@ namespace rir
 		pCodecCtx = NULL;
 		pCodec = NULL;
 		pFrame = NULL;
-		pSWSCtx = NULL;
-		pFrameRGB = NULL;
 		buffer = NULL;
 		m_file_open = false;
 		m_is_packet = false;
@@ -2848,29 +2853,22 @@ namespace rir
 
 			// Allocate video frame
 			pFrame = av_frame_alloc();
-			// Allocate an AVFrame structure
-			pFrameRGB = av_frame_alloc();
-			if (pFrameRGB == NULL)
+			if (pFrame == NULL)
 				goto error;
-			// Allocate an AVFrame structure
-			pFrameRGB = av_frame_alloc();
-			if (pFrameRGB == NULL)
-				goto error;
-
+			
 			// Determine required buffer size and allocate buffer
-			numBytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, pCodecCtx->width,
-												pCodecCtx->height, 1);
+			//numBytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24, pCodecCtx->width,
+			//									pCodecCtx->height, 1);
 
-			buffer = (uint8_t *)av_malloc(numBytes);
+			//buffer = (uint8_t *)av_malloc(numBytes);
 
 			// Assign appropriate parts of buffer to image planes in pFrameRGB
-			av_image_fill_arrays(pFrameRGB->data, pFrameRGB->linesize,
-								 buffer, AV_PIX_FMT_RGB24, pCodecCtx->width, pCodecCtx->height, 1);
+			//av_image_fill_arrays(pFrameRGB->data, pFrameRGB->linesize,
+			//					 buffer, AV_PIX_FMT_RGB24, pCodecCtx->width, pCodecCtx->height, 1);
 
 			// Initialize Context
 			if (pCodecCtx->pix_fmt == AV_PIX_FMT_NONE)
 				pCodecCtx->pix_fmt = AV_PIX_FMT_YUV420P;
-			pSWSCtx = sws_getContext(pCodecCtx->width, pCodecCtx->height, pCodecCtx->pix_fmt, pCodecCtx->width, pCodecCtx->height, AV_PIX_FMT_RGB24, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 
 			m_width = pCodecCtx->width;
 			m_height = pCodecCtx->height;
@@ -2946,12 +2944,6 @@ namespace rir
 	{
 		if (m_file_open)
 		{
-			// Free the DRGBPixel image
-			if (pFrameRGB != NULL)
-			{
-				av_frame_free(&pFrameRGB);
-			}
-
 			// Free the YUV frame
 			if (pFrame != NULL)
 			{
@@ -2968,9 +2960,6 @@ namespace rir
 			if (pFormatCtx != NULL)
 				avformat_close_input(&pFormatCtx);
 
-			if (pSWSCtx != NULL)
-				sws_freeContext(pSWSCtx);
-
 			if (packet.data)
 				av_packet_unref(&packet);
 
@@ -2982,9 +2971,7 @@ namespace rir
 		pCodecCtx = NULL;
 		pCodec = NULL;
 		pFrame = NULL;
-		pFrameRGB = NULL;
 		buffer = NULL;
-		pSWSCtx = NULL;
 		m_file_open = false;
 		m_is_packet = false;
 	}
@@ -3001,8 +2988,6 @@ namespace rir
 
 	void VideoGrabber::toArray(AVFrame *frame)
 	{
-		// convert to rgb
-		// int r = sws_scale(pSWSCtx, frame->data, frame->linesize, 0, pCodecCtx->height, pFrameRGB->data, pFrameRGB->linesize);
 		unsigned short *data = (unsigned short *)m_image.data();
 		unsigned char *IT = (unsigned char *)m_IT.data();
 
