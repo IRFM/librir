@@ -15,6 +15,7 @@ include(FetchContent)
 
 set(3RD_64_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
 option(FFMPEG_LOCAL_INSTALL "Install locally" OFF)
+option(ENABLE_CUDA_FFMPEG "Enable CUDA acceleration for FFMPEG" OFF)
 IF(FFMPEG_LOCAL_INSTALL)
     set(3RD_64_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/install)
 endif()
@@ -110,41 +111,43 @@ ExternalProject_Add(x264
 ExternalProject_Add_StepTargets(x264 build)
 
 set(_PKG_CONFIG_PATH $ENV{PKG_CONFIG_PATH})
+if(ENABLE_CUDA_FFMPEG)
+    find_package(CUDAToolkit REQUIRED)
+    if (CUDAToolkit_FOUND)
 
-find_package(CUDAToolkit REQUIRED)
-if (CUDAToolkit_FOUND)
+        FetchContent_Declare(
+            ffnvcodec
+            GIT_REPOSITORY https://git.videolan.org/git/ffmpeg/nv-codec-headers.git
+            GIT_TAG sdk/12.0
+            )
+        FetchContent_MakeAvailable(ffnvcodec)
 
-    FetchContent_Declare(
-        ffnvcodec
-        GIT_REPOSITORY https://git.videolan.org/git/ffmpeg/nv-codec-headers.git
-        GIT_TAG sdk/12.0
+        set(NVCODEC_PREFIX_MODIFICATION_CMD sed -i "s#PREFIX = /usr/local#PREFIX = ${3RD_64_INSTALL_DIR}#g" ${CMAKE_BINARY_DIR}/_deps/ffnvcodec-src/Makefile)
+
+
+        ExternalProject_Add(ffnvcodec
+                        SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/ffnvcodec-src
+                        CONFIGURE_COMMAND ""
+                        INSTALL_COMMAND ${NVCODEC_PREFIX_MODIFICATION_CMD} && $(MAKE) install
+                        UPDATE_DISCONNECTED true
+                        INSTALL_DIR ${3RD_64_INSTALL_DIR}
+                        BUILD_IN_SOURCE true
+                        DOWNLOAD_COMMAND ""
         )
-    FetchContent_MakeAvailable(ffnvcodec)
+        ExternalProject_Add_StepTargets(ffnvcodec install)
 
-    set(NVCODEC_PREFIX_MODIFICATION_CMD sed -i "s#PREFIX = /usr/local#PREFIX = ${3RD_64_INSTALL_DIR}#g" ${CMAKE_BINARY_DIR}/_deps/ffnvcodec-src/Makefile)
+        set(NVCC_FLAGS "-gencode arch=compute_52,code=sm_52 -O2")
+        set(CUDA_CONFIGURE_ARGS --enable-nonfree --enable-cuda-nvcc --enable-libnpp --extra-cflags=-I/usr/local/cuda/include --extra-cflags=-I${3RD_64_INSTALL_DIR}/include --extra-ldflags=-L/usr/local/cuda/lib64 --disable-static --enable-shared --nvccflags=${NVCC_FLAGS} --enable-nvenc --enable-nvdec  --enable-opencl)
+        FetchContent_Declare(
+            ffmpeg
+            GIT_REPOSITORY https://git.ffmpeg.org/ffmpeg.git
+            GIT_TAG release/${PROJECT_VERSION}
+            )
 
-
-    ExternalProject_Add(ffnvcodec
-                    SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/ffnvcodec-src
-                    CONFIGURE_COMMAND ""
-                    INSTALL_COMMAND ${NVCODEC_PREFIX_MODIFICATION_CMD} && $(MAKE) install
-                    UPDATE_DISCONNECTED true
-                    INSTALL_DIR ${3RD_64_INSTALL_DIR}
-                    BUILD_IN_SOURCE true
-                    DOWNLOAD_COMMAND ""
-    )
-    ExternalProject_Add_StepTargets(ffnvcodec install)
-
-    set(NVCC_FLAGS "-gencode arch=compute_52,code=sm_52 -O2")
-    set(CUDA_CONFIGURE_ARGS --enable-nonfree --enable-cuda-nvcc --enable-libnpp --extra-cflags=-I/usr/local/cuda/include --extra-cflags=-I${3RD_64_INSTALL_DIR}/include --extra-ldflags=-L/usr/local/cuda/lib64 --disable-static --enable-shared --nvccflags=${NVCC_FLAGS} --enable-nvenc --enable-nvdec)
-    FetchContent_Declare(
-        ffmpeg
-        GIT_REPOSITORY https://git.ffmpeg.org/ffmpeg.git
-        GIT_TAG release/${PROJECT_VERSION}
-        )
-
-else()
-    set(CUDA_CONFIGURE_ARGS )
+    else()
+        message(STATUS "CUDA not found ! No GPU acceleration")
+        set(CUDA_CONFIGURE_ARGS )
+    endif()
 endif()
 
 FetchContent_MakeAvailable(ffmpeg)
