@@ -648,8 +648,8 @@ namespace rir
 
 		if (kvazaar)
 			codec = kvazaar;
-		if (h264_nvenc)
-			codec = h264_nvenc;
+		if (libx264)
+			codec = libx264;
 		else if (!(codec = avcodec_find_encoder(/*oformat->video_codec*/ id)))
 		{
 			RIR_LOG_ERROR("Failed to find encoder for id %i", (int)id);
