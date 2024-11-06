@@ -564,7 +564,7 @@ namespace rir
 
 		fname = filename;
 		fps = fpsrate;
-		codec_name = "h264_nvenc"; // codecn;
+		codec_name = "libx264"; // codecn;
 		std::string ext = codec_name;
 		frame_width = width;
 		frame_height = height;
@@ -589,10 +589,10 @@ namespace rir
 		tmp_name = fname + "." + ext;
 		threadCount = toString(_threads);
 
-		const AVCodec *h264_nvenc = nullptr;
-		if (codec_name == "h264_nvenc")
+		const AVCodec *libx264 = nullptr;
+		if (codec_name == "libx264")
 		{
-			h264_nvenc = avcodec_find_encoder_by_name("h264_nvenc");
+			libx264 = avcodec_find_encoder_by_name("libx264");
 			codec_name = "h264";
 			tmp_name = fname + ".h264";
 			ext = "h264";
@@ -648,8 +648,8 @@ namespace rir
 
 		if (kvazaar)
 			codec = kvazaar;
-		if (h264_nvenc)
-			codec = h264_nvenc;
+		if (libx264)
+			codec = libx264;
 		else if (!(codec = avcodec_find_encoder(/*oformat->video_codec*/ id)))
 		{
 			RIR_LOG_ERROR("Failed to find encoder for id %i", (int)id);
@@ -772,18 +772,17 @@ namespace rir
 			cctx->height = height;
 
 			// cctx->thread_type = FF_THREAD_SLICE;
-			av_opt_set(cctx->priv_data, "preset", "p1", AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx->priv_data, "profile", "high444p", AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx->priv_data, "tune", "lossless", AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx->priv_data, "rc", "constqp", AV_OPT_SEARCH_CHILDREN);
-			// av_opt_set(cctx->priv_data, "gpu", "any", 0);
-			// av_opt_set(cctx->priv_data, "crf", "0", AV_OPT_SEARCH_CHILDREN);
+			av_opt_set(cctx->priv_data, "x264opts", "opencl", AV_OPT_SEARCH_CHILDREN);
+			av_opt_set(cctx->priv_data, "preset", preset, AV_OPT_SEARCH_CHILDREN);
+			av_opt_set(cctx->priv_data, "profile", "high444", AV_OPT_SEARCH_CHILDREN);
+			av_opt_set(cctx->priv_data, "crf", "0", AV_OPT_SEARCH_CHILDREN);
 			av_opt_set(cctx->priv_data, "qp", "0", AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx, "preset", "p1", AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx, "tune", "lossless", AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx, "rc", "constqp", AV_OPT_SEARCH_CHILDREN);
-			// av_opt_set(cctx, "crf", "0", AV_OPT_SEARCH_CHILDREN);
+			av_opt_set(cctx, "preset", preset, AV_OPT_SEARCH_CHILDREN);
+			av_opt_set(cctx, "crf", "0", AV_OPT_SEARCH_CHILDREN);
 			av_opt_set(cctx, "qp", "0", AV_OPT_SEARCH_CHILDREN);
+
+			av_opt_set(cctx->priv_data, "threads", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
+			av_opt_set(cctx, "threads", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
 
 			// av_opt_set(cctx->priv_data, "threads", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
 			// av_opt_set(cctx, "threads", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
