@@ -564,7 +564,7 @@ namespace rir
 
 		fname = filename;
 		fps = fpsrate;
-		codec_name = "h265"; // codecn;// "libx264"; // codecn;
+		codec_name = "h264"; // codecn;// "libx264"; // codecn;
 		std::string ext = codec_name;
 		frame_width = width;
 		frame_height = height;
