@@ -609,6 +609,8 @@ class IRMovie(object):
         with IRSaver(dst_filename, w, h, h, clevel) as s:
             s.set_global_attributes(attrs)
             s.set_parameter("threads", cthreads)
+            # Force codec to be h264
+            s.set_parameter("codec", "h264")
             saved = 0
             for i in range(start_img, start_img + count):
                 img = self.load_pos(i, 0)

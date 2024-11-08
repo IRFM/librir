@@ -564,7 +564,7 @@ namespace rir
 
 		fname = filename;
 		fps = fpsrate;
-		codec_name = "h264"; // codecn;// "libx264"; // codecn;
+		codec_name = codecn;
 		std::string ext = codec_name;
 		frame_width = width;
 		frame_height = height;
@@ -624,13 +624,7 @@ namespace rir
 		kvazaar = NULL;
 		if (codec_name == "h265")
 		{
-			kvazaar = av_codec_iterate(NULL);
-			while (kvazaar)
-			{
-				if (kvazaar->id == AV_CODEC_ID_HEVC && strcmp(kvazaar->name, "libkvazaar") == 0)
-					break;
-				kvazaar = av_codec_iterate((void **)kvazaar);
-			}
+			kvazaar = avcodec_find_encoder_by_name("libkvazaar");
 		}
 
 		if ((err = avformat_alloc_output_context2(&ofctx, oformat, NULL, tmp_name.c_str()) < 0))
