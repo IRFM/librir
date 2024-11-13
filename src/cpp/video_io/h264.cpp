@@ -543,7 +543,6 @@ namespace rir
 		AVStream *videoStream;
 		AVFrame *videoFrame;
 		const AVCodec *codec;
-		const AVCodec *kvazaar;
 		AVCodecContext *cctx;
 		SwsContext *swsCtx;
 		std::vector<uint8_t> img;
@@ -565,6 +564,22 @@ namespace rir
 		fname = filename;
 		fps = fpsrate;
 		codec_name = codecn;
+		std::string sub_codec_name = codec_name;
+		if (codec_name == "h264_nvenc") {
+			sub_codec_name = "h264_nvenc";
+			codec_name = "h264";
+		}
+		else if (codec_name == "hevc_nvenc") {
+			sub_codec_name = "hevc_nvenc";
+			codec_name = "h265";
+		}
+		else if (codec_name == "h264") {
+			sub_codec_name = "libx264";
+			codec_name = "h264";
+		}
+		else if (codec_name == "h265") {
+			sub_codec_name = "libkvazaar";
+		}
 		std::string ext = codec_name;
 		frame_width = width;
 		frame_height = height;
@@ -589,15 +604,31 @@ namespace rir
 		tmp_name = fname + "." + ext;
 		threadCount = toString(_threads);
 
-		const AVCodec *libx264 = nullptr;
-		if (codec_name == "h264")
-		{
-			libx264 = avcodec_find_encoder_by_name("h264");
-			codec_name = "h264";
-			tmp_name = fname + ".h264";
-			ext = "h264";
-		}
+		// Find codec
+		codec = nullptr;
 
+		if (codec_name == "ffv1")
+			if (!(codec = avcodec_find_encoder(AV_CODEC_ID_FFV1)))
+				return false;
+		if (codec_name == "av1")
+			if (!(codec = avcodec_find_encoder(AV_CODEC_ID_AV1)))
+				return false;
+		if (codec_name == "vp9")
+			if (!(codec = avcodec_find_encoder(AV_CODEC_ID_VP9)))
+				return false;
+		if (codec_name == "vp8")
+			if (!(codec = avcodec_find_encoder(AV_CODEC_ID_VP8)))
+				return false;
+		if (sub_codec_name == "h265")
+			if (!(codec = avcodec_find_encoder(AV_CODEC_ID_HEVC)))
+				return false;
+		
+		if(!codec)
+			codec = avcodec_find_encoder_by_name(sub_codec_name.c_str());
+		if(!codec)
+			return false;
+
+		// Find output format
 		int err;
 		if (!(oformat = av_guess_format(NULL, tmp_name.c_str(), NULL)))
 		{
@@ -607,6 +638,10 @@ namespace rir
 				codec_name = "h265";
 				ext = codec_name;
 				tmp_name = fname + "." + ext;
+				codec = avcodec_find_encoder_by_name(codec_name.c_str());
+				if (!codec)
+					return false;
+
 				if (!(oformat = av_guess_format(NULL, tmp_name.c_str(), NULL)))
 				{
 					RIR_LOG_ERROR("Failed to define output format for file %s", tmp_name.c_str());
@@ -620,13 +655,6 @@ namespace rir
 			}
 		}
 
-		// detect kvazaar video codec
-		kvazaar = NULL;
-		if (codec_name == "h265")
-		{
-			kvazaar = avcodec_find_encoder_by_name("libkvazaar");
-		}
-
 		if ((err = avformat_alloc_output_context2(&ofctx, oformat, NULL, tmp_name.c_str()) < 0))
 		{
 			RIR_LOG_ERROR("Failed to allocate output context (%i)", err);
@@ -634,22 +662,6 @@ namespace rir
 			return false;
 		}
 
-		AVCodecID id = codec_name == "h265" ? AV_CODEC_ID_HEVC : oformat->video_codec;
-		if (codec_name == "ffv1")
-			id = AV_CODEC_ID_FFV1;
-		if (codec_name == "av1")
-			id = AV_CODEC_ID_AV1;
-
-		if (kvazaar)
-			codec = kvazaar;
-		if (libx264)
-			codec = libx264;
-		else if (!(codec = avcodec_find_encoder(/*oformat->video_codec*/ id)))
-		{
-			RIR_LOG_ERROR("Failed to find encoder for id %i", (int)id);
-			Free();
-			return false;
-		}
 
 		if (!(videoStream = avformat_new_stream(ofctx, codec)))
 		{
@@ -668,7 +680,7 @@ namespace rir
 		videoStream->time_base = {1, fps};
 
 		this->file_format = AV_PIX_FMT_YUV444P;
-		videoStream->codecpar->codec_id = /*oformat->video_codec*/ id;
+		videoStream->codecpar->codec_id = codec->id;
 		videoStream->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
 		videoStream->codecpar->width = width;
 		videoStream->codecpar->height = height;
@@ -704,25 +716,6 @@ namespace rir
 			av_opt_set(cctx->priv_data, "tiles", "2x2", AV_OPT_SEARCH_CHILDREN);
 			av_opt_set(cctx, "tiles", "2x2", AV_OPT_SEARCH_CHILDREN);
 			av_dict_set(&av_dict_opts, "tiles", "2x2", AV_DICT_MATCH_CASE);
-
-			/*cctx->bit_rate=0;
-			cctx->qmin = cctx->qmax = 0;
-			cctx->thread_count = _threads;*/
-
-			/*av_opt_set(cctx->priv_data, "b", "0", AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx, "b", "0", AV_OPT_SEARCH_CHILDREN);
-			av_dict_set(&av_dict_opts, "b", "0", AV_DICT_MATCH_CASE);
-			av_opt_set(cctx->priv_data, "b:v", "0", AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx, "b:v", "0", AV_OPT_SEARCH_CHILDREN);
-			av_dict_set(&av_dict_opts, "b:v", "0", AV_DICT_MATCH_CASE);*/
-
-			/*av_opt_set(cctx->priv_data, "preset", "0", AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx, "preset", "0", AV_OPT_SEARCH_CHILDREN);
-			av_dict_set(&av_dict_opts, "preset", "0", AV_DICT_MATCH_CASE);*/
-
-			/*av_opt_set(cctx->priv_data, "cpu-used", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx, "cpu-used", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
-			av_dict_set(&av_dict_opts, "cpu-used", threadCount.c_str(), AV_DICT_MATCH_CASE);*/
 
 			av_opt_set(cctx->priv_data, "g", toString(_GOP).c_str(), AV_OPT_SEARCH_CHILDREN);
 			av_opt_set(cctx, "g", toString(_GOP).c_str(), AV_OPT_SEARCH_CHILDREN);
@@ -765,32 +758,36 @@ namespace rir
 			cctx->width = width;
 			cctx->height = height;
 
-			// cctx->thread_type = FF_THREAD_SLICE;
-			// av_opt_set(cctx->priv_data, "x264opts", "opencl", AV_OPT_SEARCH_CHILDREN);
-			// av_opt_set(cctx, "x264opts", "opencl", AV_OPT_SEARCH_CHILDREN);
+			if (sub_codec_name == "h264_nvenc") {
+				av_opt_set(cctx->priv_data, "preset", "p1", AV_OPT_SEARCH_CHILDREN);
+				av_opt_set(cctx, "preset", "p1", AV_OPT_SEARCH_CHILDREN);
+				av_opt_set(cctx->priv_data, "tune", "lossless", AV_OPT_SEARCH_CHILDREN);
+				av_opt_set(cctx, "tune", "lossless", AV_OPT_SEARCH_CHILDREN);
+				av_opt_set(cctx->priv_data, "profile", "main", AV_OPT_SEARCH_CHILDREN);
+				av_opt_set(cctx, "profile", "main", AV_OPT_SEARCH_CHILDREN);
 
-			av_opt_set(cctx->priv_data, "preset", preset, AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx, "preset", preset, AV_OPT_SEARCH_CHILDREN);
+				std::string gop = toString(_GOP);
+				av_opt_set(cctx->priv_data, "g", gop.c_str(), AV_OPT_SEARCH_CHILDREN);
+				av_opt_set(cctx, "g", gop.c_str(), AV_OPT_SEARCH_CHILDREN);
+			}
+			else {
+				// cctx->thread_type = FF_THREAD_SLICE;
 
-			// av_opt_set(cctx->priv_data, "preset", "p1", AV_OPT_SEARCH_CHILDREN);
-			// av_opt_set(cctx, "preset", "p1", AV_OPT_SEARCH_CHILDREN);
-			// av_opt_set(cctx->priv_data, "tune", "lossless", AV_OPT_SEARCH_CHILDREN);
-			// av_opt_set(cctx, "tune", "lossless", AV_OPT_SEARCH_CHILDREN);
-			// av_opt_set(cctx->priv_data, "profile", "main", AV_OPT_SEARCH_CHILDREN);
-			// av_opt_set(cctx, "profile", "main", AV_OPT_SEARCH_CHILDREN);
+				av_opt_set(cctx->priv_data, "preset", preset, AV_OPT_SEARCH_CHILDREN);
+				av_opt_set(cctx, "preset", preset, AV_OPT_SEARCH_CHILDREN);
 
-			av_opt_set(cctx->priv_data, "profile", "high444", AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx, "profile", "high444", AV_OPT_SEARCH_CHILDREN);
+				av_opt_set(cctx->priv_data, "profile", "high444", AV_OPT_SEARCH_CHILDREN);
+				av_opt_set(cctx, "profile", "high444", AV_OPT_SEARCH_CHILDREN);
 
-			av_opt_set(cctx->priv_data, "crf", "0", AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx->priv_data, "qp", "0", AV_OPT_SEARCH_CHILDREN);
+				av_opt_set(cctx->priv_data, "crf", "0", AV_OPT_SEARCH_CHILDREN);
+				av_opt_set(cctx->priv_data, "qp", "0", AV_OPT_SEARCH_CHILDREN);
 
-			av_opt_set(cctx, "crf", "0", AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx, "qp", "0", AV_OPT_SEARCH_CHILDREN);
+				av_opt_set(cctx, "crf", "0", AV_OPT_SEARCH_CHILDREN);
+				av_opt_set(cctx, "qp", "0", AV_OPT_SEARCH_CHILDREN);
 
-			av_opt_set(cctx->priv_data, "threads", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx, "threads", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
-
+				av_opt_set(cctx->priv_data, "threads", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
+				av_opt_set(cctx, "threads", threadCount.c_str(), AV_OPT_SEARCH_CHILDREN);
+			}
 			if (slices < 1)
 				slices = 1;
 			else if (slices > 8)
@@ -811,12 +808,7 @@ namespace rir
 		else if (videoStream->codecpar->codec_id == AV_CODEC_ID_H265)
 		{
 
-			av_opt_set(cctx->priv_data, "preset", preset, AV_OPT_SEARCH_CHILDREN); /// hq ll lossless losslesshq
-			av_opt_set(cctx, "preset", preset, AV_OPT_SEARCH_CHILDREN);			   /// hq ll lossless losslesshq
-			av_dict_set(&av_dict_opts, "preset", preset, AV_DICT_MATCH_CASE);
-
-			av_opt_set(cctx->priv_data, "lossless", "1", AV_OPT_SEARCH_CHILDREN); /// hq ll lossless losslesshq
-
+			
 			if (slices < 1)
 				slices = 1;
 			else if (slices > 8)
@@ -827,17 +819,25 @@ namespace rir
 				av_opt_set(cctx->priv_data, "slices", _slices.c_str(), AV_OPT_SEARCH_CHILDREN);
 				av_opt_set(cctx, "slices", _slices.c_str(), AV_OPT_SEARCH_CHILDREN);
 			}
+			if (sub_codec_name == "hevc_nvenc") {
+				av_opt_set(cctx->priv_data, "preset", "p1", AV_OPT_SEARCH_CHILDREN);
+				av_opt_set(cctx, "preset", "p1", AV_OPT_SEARCH_CHILDREN);
+				av_opt_set(cctx->priv_data, "tune", "lossless", AV_OPT_SEARCH_CHILDREN);
+				av_opt_set(cctx, "tune", "lossless", AV_OPT_SEARCH_CHILDREN);
+				av_opt_set(cctx->priv_data, "profile", "main", AV_OPT_SEARCH_CHILDREN);
+				av_opt_set(cctx, "profile", "main", AV_OPT_SEARCH_CHILDREN);
 
-			if (kvazaar)
-			{
-				std::string pr = preset;
 				std::string gop = toString(_GOP);
-				// av_opt_set(cctx->priv_data, "kvazaar-params", ("lossless=1,preset=" + pr + ",gop="+gop+",threads=" + threadCount).c_str(), AV_OPT_SEARCH_CHILDREN); //limit to 4 threads
-				// av_opt_set(cctx, "kvazaar-params", ("lossless=1,preset=" + pr + ",gop="+gop+",threads=" + threadCount).c_str(), AV_OPT_SEARCH_CHILDREN); //limit to 4 threads
-
+				av_opt_set(cctx->priv_data, "g", gop.c_str(), AV_OPT_SEARCH_CHILDREN);
+				av_opt_set(cctx, "g", gop.c_str(), AV_OPT_SEARCH_CHILDREN);
+			}
+			else if (strcmp(codec->name, "libkvazaar") == 0)
+			{
+				std::string gop = toString(_GOP);
+				
 				// For unkown reason, not setting a preset provides the best ratio rate/speed
-				av_opt_set(cctx->priv_data, "kvazaar-params", ("lossless=1,gop=" + gop + ",threads=" + threadCount).c_str(), AV_OPT_SEARCH_CHILDREN); // limit to 4 threads
-				av_opt_set(cctx, "kvazaar-params", ("lossless=1,gop=" + gop + ",threads=" + threadCount).c_str(), AV_OPT_SEARCH_CHILDREN);			  // limit to 4 threads
+				av_opt_set(cctx->priv_data, "kvazaar-params", ("lossless=1,gop=" + gop + ",threads=" + threadCount).c_str(), AV_OPT_SEARCH_CHILDREN); 
+				av_opt_set(cctx, "kvazaar-params", ("lossless=1,gop=" + gop + ",threads=" + threadCount).c_str(), AV_OPT_SEARCH_CHILDREN);
 
 				width = (int)(ceil(width / 8.) * 8);
 				height = (int)(ceil(height / 8.) * 8);
@@ -851,6 +851,13 @@ namespace rir
 			}
 			else
 			{
+				av_opt_set(cctx->priv_data, "preset", preset, AV_OPT_SEARCH_CHILDREN); /// hq ll lossless losslesshq
+				av_opt_set(cctx, "preset", preset, AV_OPT_SEARCH_CHILDREN);			   /// hq ll lossless losslesshq
+				av_dict_set(&av_dict_opts, "preset", preset, AV_DICT_MATCH_CASE);
+
+				av_opt_set(cctx->priv_data, "lossless", "1", AV_OPT_SEARCH_CHILDREN); /// hq ll lossless losslesshq
+
+
 				const std::string x265_params = "lossless=1:threads=1:pools=" + threadCount;
 				av_opt_set(cctx->priv_data, "x265_params", x265_params.c_str(), AV_OPT_SEARCH_CHILDREN); // limit to 4 threads
 
@@ -886,12 +893,6 @@ namespace rir
 			av_opt_set(cctx, "speed", _speed.c_str(), AV_OPT_SEARCH_CHILDREN);			  /// hq ll lossless losslesshq
 			av_dict_set(&av_dict_opts, "speed", _speed.c_str(), AV_OPT_SEARCH_CHILDREN);
 
-			/*av_opt_set(cctx->priv_data, "maxrate", "200k", AV_OPT_SEARCH_CHILDREN); /// hq ll lossless losslesshq
-			av_opt_set(cctx, "maxrate", "200k", AV_OPT_SEARCH_CHILDREN); /// hq ll lossless losslesshq
-			av_dict_set(&av_dict_opts, "maxrate", "200k", AV_OPT_SEARCH_CHILDREN);
-			av_opt_set(cctx->priv_data, "minrate", "200k", AV_OPT_SEARCH_CHILDREN); /// hq ll lossless losslesshq
-			av_opt_set(cctx, "minrate", "200k", AV_OPT_SEARCH_CHILDREN); /// hq ll lossless losslesshq
-			av_dict_set(&av_dict_opts, "minrate", "200k", AV_OPT_SEARCH_CHILDREN);*/
 			av_opt_set(cctx->priv_data, "b", "0", AV_OPT_SEARCH_CHILDREN); /// hq ll lossless losslesshq
 			av_opt_set(cctx, "b", "0", AV_OPT_SEARCH_CHILDREN);			   /// hq ll lossless losslesshq
 			av_dict_set(&av_dict_opts, "b", "0", AV_OPT_SEARCH_CHILDREN);  /// hq ll lossless losslesshq
@@ -1032,6 +1033,8 @@ namespace rir
 			}
 		}
 
+		bool kvazaar = strcmp(codec->name, "libkvazaar") == 0;
+
 		if (!kvazaar && (videoStream->codecpar->codec_id != AV_CODEC_ID_FFV1 && videoStream->codecpar->codec_id != AV_CODEC_ID_VP9))
 		{
 			if (frameCounter == 0)
@@ -1067,10 +1070,10 @@ namespace rir
 		}
 		else
 		{ // AV_PIX_FMT_YUV420P
-			/*memset(videoFrame->data[0],0,cctx->height * videoFrame->linesize[0]);
+			/*memset(videoFrame->data[0], 0, cctx->height * videoFrame->linesize[0]);
 			memset(videoFrame->data[1],0, cctx->height * videoFrame->linesize[1]);
-			memset(videoFrame->data[2],0, cctx->height * videoFrame->linesize[2]);*/
-
+			memset(videoFrame->data[2],0, cctx->height * videoFrame->linesize[2]);
+			*/
 			memset(videoFrame->buf[0]->data, 0, videoFrame->buf[0]->size);
 
 			for (int y = 0; y < frame_height; ++y)
@@ -1140,6 +1143,8 @@ namespace rir
 				return false;
 			}
 		}
+
+		bool kvazaar = strcmp(codec->name, "libkvazaar") == 0;
 
 		if (!kvazaar && (videoStream->codecpar->codec_id != AV_CODEC_ID_FFV1 && videoStream->codecpar->codec_id != AV_CODEC_ID_VP9))
 		{
