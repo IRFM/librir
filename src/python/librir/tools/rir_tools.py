@@ -163,6 +163,18 @@ def attrs_open_file(filename):
         raise RuntimeError("An error occured while calling 'attrs_open_file'")
     return tmp
 
+def attrs_open_buffer(buf : bytes):
+    """
+    Open attributes from an in-memory file.
+    Attributes are read-only.
+    """
+    res = _tools.attrs_open_from_memory(
+        ct.cast(ct.c_char_p(buffer),ct.c_void_p), len(buffer))
+    )
+    if res == 0:
+        raise RuntimeError("cannot read attributes from memory")
+    return res
+
 
 def attrs_close(handle):
     """
