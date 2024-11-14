@@ -142,6 +142,17 @@ def blosc_decompress_zstd(src):
     return out[0:ret]
 
 
+def attrs_read_file_reader(data: bytes):
+    """
+    Open attribute file reader and returns a handle to it
+    """
+    _tools.attrs_read_file_reader.argtypes = [ct.c_char_p]
+    tmp = _tools.attrs_read_file_reader(data)
+    if tmp < 0:
+        raise RuntimeError("An error occured while calling 'attrs_read_file_reader'")
+    return tmp
+
+
 def attrs_open_file(filename):
     """
     Open attribute file and returns a handle to it
