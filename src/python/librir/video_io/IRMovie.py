@@ -385,26 +385,10 @@ class IRMovie(object):
     def data(self) -> np.ndarray:
         """
         Accessor to data contained in movie file.
-        There are two strategies for getting the data.
-
-            - Movie filename is uncompressed (.pcr format):
-                data is not read through librir C functions.
-                Instead, the whole data is read directly from the file to speed up
-                computation.
-                It can only work with calibration_index == 0
-
-            - Movie filename is compressed (.bin, .h264 formats):
-                Every image must be read individually and stacked up
 
         @return: 3D np.array representing IR data movie
         """
-        if self.is_file_uncompressed and (self._calibration_index == 0):
-            with open(self.filename, "rb") as f:
-                f.seek(self._header_offset)
-                data = np.fromfile(f, np.uint16, -1)
-            return np.reshape(data, (self.images,) + self.image_size)
-        else:
-            return self[:]
+        return self[:]
 
     @property
     def support_emissivity(self):
