@@ -67,6 +67,7 @@ def create_pcr_header(rows, columns, frequency=50, bits=16):
 class IRMovie(object):
     _header_offset = 1024
     __tempfile__ = None
+    _file_attributes: Union[FileAttributes, None] = None
     handle = -1
     _calibration_nickname_mapper = {"DL": "Digital Level"}
     _th = None
@@ -75,7 +76,10 @@ class IRMovie(object):
     def from_filename(cls, filename):
         """Create an IRMovie object from a local filename"""
         handle = open_camera_file(str(filename))
-        return IRMovie(handle)
+        instance = IRMovie(handle)
+        instance._file_attributes = FileAttributes.from_filename(filename)
+        instance._file_attributes.attributes = get_global_attributes(instance.handle)
+        return instance
 
     @classmethod
     def from_bytes(cls, data: bytes):
@@ -90,7 +94,11 @@ class IRMovie(object):
         """
 
         handle = open_camera_memory(data)
-        return cls(handle)
+        instance = cls(handle)
+        instance._file_attributes = FileAttributes.from_buffer(data)
+        instance._file_attributes.attributes = get_global_attributes(instance.handle)
+
+        return instance
 
     @classmethod
     def from_numpy_array(
@@ -148,13 +156,6 @@ class IRMovie(object):
         self._timestamps = None
         self._camstatus = None
         self._frame_attributes_d = {}
-
-        self._file_attributes = (
-            FileAttributes(self.filename)
-            if self.filename is not None
-            else FileAttributes(self.handle)
-        )
-        self._file_attributes.attributes = get_global_attributes(self.handle)
         self._registration_file = None
 
         self.calibration = "DL"
