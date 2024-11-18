@@ -14,6 +14,8 @@ extern "C"
 #include "tools.h"
 #include "Log.h"
 #include "FileAttributes.h"
+#include "ReadFileChunk.h"
+
 
 using namespace rir;
 
@@ -225,6 +227,17 @@ int attrs_read_file_reader(void *file_reader)
 	}
 	return set_void_ptr(attrs);
 }
+
+int attrs_open_from_memory(void *ptr, int64_t size)
+{
+	void *reader = createFileReader(createMemoryAccess(ptr,size)); 
+	int res = attrs_read_file_reader(reader);
+	destroyFileReader(reader);
+	return res;
+}
+
+
+
 int attrs_open_file(const char *filename)
 {
 	FileAttributes *attrs = new FileAttributes();

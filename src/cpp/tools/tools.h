@@ -94,6 +94,13 @@ Log levels
     Returns 0 on error.
     */
     TOOLS_EXPORT int attrs_read_file_reader(void *file_reader);
+
+    /**
+    Read file attributes from an in-memory file.
+    This is a read-only version.
+    */
+    TOOLS_EXPORT int attrs_open_from_memory(void *ptr, int64_t size);
+
     /**
     Read file attributes.
     Returns the file attribute object handle.

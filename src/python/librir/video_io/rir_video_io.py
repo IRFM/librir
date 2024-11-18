@@ -49,6 +49,27 @@ def open_camera_file(filename):
         raise RuntimeError("cannot read file " + filename)
     return res
 
+def open_camera_memory(buffer):
+    """
+    Open a video from a buffer.
+    Returns an integer value representing the camera. This value can be used by the
+    functions:
+    - close_camera
+    - get_camera_identifier
+    - get_camera_pulse
+    - get_image_count
+    - get_image_time
+    - get_image_size
+    - supported_calibrations
+    - load_image
+    """
+    pulse = np.zeros(1, dtype="i")
+    res = _video_io.open_camera_from_memory(
+        ct.cast(ct.c_char_p(buffer),ct.c_void_p), len(buffer), pulse.ctypes.data_as(ct.POINTER(ct.c_int))
+    )
+    if res == 0:
+        raise RuntimeError("cannot read video from memory ")
+    return res
 
 def video_file_format(filename):
     """
