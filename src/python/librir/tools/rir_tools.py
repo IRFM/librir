@@ -379,7 +379,8 @@ def attrs_timestamps(handle):
 
 def attrs_set_times(handle, times):
     _tools.attrs_set_times.argtypes = [ct.c_int, ct.POINTER(ct.c_int64), ct.c_int]
-    if isinstance(times, np.ndarray) or (times.dtype != np.int64):
+
+    if not isinstance(times, np.ndarray) or (times.dtype != np.int64):
         times = np.array(list(times), dtype=np.int64)
     tmp = _tools.attrs_set_times(
         handle, times.ctypes.data_as(ct.POINTER(ct.c_int64)), int(times.shape[0])
