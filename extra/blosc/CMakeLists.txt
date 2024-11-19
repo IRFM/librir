@@ -187,33 +187,33 @@ endif(COMPILER_SUPPORT_AVX2)
 # When the option has been selected to compile the test suite,
 # compile an additional version of blosc_shared which exports
 # some normally-hidden symbols (to facilitate unit testing).
-if (BUILD_TESTS)
-    add_library(blosc_shared_testing SHARED ${SOURCES})
-    set_target_properties(blosc_shared_testing PROPERTIES OUTPUT_NAME blosc_testing)
-    set_property(
-        TARGET blosc_shared_testing
-        APPEND PROPERTY COMPILE_DEFINITIONS BLOSC_SHARED_LIBRARY)
-    set_property(
-        TARGET blosc_shared_testing
-        APPEND PROPERTY COMPILE_DEFINITIONS BLOSC_TESTING)
-    # TEMP : CMake doesn't automatically add -lpthread here like it does
-    # for the blosc_shared target. Force it for now.
-    if(UNIX)
-        set_property(
-            TARGET blosc_shared_testing
-            APPEND PROPERTY LINK_FLAGS "-lpthread")
-    endif()
-endif()
+# if (BUILD_TESTS)
+#     add_library(blosc_shared_testing SHARED ${SOURCES})
+#     set_target_properties(blosc_shared_testing PROPERTIES OUTPUT_NAME blosc_testing)
+#     set_property(
+#         TARGET blosc_shared_testing
+#         APPEND PROPERTY COMPILE_DEFINITIONS BLOSC_SHARED_LIBRARY)
+#     set_property(
+#         TARGET blosc_shared_testing
+#         APPEND PROPERTY COMPILE_DEFINITIONS BLOSC_TESTING)
+#     # TEMP : CMake doesn't automatically add -lpthread here like it does
+#     # for the blosc_shared target. Force it for now.
+#     if(UNIX)
+#         set_property(
+#             TARGET blosc_shared_testing
+#             APPEND PROPERTY LINK_FLAGS "-lpthread")
+#     endif()
+# endif()
 
 if (BUILD_SHARED)
     target_link_libraries(blosc_shared ${LIBS})
     target_include_directories(blosc_shared PUBLIC ${BLOSC_INCLUDE_DIRS})
 endif()
 
-if (BUILD_TESTS)
-    target_link_libraries(blosc_shared_testing ${LIBS})
-    target_include_directories(blosc_shared_testing PUBLIC ${BLOSC_INCLUDE_DIRS})
-endif()
+# if (BUILD_TESTS)
+#     target_link_libraries(blosc_shared_testing ${LIBS})
+#     target_include_directories(blosc_shared_testing PUBLIC ${BLOSC_INCLUDE_DIRS})
+# endif()
 
 if(BUILD_STATIC)
     add_library(blosc_static STATIC ${SOURCES})

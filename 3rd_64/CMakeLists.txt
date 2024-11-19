@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(ffmpeg_librir
-    VERSION 	4.3
+    VERSION 	7.1
     DESCRIPTION "ffmpeg_librir"
     
     LANGUAGES CXX C
@@ -15,6 +15,7 @@ include(FetchContent)
 
 set(3RD_64_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
 option(FFMPEG_LOCAL_INSTALL "Install locally" OFF)
+option(ENABLE_CUDA_FFMPEG "Enable CUDA acceleration for FFMPEG" OFF)
 IF(FFMPEG_LOCAL_INSTALL)
     set(3RD_64_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/install)
 endif()
@@ -49,20 +50,29 @@ ExternalProject_Add(nasm
 ExternalProject_Add_StepTargets(nasm install)
 
 FetchContent_Declare(
-    kvazaar
+    kvazaar-librir
     GIT_REPOSITORY https://github.com/ultravideo/kvazaar.git
-    GIT_TAG v2.2.0
+    GIT_TAG 6b7f065
     )
-FetchContent_MakeAvailable(kvazaar)
+FetchContent_MakeAvailable(kvazaar-librir)
 set(KVAZAAR_CONFIGURE_CMD sed -i "/AM_PROG_AR/c\\m4_ifdef([AM_PROG_AR], [AM_PROG_AR])" ./configure.ac  && ./autogen.sh &&  ./configure --enable-static=yes --enable-shared=no CFLAGS=-fPIC )#--extra-ldflags="-Wl,-rpath='$ORIGIN'")
-ExternalProject_Add(kvazaar
-                    SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/kvazaar-src
+ExternalProject_Add(kvazaar-librir
+                    SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/kvazaar-librir-src
                     UPDATE_DISCONNECTED true
                     DOWNLOAD_EXTRACT_TIMESTAMP true
+                    CMAKE_ARGS  
+                        -DBUILD_KVAZAAR_BINARY:BOOL=OFF
+                        -DBUILD_TESTS:BOOL=OFF
+                        -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+                        -DCMAKE_INSTALL_LIBDIR:PATH=<INSTALL_DIR>/lib
+                        # -DCMAKE_INSTALL_BINDIR:PATH=<INSTALL_DIR>/bin
+                        # -DCMAKE_INSTALL_INCLUDEDIR=<INSTALL_DIR>/include
+                        # -DCMAKE_INSTALL_MANDIR=<INSTALL_DIR>/man
+                        -DKVZ_DEFAULT_BUILD_TYPE:STRING=Release
                     # PREFIX deps
                     INSTALL_DIR ${3RD_64_INSTALL_DIR}
-                    CONFIGURE_COMMAND ${KVAZAAR_CONFIGURE_CMD} --prefix=<INSTALL_DIR>
-                    BUILD_COMMAND $(MAKE) --silent
+                    # CONFIGURE_COMMAND ${KVAZAAR_CONFIGURE_CMD} --prefix=<INSTALL_DIR>
+                    # BUILD_COMMAND $(MAKE) --silent
                     # INSTALL_COMMAND ${KVAZAAR_INSTALL_CMD}
                     BUILD_IN_SOURCE true
                     DOWNLOAD_COMMAND ""
@@ -70,13 +80,13 @@ ExternalProject_Add(kvazaar
                     )
 
 add_custom_command(
-                        TARGET kvazaar
+                        TARGET kvazaar-librir
                         POST_BUILD 
                         COMMAND bash -c "sed -i \"/lkvazaar/c $(grep lkvazaar ${3RD_64_INSTALL_DIR}/lib/pkgconfig/kvazaar.pc) -lm -lpthread\" ${3RD_64_INSTALL_DIR}/lib/pkgconfig/kvazaar.pc"
                         VERBATIM
                       )
-ExternalProject_Add_StepTargets(kvazaar build)
-
+ExternalProject_Add_StepTargets(kvazaar-librir build)
+list( APPEND CMAKE_INSTALL_RPATH "../../out" )
 
 FetchContent_Declare(
     x264
@@ -102,6 +112,43 @@ ExternalProject_Add_StepTargets(x264 build)
 
 set(_PKG_CONFIG_PATH $ENV{PKG_CONFIG_PATH})
 
+set(FFMPEG_DEPENDENCIES kvazaar-librir x264)
+
+if(ENABLE_CUDA_FFMPEG)
+    find_package(CUDAToolkit REQUIRED)
+    if (CUDAToolkit_FOUND)
+
+        FetchContent_Declare(
+            ffnvcodec
+            GIT_REPOSITORY https://git.videolan.org/git/ffmpeg/nv-codec-headers.git
+            GIT_TAG sdk/12.0
+            )
+        FetchContent_MakeAvailable(ffnvcodec)
+
+        set(NVCODEC_PREFIX_MODIFICATION_CMD sed -i "s#PREFIX = /usr/local#PREFIX = ${3RD_64_INSTALL_DIR}#g" ${CMAKE_BINARY_DIR}/_deps/ffnvcodec-src/Makefile)
+
+
+        ExternalProject_Add(ffnvcodec
+                        SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/ffnvcodec-src
+                        CONFIGURE_COMMAND ""
+                        INSTALL_COMMAND ${NVCODEC_PREFIX_MODIFICATION_CMD} && $(MAKE) install
+                        UPDATE_DISCONNECTED true
+                        INSTALL_DIR ${3RD_64_INSTALL_DIR}
+                        BUILD_IN_SOURCE true
+                        DOWNLOAD_COMMAND ""
+        )
+        ExternalProject_Add_StepTargets(ffnvcodec install)
+
+        set(NVCC_FLAGS "-gencode arch=compute_52,code=sm_52 -O2")
+        set(CUDA_CONFIGURE_ARGS --enable-nonfree --enable-cuda-nvcc --enable-libnpp --extra-cflags=-I/usr/local/cuda/include --extra-cflags=-I${3RD_64_INSTALL_DIR}/include --extra-ldflags=-L/usr/local/cuda/lib64 --disable-static --enable-shared --nvccflags=${NVCC_FLAGS} --enable-nvenc --enable-nvdec  --enable-opencl)
+
+
+    else()
+        message(STATUS "CUDA not found ! No GPU acceleration")
+        set(CUDA_CONFIGURE_ARGS )
+        set(FFMPEG_DEPENDENCIES kvazaar-librir x264 ffnvcodec-install)
+    endif()
+endif()
 FetchContent_Declare(
     ffmpeg
     GIT_REPOSITORY https://git.ffmpeg.org/ffmpeg.git
@@ -113,19 +160,20 @@ set(FFMPEG_CONFIGURE_CMD
                             export LD_LIBRARY_PATH=${3RD_64_INSTALL_DIR}/lib:$ENV{LD_LIBRARY_PATH}  && 
                             export PKG_CONFIG_PATH=${3RD_64_INSTALL_DIR}/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}   &&
                             export OPENSSL_LIBS="-L/usr/lib64 -llibeay32 -lssleay32 -llibcrypto -luser32 -lgdi32 -lwsock32 -lws2_32" && 
-                            ./configure --arch=native --enable-asm --disable-libvpx --disable-libaom --disable-static --enable-shared --enable-libx264 --enable-libkvazaar --extra-cflags=-DKVZ_STATIC_LIB  --enable-gpl --enable-rpath --enable-pic --disable-debug)
+                            ./configure --enable-asm --disable-libvpx --disable-libaom --disable-static --enable-shared --enable-libx264 --enable-libkvazaar --extra-cflags=-DKVZ_STATIC_LIB  --enable-gpl --enable-rpath --enable-pic --disable-debug)
 
 ExternalProject_Add(ffmpeg
                     SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/ffmpeg-src
                     DOWNLOAD_EXTRACT_TIMESTAMP true
                     UPDATE_DISCONNECTED true
-                    CONFIGURE_COMMAND ${FFMPEG_CONFIGURE_CMD} --prefix=<INSTALL_DIR>
+                    CONFIGURE_COMMAND ${FFMPEG_CONFIGURE_CMD} ${CUDA_CONFIGURE_ARGS} --prefix=<INSTALL_DIR> 
                     BUILD_COMMAND $(MAKE)
                     INSTALL_COMMAND make install
                     INSTALL_DIR ${3RD_64_INSTALL_DIR}
                     BUILD_IN_SOURCE true
-                    DEPENDS kvazaar
-                    DEPENDS x264
+                    DEPENDS ${FFMPEG_DEPENDENCIES}
+                    # DEPENDS x264
+                    # DEPENDS ffnvcodec-install
                     DOWNLOAD_COMMAND ""
                     # BUILD_ALWAYS 1
 )

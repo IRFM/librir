@@ -46,8 +46,8 @@ add_library(video_io ${LIBRIR_IO_SRC})
 # to fetch and compile sources for windows and linux
 # FIXME: FetchContent/find_package ffmpeg
 IF (MSVC)
-	SET(FFMPEG_LIB_DIR ${PROJECT_SOURCE_DIR}/3rd_64/ffmpeg-4.3-msvc/lib)
-	SET(FFMPEG_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/3rd_64/ffmpeg-4.3-msvc)
+	SET(FFMPEG_LIB_DIR ${PROJECT_SOURCE_DIR}/3rd_64/ffmpeg-7.1-msvc/lib)
+	SET(FFMPEG_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/3rd_64/ffmpeg-7.1-msvc)
 	SET(FFMPEG_LIBS avdevice avformat avcodec swscale avutil swresample avfilter )
 	SET(ADDITIONAL_FFMPEG_LIBS libx264 libx265 kvazaar postproc vcruntime140_1 )
 	SET(FFMPEG_SYSTEM_DEPENDENCIES Vfw32 shlwapi strmbase)
