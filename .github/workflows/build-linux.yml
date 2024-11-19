@@ -28,7 +28,7 @@ jobs:
 
         - name: Cache Dependencies
           id: cache-dependencies
-          uses: actions/cache@v3
+          uses: actions/cache@v4
           with:
             path: 3rd_64
             key: ${{ github.ref }}-3rd_64
