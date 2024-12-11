@@ -84,8 +84,15 @@ SET(MINIZIP_SRC
 )
 ENDIF()
 
-
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/blosc)
+# option(BUILD_TESTS "build TESTS" OFF)
+# include(ExternalProject)
+# ExternalProject_Add(
+# 	blosc
+# 	SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/blosc
+# 	CMAKE_ARGS 
+# 		-DBUILD_TESTS=OFF
+# )
+add_subdirectory(blosc)
 SET(BLOSC_SRC ${BLOSC_SRC} PARENT_SCOPE)
 
 SET(JPEG9B_DIR ${CMAKE_CURRENT_SOURCE_DIR}/jpeg-9b PARENT_SCOPE)
