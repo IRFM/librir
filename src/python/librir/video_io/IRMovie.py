@@ -52,6 +52,10 @@ class CalibrationNotFound(Exception):
     pass
 
 
+class InvalidMovie(Exception):
+    pass
+
+
 def create_pcr_header(rows, columns, frequency=50, bits=16):
     pcr_header = np.zeros((256,), dtype=np.uint32)
     pcr_header[2] = columns
@@ -144,7 +148,7 @@ class IRMovie(object):
         """
         # check valid handle identifier
         if get_image_count(handle) < 0:
-            raise RuntimeError("Invalid ir_movie descriptor")
+            raise InvalidMovie("Invalid ir_movie descriptor")
 
         self.handle = handle
         self.times = None
