@@ -22,7 +22,7 @@ on:
 jobs:
     
     build-linux:
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-22.04
       steps:
         - uses: actions/checkout@v4
 
@@ -30,7 +30,7 @@ jobs:
           id: cache-dependencies
           uses: actions/cache@v4
           with:
-            path: 3rd_64
+            path: build/3rd-party-install
             key: ${{ github.ref }}-3rd_64
 
         - name: Install compiler ${{ inputs.compiler || 'latest' }}
@@ -45,5 +45,5 @@ jobs:
         - name: Upload artifact
           uses: actions/upload-artifact@v4
           with:
-            name: install-librir-ubuntu-latest-${{ inputs.compiler || 'latest' }}
+            name: install-librir-ubuntu-22.04-${{ inputs.compiler || 'latest' }}
             path: build/install

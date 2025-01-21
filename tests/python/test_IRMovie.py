@@ -10,6 +10,8 @@ import pytest
 from librir import IRMovie
 from librir.video_io.IRMovie import CalibrationNotFound
 
+from librir.video_io.IRMovie import InvalidMovie
+
 
 @pytest.mark.instantiation
 def test_IRMovie_with_filename_as_input(filename):
@@ -27,7 +29,7 @@ def test_IRMovie_with_handle_as_input(array):
         assert new_mov.handle == movie.handle
         new_mov.__tempfile__ = None
         movie.__tempfile__ = None
-        with pytest.raises(RuntimeError):
+        with pytest.raises(InvalidMovie):
             IRMovie(0)
 
 

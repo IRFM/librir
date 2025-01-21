@@ -33,19 +33,6 @@ def test_zstd_decompress(c, data_bytes):
     rts.zstd_decompress(c) == data_bytes
 
 
-def test_blosc_compress_zstd(data_bytes):
-    rts.blosc_compress_zstd(data_bytes, 2, rts.BLOSC_SHUFFLE, 1)
-
-
-@pytest.fixture
-def compressed_blosc(data_bytes):
-    return rts.blosc_compress_zstd(data_bytes, 2, rts.BLOSC_SHUFFLE, 1)
-
-
-def test_blosc_decompress_zstd(compressed_blosc):
-    print(rts.blosc_decompress_zstd(compressed_blosc))
-
-
 def test_file_attributes(movie: IRMovie):
     filename = movie.filename
     attrs = fa.FileAttributes.from_filename(filename)

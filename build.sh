@@ -38,7 +38,7 @@ function clone_pull {
 
 
 # Additional cmake options
-CMAKE_OPTIONS="-DLOCAL_INSTALL=ON"
+CMAKE_OPTIONS="-DCMAKE_INSTALL_PREFIX=install"
 CMAKE_BUILD="Release"
 # Set to 1 to build wheel package
 WHEEL=0
@@ -84,15 +84,6 @@ while [[ $# -gt 0 ]]; do
 done
 
 CMAKE_OPTIONS="$CMAKE_OPTIONS -DCMAKE_BUILD_TYPE=$CMAKE_BUILD"
-
-# From within IRFM only, but does not prevent script to work elsewhere
-module load mamba/python39
-module load gcc/13.2.0
-module load cmake
-
-
-# Make ffmpeg build script executable
-chmod 777 configure_ffmpeg
 
 # Build
 

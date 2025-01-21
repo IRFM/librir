@@ -10,10 +10,6 @@ from ..low_level.misc import (
     toArray,
 )
 
-BLOSC_NOSHUFFLE = 0
-BLOSC_SHUFFLE = 1
-BLOSC_BITSHUFFLE = 2
-
 
 def zstd_compress_bound(size):
     """
@@ -76,67 +72,6 @@ def zstd_decompress(src):
         out = "\00" * outsize
 
     ret = _tools.zstd_decompress(src, len(src), out, outsize)
-    if ret < 0:
-        raise RuntimeError("'zstd_decompress': unknown error")
-    return out[0:ret]
-
-
-def blosc_compress_zstd(src, typesize, shuffle, level=1):
-    """
-    Zstd interface.
-    Compress a bytes object and return the result.
-    """
-    _tools.blosc_compress_zstd.argtypes = [
-        ct.POINTER(ct.c_char),
-        ct.c_longlong,
-        ct.POINTER(ct.c_char),
-        ct.c_longlong,
-        ct.c_int,
-        ct.c_int,
-        ct.c_int,
-    ]
-
-    src = bytes(src)
-
-    outsize = zstd_compress_bound(len(src))
-
-    if sys.version_info[0] > 2:
-        out = bytes(outsize)
-    else:
-        out = "\00" * outsize
-    ret = _tools.blosc_compress_zstd(
-        src, len(src), out, outsize, int(typesize), int(shuffle), level
-    )
-    if ret < 0:
-        raise RuntimeError("'blosc_compress_zstd': unknown error")
-    return out[0:ret]
-
-
-def blosc_decompress_zstd(src):
-    """
-    Zstd interface.
-    Decompress a bytes object (previously compressed with zstd_compress) and return the result.
-    """
-    _tools.blosc_decompress_zstd.argtypes = [
-        ct.POINTER(ct.c_char),
-        ct.c_longlong,
-        ct.POINTER(ct.c_char),
-        ct.c_longlong,
-    ]
-    _tools.zstd_decompress_bound.argtypes = [ct.POINTER(ct.c_char), ct.c_longlong]
-
-    src = bytes(src)
-
-    outsize = _tools.zstd_decompress_bound(src, len(src)) + 64
-    if outsize < 0:
-        raise RuntimeError("'blosc_decompress_zstd': wrong input format")
-
-    if sys.version_info[0] > 2:
-        out = bytes(outsize)
-    else:
-        out = "\00" * outsize
-
-    ret = _tools.blosc_decompress_zstd(src, len(src), out, outsize)
     if ret < 0:
         raise RuntimeError("'zstd_decompress': unknown error")
     return out[0:ret]
