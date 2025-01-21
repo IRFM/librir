@@ -193,12 +193,7 @@ Log levels
     TOOLS_EXPORT int64_t zstd_compress(char *src, int64_t srcSize, char *dst, int64_t dstSize, int level);
     TOOLS_EXPORT int64_t zstd_decompress(char *src, int64_t srcSize, char *dst, int64_t dstSize);
 
-#define RIR_BLOSC_NOSHUFFLE 0
-#define RIR_BLOSC_SHUFFLE 1
-#define RIR_BLOSC_BITSHUFFLE 2
-
-    TOOLS_EXPORT int64_t blosc_compress_zstd(char *src, int64_t srcSize, char *dst, int64_t dstSize, size_t typesize, int doshuffle, int level);
-    TOOLS_EXPORT int64_t blosc_decompress_zstd(char *src, int64_t srcSize, char *dst, int64_t dstSize);
+  
 
     TOOLS_EXPORT int unzip(const char *infile, const char *outfolder);
 

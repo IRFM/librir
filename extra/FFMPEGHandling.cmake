@@ -1,0 +1,51 @@
+# component dependencies declaration
+set(BASE_FFMPEG_COMPONENTS avcodec avdevice avfilter avformat avresample avutil swresample swscale)
+set(REQUIRED_FFMPEG_COMPONENTS avcodec avdevice avfilter avformat avutil swresample swscale)
+
+if(MSVC)
+    SET(ADDITIONAL_FFMPEG_DEPS libx264 libx265 kvazaar postproc vcruntime140_1)
+    SET(FFMPEG_SYSTEM_DEPENDENCIES Vfw32 shlwapi strmbase)
+elseif(WIN32)
+    SET(ADDITIONAL_FFMPEG_DEPS postproc)
+    SET(FFMPEG_SYSTEM_DEPENDENCIES)
+else()
+    set(ADDITIONAL_FFMPEG_DEPS postproc)
+    set(FFMPEG_SYSTEM_DEPENDENCIES)
+endif()
+
+# Retrieving or compiling FFMPEG
+if(NOT BUILD_FFMPEG)
+    if(MSVC)
+        set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
+        set(FFMPEG_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/ffmpeg/ffmpeg-4.3-msvc)
+        set(FFMPEG_FIND_COMPONENTS ${BASE_FFMPEG_COMPONENTS})
+    elseif(LINUX)
+    endif()
+
+    find_package(FFMPEG REQUIRED COMPONENTS ${REQUIRED_FFMPEG_COMPONENTS})
+else()
+    if(MSVC)
+        # not implemented !
+        message(FATAL_ERROR "FFMPEG compilation on windows is not possible with CMake !")
+    elseif(LINUX)
+        list(APPEND REQUIRED_FFMPEG_COMPONENTS ${ADDITIONAL_FFMPEG_DEPS})
+        add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/ffmpeg)
+    endif()
+endif()
+
+list(REMOVE_DUPLICATES FFMPEG_SHARED_LIBRARIES)
+list(REMOVE_DUPLICATES FFMPEG_ADDITIONAL_DEPENDENCIES)
+
+set(FFMPEG_SHARED_LIBRARIES ${FFMPEG_SHARED_LIBRARIES} CACHE INTERNAL "")
+set(FFMPEG_ADDITIONAL_DEPENDENCIES ${FFMPEG_ADDITIONAL_DEPENDENCIES} CACHE INTERNAL "")
+
+install(IMPORTED_RUNTIME_ARTIFACTS ${FFMPEG_SHARED_LIBRARIES} ${FFMPEG_ADDITIONAL_DEPENDENCIES}
+    RUNTIME_DEPENDENCY_SET ffmpeg-set
+
+    # LIBRARY
+    DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+# install(IMPORTED_RUNTIME_ARTIFACTS ${FFMPEG_SHARED_LIBRARIES} ${FFMPEG_ADDITIONAL_DEPENDENCIES}
+# RUNTIME_DEPENDENCY_SET ffmpeg-set
+# RUNTIME
+# DESTINATION ${CMAKE_INSTALL_BINDIR})

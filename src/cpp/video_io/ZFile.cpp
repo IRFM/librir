@@ -498,24 +498,6 @@ int z_write_image(void *file, const unsigned short *img, int64_t timestamp)
 		if (csize == (uint32_t)-1)
 			return -1;
 	}
-	else if (f->bheader.compression == 2)
-	{
-		int tmpsize = (int)blosc_compress_zstd((char *)img, f->btrigger.data_size_x * f->btrigger.data_size_y * 2, f->buffer.data(), f->buffer.size(), 2, RIR_BLOSC_SHUFFLE, f->clevel);
-		// int tmpsize = blosc_compress(f->clevel, BLOSC_SHUFFLE, 2,
-		//	f->btrigger.data_size_x*f->btrigger.data_size_y * 2, img, f->buffer.data(), f->buffer.size());
-		if (tmpsize < 0)
-			return tmpsize;
-		csize = tmpsize;
-	}
-	else if (f->bheader.compression == 3)
-	{
-		// int tmpsize = blosc_compress(f->clevel, BLOSC_BITSHUFFLE, 2,
-		//	f->btrigger.data_size_x*f->btrigger.data_size_y * 2, img, f->buffer.data(), f->buffer.size());
-		int tmpsize = (int)blosc_compress_zstd((char *)img, f->btrigger.data_size_x * f->btrigger.data_size_y * 2, f->buffer.data(), f->buffer.size(), 2, RIR_BLOSC_BITSHUFFLE, f->clevel);
-		if (tmpsize < 0)
-			return tmpsize;
-		csize = tmpsize;
-	}
 
 	if (f->file)
 	{
@@ -619,14 +601,6 @@ int z_read_image(void *file, int pos, unsigned short *img, int64_t *timestamp)
 			// if (ZSTD_isError(ZSTD_decompress(img, f->btrigger.data_size_x*f->btrigger.data_size_y * 2, f->buffer.data(), fsize)))
 			//	return -1;
 		}
-		else if (f->bheader.compression == 2 || f->bheader.compression == 3)
-		{
-			if (blosc_decompress_zstd(f->buffer.data(), fsize, (char *)img, f->btrigger.data_size_x * f->btrigger.data_size_y * 2) < 0)
-				return -1;
-			// int cread = blosc_decompress(f->buffer.data(), img, f->btrigger.data_size_x*f->btrigger.data_size_y * 2);
-			// if (cread < 0)
-			//	return cread;
-		}
 
 		return 0;
 	}
@@ -646,14 +620,6 @@ int z_read_image(void *file, int pos, unsigned short *img, int64_t *timestamp)
 			// if (ZSTD_isError(ZSTD_decompress(img, f->btrigger.data_size_x*f->btrigger.data_size_y * 2, f->buffer.data(), fsize)))
 			//	return -1;
 			if (zstd_decompress(f->buffer.data(), fsize, (char *)img, f->btrigger.data_size_x * f->btrigger.data_size_y * 2) < 0)
-				return -1;
-		}
-		else if (f->bheader.compression == 2 || f->bheader.compression == 3)
-		{
-			// int cread = blosc_decompress(f->buffer.data(), img, f->btrigger.data_size_x*f->btrigger.data_size_y * 2);
-			// if (cread < 0)
-			//	return cread;
-			if (blosc_decompress_zstd(f->buffer.data(), fsize, (char *)img, f->btrigger.data_size_x * f->btrigger.data_size_y * 2) < 0)
 				return -1;
 		}
 

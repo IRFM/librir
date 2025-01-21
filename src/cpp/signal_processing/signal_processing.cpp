@@ -195,40 +195,6 @@ int resample_time_serie(double *sample_x, double *sample_y, int size, double *ti
 	return 0;
 }
 
- 
-extern "C"
-{
-#include <jpeglib.h>
-}
-
-int jpeg_decode(char *input, int64_t isize, unsigned char *output)
-{
-	struct jpeg_decompress_struct cinfo;
-	struct jpeg_error_mgr jerr;
-	unsigned long location = 0;
-
-	cinfo.err = jpeg_std_error(&jerr);
-
-	// jpeg_create_decompress(&cinfo);
-	jpeg_CreateDecompress((&cinfo), JPEG_LIB_VERSION, (size_t)sizeof(struct jpeg_decompress_struct));
-	jpeg_mem_src(&cinfo, (unsigned char *)input, isize);
-
-	(void)jpeg_read_header(&cinfo, TRUE);
-	if (!jpeg_start_decompress(&cinfo))
-		return -1;
-	JSAMPLE *row[1];
-	while (cinfo.output_scanline < cinfo.image_height)
-	{
-		row[0] = reinterpret_cast<JSAMPLE *>(output) + location;
-		jpeg_read_scanlines(&cinfo, row, 1);
-		location += cinfo.image_width;
-	}
-	// wrap up decompression, destroy objects, free pointers and close open files
-	jpeg_finish_decompress(&cinfo);
-	jpeg_destroy_decompress(&cinfo);
-	return 0;
-}
-
 #include "BadPixels.h"
 int bad_pixels_create(unsigned short *first_image, int width, int height)
 {
@@ -349,38 +315,35 @@ int keep_largest_area(int type, void *src, int *dst, int w, int h, void *backgro
 	return 0;
 }
 
-
-
-
 // fallthrough
-#ifndef __has_cpp_attribute 
-#    define __has_cpp_attribute(x) 0
+#ifndef __has_cpp_attribute
+#define __has_cpp_attribute(x) 0
 #endif
 #if __has_cpp_attribute(clang::fallthrough)
-#    define SEQ_FALLTHROUGH() [[clang::fallthrough]]
+#define SEQ_FALLTHROUGH() [[clang::fallthrough]]
 #elif __has_cpp_attribute(gnu::fallthrough)
-#    define SEQ_FALLTHROUGH() [[gnu::fallthrough]]
+#define SEQ_FALLTHROUGH() [[gnu::fallthrough]]
 #else
-#    define SEQ_FALLTHROUGH()
+#define SEQ_FALLTHROUGH()
 #endif
 
-
-static std::uint64_t read_64(const void* p)
+static std::uint64_t read_64(const void *p)
 {
 	std::uint64_t r;
 	memcpy(&r, p, sizeof(r));
 	return r;
 }
-size_t hash_bytes(void* _ptr, size_t len)
+size_t hash_bytes(void *_ptr, size_t len)
 {
 	static constexpr std::uint64_t m = 14313749767032793493ULL;
 	static constexpr std::uint64_t seed = 3782874213ULL;
 	static constexpr std::uint64_t r = 47ULL;
 
-	const unsigned char* ptr = static_cast<const unsigned char*>(_ptr);
+	const unsigned char *ptr = static_cast<const unsigned char *>(_ptr);
 	std::uint64_t h = seed ^ (len * m);
-	const std::uint8_t* end = ptr + len - (sizeof(std::uint64_t) - 1);
-	while (ptr < end) {
+	const std::uint8_t *end = ptr + len - (sizeof(std::uint64_t) - 1);
+	while (ptr < end)
+	{
 		auto k = read_64(ptr);
 
 		k *= m;
@@ -393,7 +356,8 @@ size_t hash_bytes(void* _ptr, size_t len)
 		ptr += sizeof(std::uint64_t);
 	}
 
-	switch (len & 7U) {
+	switch (len & 7U)
+	{
 	case 7U:
 		h ^= static_cast<std::uint64_t>(ptr[6U]) << 48U;
 		SEQ_FALLTHROUGH();

@@ -30,4 +30,4 @@ version = "@PROJECT_VERSION_MAJOR@.@PROJECT_VERSION_MINOR@.@PROJECT_VERSION_PATC
 readme = {file = ["README.md"]}
 
 [tool.setuptools.package-data]
-"@PROJECT_NAME@.libs" = ["@SHARED_LIBRARY_SUFFIX_PATTERN@"]
+"@PROJECT_NAME@.libs" = ["*@CMAKE_SHARED_LIBRARY_SUFFIX@*"]

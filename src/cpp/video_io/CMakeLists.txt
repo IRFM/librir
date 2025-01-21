@@ -1,161 +1,138 @@
+option(USE_ZFILE "Whether to compile with ZSTD file format" OFF)
 
-add_definitions("-DBUILD_IO_LIB")
+if(USE_ZFILE)
+    add_compile_definitions(USE_ZFILE)
+endif()
 
-# get previous targets include folders
-get_target_property(TOOLS_HEADERS tools PUBLIC_HEADER)
-get_target_property(TOOLS_HEADERS_DIR tools INCLUDE_DIRECTORIES)
-
-get_target_property(GEOMETRY_HEADERS geometry PUBLIC_HEADER)
-get_target_property(GEOMETRY_HEADERS_DIR geometry INCLUDE_DIRECTORIES)
-
-get_target_property(SIGNAL_PROCESSING_HEADERS signal_processing PUBLIC_HEADER)
-get_target_property(SIGNAL_PROCESSING_HEADERS_DIR signal_processing INCLUDE_DIRECTORIES)
-
+# add_compile_definitions(BUILD_IO_LIB)
+if(BUILD_SHARED_LIBS)
+    add_compile_definitions(BUILD_IO_LIB)
+endif()
 
 # Set sources
-
 SET(LIBRIR_IO_SRC
-	${CMAKE_CURRENT_SOURCE_DIR}/BaseCalibration.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/IRFileLoader.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/h264.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/IRVideoLoader.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/HCCLoader.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/ZFile.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/video_io.cpp
-	# ${CMAKE_CURRENT_SOURCE_DIR}/ZFile.cpp
-	)
+    ${CMAKE_CURRENT_SOURCE_DIR}/BaseCalibration.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/IRFileLoader.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/h264.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/IRVideoLoader.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/HCCLoader.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/video_io.cpp
+)
+
+if(USE_ZFILE)
+    list(APPEND LIBRIR_IO_SRC ${CMAKE_CURRENT_SOURCE_DIR}/ZFile.cpp)
+endif()
 
 SET(LIBRIR_IO_SRC ${LIBRIR_IO_SRC} PARENT_SCOPE)
 
-set(IO_HEADERS 
-${CMAKE_CURRENT_SOURCE_DIR}/IRVideoLoader.h
-${CMAKE_CURRENT_SOURCE_DIR}/IRFileLoader.h
-${CMAKE_CURRENT_SOURCE_DIR}/BaseCalibration.h
-${CMAKE_CURRENT_SOURCE_DIR}/HCCLoader.h
-${CMAKE_CURRENT_SOURCE_DIR}/ZFile.h
-${CMAKE_CURRENT_SOURCE_DIR}/video_io.h
-${CMAKE_CURRENT_SOURCE_DIR}/h264.h
-# ${CMAKE_CURRENT_SOURCE_DIR}/ZFile.h
+set(IO_HEADERS
+    IRVideoLoader.h
+    IRFileLoader.h
+    BaseCalibration.h
+    HCCLoader.h
+    video_io.h
+    h264.h
 )
 
-# set library video_io
-
-add_library(video_io ${LIBRIR_IO_SRC})
-
-# retrieve ffmpeg dependency manually since there is no easy way 
-# to fetch and compile sources for windows and linux
-# FIXME: FetchContent/find_package ffmpeg
-IF (MSVC)
-	SET(FFMPEG_LIB_DIR ${PROJECT_SOURCE_DIR}/3rd_64/ffmpeg-4.3-msvc/lib)
-	SET(FFMPEG_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/3rd_64/ffmpeg-4.3-msvc)
-	SET(FFMPEG_LIBS avdevice avformat avcodec swscale avutil swresample avfilter )
-	SET(ADDITIONAL_FFMPEG_LIBS libx264 libx265 kvazaar postproc vcruntime140_1 )
-	SET(FFMPEG_SYSTEM_DEPENDENCIES Vfw32 shlwapi strmbase)
-	SET(FFMPEG_PREFIX )
-	SET(FFMPEG_SUFFIX .dll)
-	SET(FFMPEG_IMPLIB .lib)
-	
-ELSE()
-	IF (WIN32)
-		# mingw
-		SET(FFMPEG_LIB_DIR ${PROJECT_SOURCE_DIR}/3rd_64/ffmpeg/install/lib)
-		SET(FFMPEG_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/3rd_64/ffmpeg/install/include)
-		SET(FFMPEG_LIBS avdevice avformat avcodec swscale avutil swresample avfilter)
-		SET(ADDITIONAL_FFMPEG_LIBS postproc)
-		SET(FFMPEG_SYSTEM_DEPENDENCIES )
-
-		SET(FFMPEG_PREFIX )
-		SET(FFMPEG_SUFFIX .dll)
-		SET(FFMPEG_IMPLIB .lib)
-
-	ELSE()
-		ExternalProject_Get_property(ffmpeg INSTALL_DIR)
-		SET(FFMPEG_LIB_DIR ${INSTALL_DIR}/lib)
-		SET(FFMPEG_INCLUDE_DIR ${INSTALL_DIR}/include)
-		SET(FFMPEG_LIBS avdevice avformat avcodec swscale avutil swresample avfilter)
-		SET(ADDITIONAL_FFMPEG_LIBS postproc)
-		SET(FFMPEG_SYSTEM_DEPENDENCIES )
-		SET(FFMPEG_PREFIX lib)
-		SET(FFMPEG_SUFFIX .so)
-		SET(FFMPEG_IMPLIB .a)
-
-	ENDIF()
-ENDIF()
-
-MESSAGE(STATUS "Using ${FFMPEG_LIB_DIR} for ffmpeg library files")
-set(COMPLETE_FFMPEG_LIBS ${FFMPEG_LIBS} ${ADDITIONAL_FFMPEG_LIBS})
-set(FFMPEG_DLLS_DEPEDENCIES "" CACHE INTERNAL "")
-
-if (WIN32 OR MSVC)  
-	foreach(ffmpeg_lib ${FFMPEG_LIBS})
-		file(GLOB CORRECT_FFMPEG_SHARED_LIB_PATH_LIST "${FFMPEG_LIB_DIR}/*${ffmpeg_lib}*${FFMPEG_SUFFIX}*")
-		list(GET CORRECT_FFMPEG_SHARED_LIB_PATH_LIST 0 CORRECT_FFMPEG_SHARED_LIB_PATH)
-		file(GLOB CORRECT_FFMPEG_IMPLIB_PATH_LIST "${FFMPEG_LIB_DIR}/*${ffmpeg_lib}*${FFMPEG_IMPLIB}*")
-		list(GET CORRECT_FFMPEG_IMPLIB_PATH_LIST 0 CORRECT_FFMPEG_IMPLIB_PATH)
-		add_library(${ffmpeg_lib} SHARED IMPORTED)
-		set_target_properties(${ffmpeg_lib} PROPERTIES
-			IMPORTED_LOCATION ${CORRECT_FFMPEG_SHARED_LIB_PATH}
-			
-		)
-
-		get_filename_component(__dll_name ${CORRECT_FFMPEG_SHARED_LIB_PATH} NAME)
-		set_target_properties(${ffmpeg_lib} PROPERTIES
-			RUNTIME_OUTPUT_NAME ${__dll_name}
-		)
-		
-		set_target_properties(${ffmpeg_lib} PROPERTIES
-		IMPORTED_IMPLIB ${CORRECT_FFMPEG_IMPLIB_PATH}
-		)
-		set_target_properties(${ffmpeg_lib} PROPERTIES
-			INCLUDE_DIRECTORIES ${FFMPEG_INCLUDE_DIR}/lib${ffmpeg_lib}
-		)
-		list(APPEND FFMPEG_DLLS_DEPEDENCIES ${CORRECT_FFMPEG_SHARED_LIB_PATH})
-
-	endforeach()
-	foreach(_additional_ffmpeg_lib ${ADDITIONAL_FFMPEG_LIBS})
-		file(GLOB CORRECT_FFMPEG_SHARED_LIB_PATH "${FFMPEG_LIB_DIR}/*${_additional_ffmpeg_lib}*${FFMPEG_SUFFIX}*")
-		list(APPEND FFMPEG_DLLS_DEPEDENCIES ${CORRECT_FFMPEG_SHARED_LIB_PATH})
-	endforeach()
+if(USE_ZFILE)
+    list(APPEND LIBRIR_IO_SRC ${CMAKE_CURRENT_SOURCE_DIR}/ZFile.h)
 endif()
 
-set(FFMPEG_DLLS_DEPEDENCIES ${FFMPEG_DLLS_DEPEDENCIES} CACHE INTERNAL "")
-set(FFMPEG_LIB_DIR ${FFMPEG_LIB_DIR} CACHE INTERNAL "")
-set(FFMPEG_INCLUDE_DIR ${FFMPEG_INCLUDE_DIR} CACHE INTERNAL "")
-set(FFMPEG_LIBS ${FFMPEG_LIBS} CACHE INTERNAL "")
+add_library(video_io ${LIBRIR_IO_SRC})
+add_library(librir::video_io ALIAS video_io)
+
+set(FFMPEG_LIBS ${FFMPEG_LIBRARIES} CACHE INTERNAL "")
 set(ADDITIONAL_FFMPEG_LIBS ${ADDITIONAL_FFMPEG_LIBS} CACHE INTERNAL "")
-set(FFMPEG_PREFIX ${FFMPEG_PREFIX} CACHE INTERNAL "")
-set(FFMPEG_SUFFIX ${FFMPEG_SUFFIX} CACHE INTERNAL "")
-set(COMPLETE_FFMPEG_LIBS ${COMPLETE_FFMPEG_LIBS} CACHE INTERNAL "")
 
 # include and linking
 target_link_libraries(video_io PUBLIC tools geometry signal_processing)
-
-target_include_directories(	video_io 
-							INTERFACE 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-										$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-							PUBLIC 		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}> 
-										$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+target_include_directories(video_io
+    PRIVATE $<BUILD_INTERFACE:${FFMPEG_INCLUDE_DIRS}>
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 
-target_link_libraries(	video_io 
-						PRIVATE 	${FFMPEG_LIBS}
-								
+target_link_libraries(video_io
+    PRIVATE
+    $<BUILD_INTERFACE:${FFMPEG_SHARED_LIBRARIES}>
+
+    # INTERFACE
+    # $<BUILD_INTERFACE:${FFMPEG_ADDITIONAL_DEPENDENCIES}>
 )
 
-target_link_directories(video_io 
-						PRIVATE 	$<BUILD_INTERFACE:${FFMPEG_LIB_DIR}>
-									$<INSTALL_INTERFACE:${CMAKE_INSTALL_LIBDIR}>
+target_sources(
+    video_io
+    PUBLIC
+    FILE_SET video_io_public_headers
+    TYPE HEADERS
+    FILES
+    ${IO_HEADERS}
 )
-target_include_directories(video_io PRIVATE ${FFMPEG_INCLUDE_DIR})
 
-
-set_target_properties(video_io PROPERTIES
-	PUBLIC_HEADER "${IO_HEADERS}"
+target_sources(
+    video_io
+    INTERFACE
+    FILE_SET video_io_api_header
+    TYPE HEADERS
+    FILES
+    video_io.h
 )
-get_target_property(IO_RUNTIME_OUTPUT_DIRECTORY video_io RUNTIME_OUTPUT_DIRECTORY)
 
-MESSAGE(STATUS "IO_RUNTIME_OUTPUT_DIRECTORY : ${IO_RUNTIME_OUTPUT_DIRECTORY}")
+# Configure and install PackageConfig files
+generate_export_header(video_io)
+set_property(TARGET video_io PROPERTY VERSION ${PROJECT_VERSION})
+set_property(TARGET video_io PROPERTY SOVERSION ${PROJECT_VERSION_MAJOR})
+set_property(TARGET video_io PROPERTY
+    INTERFACE_video_io_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
+set_property(TARGET video_io APPEND PROPERTY
+    COMPATIBLE_INTERFACE_STRING video_io_MAJOR_VERSION
+)
 
-# installing FFMPEG dependencies 
-install(CODE "set(FFMPEG_INSTALL_DIR \"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}\")")
-install(SCRIPT InstallFfmpeg.cmake)
+install(TARGETS video_io EXPORT VideoIOTargets
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+    COMPONENT VideoIO
+    INCLUDES DESTINATION include
+    FILE_SET video_io_public_headers
+    FILE_SET video_io_api_header DESTINATION include/api
+)
+
+# install(
+# TARGETS ${LIBRIR_TARGETS}
+# EXPORT VideoIOTargets
+# )
+include(CMakePackageConfigHelpers)
+
+configure_package_config_file(VideoIOConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/VideoIOConfig.cmake
+    INSTALL_DESTINATION lib/cmake
+)
+
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/VideoIOConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion)
+
+export(EXPORT VideoIOTargets
+    FILE "${CMAKE_CURRENT_BINARY_DIR}/VideoIOTargets.cmake"
+    NAMESPACE librir::
+)
+
+set(ConfigPackageLocation lib/cmake/librir)
+
+install(EXPORT VideoIOTargets
+    FILE VideoIOTargets.cmake
+    DESTINATION ${ConfigPackageLocation}
+    NAMESPACE librir::
+    EXPORT_LINK_INTERFACE_LIBRARIES
+)
+
+install(
+    FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/VideoIOConfig.cmake
+    "${CMAKE_CURRENT_BINARY_DIR}/VideoIOConfigVersion.cmake"
+    DESTINATION
+    ${ConfigPackageLocation}
+    COMPONENT
+    Devel
+)

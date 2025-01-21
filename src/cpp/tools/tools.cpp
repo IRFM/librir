@@ -6,7 +6,6 @@
 extern "C"
 {
 #include "zstd.h"
-#include "blosc.h"
 #include "unzip.h"
 #include <string.h>
 }
@@ -15,7 +14,6 @@ extern "C"
 #include "Log.h"
 #include "FileAttributes.h"
 #include "ReadFileChunk.h"
-
 
 using namespace rir;
 
@@ -230,13 +228,11 @@ int attrs_read_file_reader(void *file_reader)
 
 int attrs_open_from_memory(void *ptr, int64_t size)
 {
-	void *reader = createFileReader(createMemoryAccess(ptr,size)); 
+	void *reader = createFileReader(createMemoryAccess(ptr, size));
 	int res = attrs_read_file_reader(reader);
 	destroyFileReader(reader);
 	return res;
 }
-
-
 
 int attrs_open_file(const char *filename)
 {
@@ -492,7 +488,7 @@ int64_t zstd_compress_bound(int64_t srcSize)
 }
 int64_t zstd_decompress_bound(char *src, int64_t srcSize)
 {
-	size_t ret = ZSTD_getDecompressedSize(src, srcSize);
+	size_t ret = ZSTD_getFrameContentSize(src, srcSize);
 	if (ZSTD_isError(ret))
 		return -1;
 	return ret;
@@ -510,25 +506,6 @@ int64_t zstd_decompress(char *src, int64_t srcSize, char *dst, int64_t dstSize)
 	if (ZSTD_isError(ret))
 		return -1;
 	return ret;
-}
-
-static int init_blosc()
-{
-	blosc_init();
-	blosc_set_nthreads(1);
-	blosc_set_compressor("zstd");
-	return 0;
-}
-static int _init_blosc = init_blosc();
-
-int64_t blosc_compress_zstd(char *src, int64_t srcSize, char *dst, int64_t dstSize, size_t typesize, int doshuffle, int level)
-{
-	return blosc_compress(level, doshuffle, typesize, srcSize, src, dst, dstSize);
-}
-
-int64_t blosc_decompress_zstd(char *src, int64_t, char *dst, int64_t dstSize)
-{
-	return blosc_decompress(src, dst, dstSize);
 }
 
 int unzip(const char *infile, const char *outfolder)
