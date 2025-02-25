@@ -76,8 +76,6 @@ foreach(_ffmpeg_shared_lib_target IN LISTS _ALL_FFMPEG_SHARED_LIBS)
 	list(APPEND _ffmpeg_commands "$<TARGET_FILE:${_ffmpeg_shared_lib_target}>")
 endforeach()
 
-message(STATUS "AAAAAAAAAA : ${_ffmpeg_commands}")
-
 add_custom_target(copy_dlls_to_python_package_librir ALL
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_SOURCE_DIR}/librir/libs
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different
