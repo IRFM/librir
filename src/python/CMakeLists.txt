@@ -1,4 +1,4 @@
-
+option(BUILD_WHEEL "Building python wheels during install" OFF)
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/librir
 	DESTINATION python
@@ -106,7 +106,7 @@ add_custom_target(copy_dlls_to_python_package_librir ALL
 # endforeach()
 find_program(PIP_EXECUTABLE "pip" HINTS ENV "PATH" PATHS ENV PIP_EXECUTABLE)
 
-if(PIP_EXECUTABLE)
+if(PIP_EXECUTABLE AND BUILD_WHEEL)
 	install(CODE "execute_process(COMMAND ${PIP_EXECUTABLE} wheel ${CMAKE_CURRENT_SOURCE_DIR} -w ${CMAKE_INSTALL_PREFIX}/dist --no-deps)")
 endif()
 
