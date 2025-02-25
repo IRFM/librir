@@ -55,14 +55,6 @@ Log levels
     TOOLS_EXPORT int get_last_log_error(char *text, int *len);
 
     /**
-    For compatibility with older thermavip versions, new versions should NOT use these 3 functions
-    */
-
-    TOOLS_EXPORT void get_temp_directory(char *dirname);
-    TOOLS_EXPORT void get_default_temp_directory(char *dirname);
-    TOOLS_EXPORT int set_temp_directory(const char *dirname);
-
-    /**
     Object handler functions
     */
 
@@ -193,9 +185,7 @@ Log levels
     TOOLS_EXPORT int64_t zstd_compress(char *src, int64_t srcSize, char *dst, int64_t dstSize, int level);
     TOOLS_EXPORT int64_t zstd_decompress(char *src, int64_t srcSize, char *dst, int64_t dstSize);
 
-  
-
-    TOOLS_EXPORT int unzip(const char *infile, const char *outfolder);
+      TOOLS_EXPORT int unzip(const char *infile, const char *outfolder);
 
 #ifdef __cplusplus
 }
