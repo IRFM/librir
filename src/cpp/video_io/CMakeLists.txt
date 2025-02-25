@@ -11,16 +11,16 @@ endif()
 
 # Set sources
 SET(LIBRIR_IO_SRC
-    ${CMAKE_CURRENT_SOURCE_DIR}/BaseCalibration.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/IRFileLoader.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/h264.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/IRVideoLoader.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/HCCLoader.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/video_io.cpp
+    BaseCalibration.cpp
+    IRFileLoader.cpp
+    h264.cpp
+    IRVideoLoader.cpp
+    HCCLoader.cpp
+    video_io.cpp
 )
 
 if(USE_ZFILE)
-    list(APPEND LIBRIR_IO_SRC ${CMAKE_CURRENT_SOURCE_DIR}/ZFile.cpp)
+    list(APPEND LIBRIR_IO_SRC ZFile.cpp)
 endif()
 
 SET(LIBRIR_IO_SRC ${LIBRIR_IO_SRC} PARENT_SCOPE)
@@ -35,7 +35,7 @@ set(IO_HEADERS
 )
 
 if(USE_ZFILE)
-    list(APPEND LIBRIR_IO_SRC ${CMAKE_CURRENT_SOURCE_DIR}/ZFile.h)
+    list(APPEND LIBRIR_IO_SRC ZFile.h)
 endif()
 
 add_library(video_io ${LIBRIR_IO_SRC})
