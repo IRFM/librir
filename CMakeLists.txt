@@ -16,7 +16,7 @@ include(GNUInstallDirs)
 include(GenerateExportHeader)
 
 # option(LOCAL_INSTALL "Install locally" ON)
-set(FFMPEG_VERSION_REQUIRED "4.3" CACHE STRING "FFmpeg version to use")
+set(FFMPEG_VERSION_REQUIRED "7.1" CACHE STRING "FFmpeg version to use")
 
 IF(NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 	IF(NOT MSVC)

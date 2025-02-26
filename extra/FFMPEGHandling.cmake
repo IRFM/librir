@@ -16,12 +16,12 @@ endif()
 # Retrieving or compiling FFMPEG
 if(NOT BUILD_FFMPEG)
     if(MSVC)
-		list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
-        set(FFMPEG_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/ffmpeg/ffmpeg-4.3-msvc)
+        list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
+        set(FFMPEG_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/ffmpeg/ffmpeg-7.1-msvc)
         set(FFMPEG_FIND_COMPONENTS ${BASE_FFMPEG_COMPONENTS})
     elseif(LINUX)
     endif()
-	
+
     find_package(FFMPEG REQUIRED COMPONENTS ${REQUIRED_FFMPEG_COMPONENTS})
 else()
     if(MSVC)
