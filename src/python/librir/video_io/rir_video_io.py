@@ -49,6 +49,27 @@ def open_camera_file(filename):
         raise RuntimeError("cannot read file " + filename)
     return res
 
+def open_camera_memory(buffer):
+    """
+    Open a video from a buffer.
+    Returns an integer value representing the camera. This value can be used by the
+    functions:
+    - close_camera
+    - get_camera_identifier
+    - get_camera_pulse
+    - get_image_count
+    - get_image_time
+    - get_image_size
+    - supported_calibrations
+    - load_image
+    """
+    pulse = np.zeros(1, dtype="i")
+    res = _video_io.open_camera_from_memory(
+        ct.cast(ct.c_char_p(buffer),ct.c_void_p), len(buffer), pulse.ctypes.data_as(ct.POINTER(ct.c_int))
+    )
+    if res == 0:
+        raise RuntimeError("cannot read video from memory ")
+    return res
 
 def video_file_format(filename):
     """
@@ -375,7 +396,18 @@ def get_attributes(camera):
             )
         if tmp < 0:
             raise RuntimeError("An error occured while calling 'get_attributes'")
-        res[toString(key)] = toString(value)[0 : vlen[0]]
+        _val = toBytes(value)[0 : vlen[0]]
+
+        # some data cleaning on badly encoded attributes
+        if _val.startswith(b"b'") and _val.endswith(b"'"):
+            _s = _val.decode()
+            _s = _s.replace("'", "")[1:]
+            _val = _s.encode()
+
+        try:
+            res[toString(key)] = _val.decode()
+        except UnicodeDecodeError:
+            res[toString(key)] = _val
 
     return res
 
@@ -759,3 +791,20 @@ def motion_correction_enabled(cam):
     if tmp == 0:
         return False
     return True
+
+
+def change_hcc_external_blackbody_temperature(filename: str, temperature: float):
+    """
+    Enable/disable registration for given camera
+    """
+    _video_io.change_hcc_external_blackbody_temperature.argtypes = [
+        ct.POINTER(ct.c_char),
+        ct.c_float,
+    ]
+
+    tmp = _video_io.change_hcc_external_blackbody_temperature(
+        str(filename).encode(), float(temperature)
+    )
+    if tmp < 0:
+        raise RuntimeError("An error occured while calling 'enable_motion_correction'")
+    return tmp

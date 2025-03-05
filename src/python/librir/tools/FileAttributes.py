@@ -5,11 +5,11 @@ Created on Mon Jan 13 17:53:46 2020
 @author: VM213788
 """
 
+from os import PathLike
 import numpy as np
-from .. import low_level
 from ..low_level.misc import *
 from .rir_tools import (
-    attrs_open_file,
+    attrs_open_buffer,
     attrs_close,
     attrs_discard,
     attrs_global_attribute_count,
@@ -18,6 +18,7 @@ from .rir_tools import (
     attrs_global_attribute_value,
     attrs_frame_attribute_name,
     attrs_frame_attribute_value,
+    attrs_open_file,
     attrs_timestamps,
     attrs_set_times,
     attrs_set_frame_attributes,
@@ -38,13 +39,22 @@ class FileAttributes(object):
     Use the discard() function to avoid writting attributes to the file.
     """
 
-    def __init__(self, filename):
+    @classmethod
+    def from_buffer(cls, buffer: bytes):
+        handle = attrs_open_buffer(buffer)
+        return cls(handle)
+
+    @classmethod
+    def from_filename(cls, filename: PathLike):
+        handle = attrs_open_file(filename)
+        return cls(handle)
+
+    def __init__(self, handle):
         """
         Constructor.
         Create a FileAttributes object from a filename.
         """
-        self.handle = 0
-        self.handle = attrs_open_file(filename)
+        self.handle = handle
 
         # read timestamps and attributes
         self._timestamps = attrs_timestamps(self.handle)

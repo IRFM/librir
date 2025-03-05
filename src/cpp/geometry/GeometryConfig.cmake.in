@@ -1,0 +1,18 @@
+
+@PACKAGE_INIT@
+
+set_and_check(LIBRIR_INCLUDE_DIR "${PACKAGE_PREFIX_DIR}/../include")
+
+math(EXPR BITS "8*${CMAKE_SIZEOF_VOID_P}")
+
+IF(${BITS} MATCHES "64" AND UNIX)
+	set_and_check(LIBRIR_LIB_DIR "${PACKAGE_PREFIX_DIR}/../lib64")
+ELSE()
+	set_and_check(LIBRIR_LIB_DIR "${PACKAGE_PREFIX_DIR}/../lib")
+ENDIF()
+
+
+include(${CMAKE_CURRENT_LIST_DIR}/GeometryConfigVersion.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/GeometryTargets.cmake)
+
+#check_required_components(geometry)

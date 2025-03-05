@@ -9,7 +9,10 @@ on:
       os:
         required: true
         type: string
-      
+      compiler:
+        required: false
+        type: string
+        default: "latest"
     # secrets:
     #   token:
     #     required: true
@@ -25,14 +28,14 @@ jobs:
         
           - name: Set up Python ${{ inputs.python-version }}
 
-            uses: actions/setup-python@v4
+            uses: actions/setup-python@v5
             with:
               python-version: ${{ inputs.python-version }}   
               
-          - uses: actions/checkout@v3
-          - uses: actions/download-artifact@v3
+          - uses: actions/checkout@v4
+          - uses: actions/download-artifact@v4
             with:
-              name: install-librir-${{ inputs.os }}
+              name: install-librir-${{ inputs.os }}-${{ inputs.compiler || 'latest' }}
               path: build/install
               
           - name: Install python dependencies
@@ -47,10 +50,10 @@ jobs:
               python -m pytest --junitxml=pytest.xml --cov-report=term-missing:skip-covered --cov=librir tests/python -m "not thermavip"  | tee pytest-coverage.txt
 
           - name: Upload coverage reports to Codecov
-            uses: codecov/codecov-action@v3
+            uses: codecov/codecov-action@v5
             env:
               CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
+              
          # - name: Pytest coverage comment
          #   uses: MishaKav/pytest-coverage-comment@main
          #   with:

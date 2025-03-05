@@ -10,8 +10,6 @@ from .rir_signal_processing import (
     find_median_pixel,
     extract_times,
     resample_time_serie,
-    jpegls_encode,
-    jpegls_decode,
     label_image,
     keep_largest_area,
 )
@@ -22,8 +20,6 @@ __all__ = [
     "find_median_pixel",
     "extract_times",
     "resample_time_serie",
-    "jpegls_encode",
-    "jpegls_decode",
     "label_image",
     "keep_largest_area",
 ]

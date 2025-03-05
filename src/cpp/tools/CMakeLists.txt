@@ -1,85 +1,136 @@
 # Find or fetch ZSTD
+include(ExternalProject)
 include(FetchContent)
 
 set(TOOLS_DEP_LIBS)
-message(STATUS "fetching ZSTD")
-FetchContent_Declare(
-	ZSTD
-	GIT_REPOSITORY 	"https://github.com/facebook/zstd.git"
-	GIT_TAG			v1.5.5
-	# URL "https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.5.5.tar.gz"
-	SOURCE_SUBDIR build/cmake
-	OVERRIDE_FIND_PACKAGE
-	)
 
-find_package(zstd REQUIRED)
-add_library(zstd::libzstd_shared ALIAS libzstd_shared)
-add_library(zstd::libzstd_static ALIAS libzstd_static)
+list(APPEND TOOLS_DEP_LIBS libzstd_static)
 
-set(ZSTD_INCLUDE_DIR ${zstd_SOURCE_DIR}/lib)
+# add_compile_definitions(BUILD_TOOLS_LIB)
+if(BUILD_SHARED_LIBS)
+    add_compile_definitions(BUILD_TOOLS_LIB)
+endif()
 
-list(APPEND TOOLS_DEP_LIBS zstd::libzstd_static)
- 
-add_definitions("-DBUILD_TOOLS_LIB")
-SET(LIBRIR_TOOLS_SRC
-	${CMAKE_CURRENT_SOURCE_DIR}/FileAttributes.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/FileLock.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/Log.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/Misc.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/ReadFileChunk.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/SIMD.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/tools.cpp
+set(LIBRIR_TOOLS_SRC
+    ${CMAKE_CURRENT_SOURCE_DIR}/FileAttributes.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/FileLock.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Log.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Misc.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ReadFileChunk.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/SIMD.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tools.cpp
 
-	# ${ZSTD_SRC}
-	${BLOSC_SRC}
-	${MINIZIP_SRC}
-	)
+    ${MINIZIP_SRC}
+)
 
-SET(LIBRIR_TOOLS_SRC ${LIBRIR_TOOLS_SRC} PARENT_SCOPE)
+set(LIBRIR_TOOLS_SRC ${LIBRIR_TOOLS_SRC} PARENT_SCOPE)
 
-set(TOOLS_HEADERS 
-	${CMAKE_CURRENT_SOURCE_DIR}/SIMD.h
-	${CMAKE_CURRENT_SOURCE_DIR}/FileAttributes.h
-	${CMAKE_CURRENT_SOURCE_DIR}/FileLock.h
-	${CMAKE_CURRENT_SOURCE_DIR}/Log.h
-	${CMAKE_CURRENT_SOURCE_DIR}/Misc.h
-	${CMAKE_CURRENT_SOURCE_DIR}/ReadFileChunk.h
-	${CMAKE_CURRENT_SOURCE_DIR}/tools.h
+set(TOOLS_HEADERS
+    SIMD.h
+    FileAttributes.h
+    FileLock.h
+    Log.h
+    Misc.h
+    ReadFileChunk.h
+    tools.h
 )
 
 add_library(tools ${LIBRIR_TOOLS_SRC})
+add_library(librir::tools ALIAS tools)
 
-if (NOT WIN32)
-	list(APPEND TOOLS_DEP_LIBS pthread)
+if(NOT WIN32)
+    list(APPEND TOOLS_DEP_LIBS pthread)
 endif()
-	
+
 target_link_libraries(tools PRIVATE ${TOOLS_DEP_LIBS})
+target_link_directories(tools PRIVATE ${ZSTD_LIB_DIR})
 
-target_include_directories(tools PRIVATE ${ZSTD_INCLUDE_DIR})
+target_include_directories(tools PRIVATE $<BUILD_INTERFACE:${ZSTD_INCLUDE_DIR}>)
 
-# target_include_directories(tools PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(	tools 
-							INTERFACE 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-										$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+target_include_directories(tools
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:include>
 )
 
+target_sources(
+    tools
+    PUBLIC
+    FILE_SET tools_public_headers
+    TYPE HEADERS
+    FILES
+    ${TOOLS_HEADERS}
+)
 
-target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY})
-target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/blosc)
-target_include_directories(tools PRIVATE ${EXTRAS_INCLUDE_DIRECTORY}/minizip)
+target_sources(
+    tools
+    INTERFACE
+    FILE_SET tools_api_header
+    TYPE HEADERS
+    FILES
+    tools.h
+)
 
-MESSAGE(STATUS ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
-set_target_properties(tools PROPERTIES
-	PUBLIC_HEADER "${TOOLS_HEADERS}" 
-	# INCLUDE_DIRECTORIES "${ZSTD_INCLUDE_DIR};${CMAKE_CURRENT_SOURCE_DIR};${EXTRAS_INCLUDE_DIRECTORY}" 
-	# LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-	# ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-	# RUNTIME_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-	# RUNTIME_OUTPUT_DIRECTORY ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-	# RUNTIME_OUTPUT_DIRECTORY ${DESTINATION_DIR}
-	)
+target_include_directories(tools PRIVATE ${MINIZIP_INCLUDE_DIR})
 
-get_target_property(TOOLS_INCLUDE_DIRS tools INCLUDE_DIRECTORIES)
+# Configure and install PackageConfig files
+generate_export_header(tools)
+set_property(TARGET tools PROPERTY VERSION ${PROJECT_VERSION})
+set_property(TARGET tools PROPERTY SOVERSION ${PROJECT_VERSION_MAJOR})
+set_property(TARGET tools PROPERTY
+    INTERFACE_tools_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
+set_property(TARGET tools APPEND PROPERTY
+    COMPATIBLE_INTERFACE_STRING tools_MAJOR_VERSION
+)
+get_target_property(TOOLS_PUBLIC_HEADERS tools INTERFACE_SOURCES)
+install(TARGETS tools EXPORT ToolsTargets
 
+    # LIBRARY DESTINATION lib
+    # ARCHIVE DESTINATION lib
+    # RUNTIME DESTINATION bin
+    COMPONENT Tools
+    INCLUDES DESTINATION include
+    FILE_SET tools_public_headers
+    FILE_SET tools_api_header DESTINATION include/api
+)
 
+# install(
+# TARGETS ${LIBRIR_TARGETS}
+# EXPORT ToolsTargets
+# )
+include(CMakePackageConfigHelpers)
 
+configure_package_config_file(ToolsConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/ToolsConfig.cmake
+    INSTALL_DESTINATION lib/cmake
+)
+
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/ToolsConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion)
+
+export(EXPORT ToolsTargets
+    FILE "${CMAKE_CURRENT_BINARY_DIR}/ToolsTargets.cmake"
+    NAMESPACE librir::
+)
+
+set(ConfigPackageLocation lib/cmake/librir)
+
+install(EXPORT ToolsTargets
+    FILE ToolsTargets.cmake
+    DESTINATION ${ConfigPackageLocation}
+    NAMESPACE librir::
+    EXPORT_LINK_INTERFACE_LIBRARIES
+    COMPONENT Tools
+)
+
+install(
+    FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/ToolsConfig.cmake
+    "${CMAKE_CURRENT_BINARY_DIR}/ToolsConfigVersion.cmake"
+    DESTINATION
+    ${ConfigPackageLocation}
+    COMPONENT
+    Devel
+)

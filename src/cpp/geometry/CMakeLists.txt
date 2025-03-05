@@ -1,36 +1,104 @@
-add_definitions("-DBUILD_GEOMETRY_LIB")
+# add_compile_definitions(BUILD_GEOMETRY_LIB)
 
-# get previous target include folders
-get_target_property(TOOLS_HEADERS tools PUBLIC_HEADER)
-get_target_property(TOOLS_HEADERS_DIR tools INCLUDE_DIRECTORIES)
+if(BUILD_SHARED_LIBS)
+    add_compile_definitions(BUILD_GEOMETRY_LIB)
+endif()
 
-SET(LIBRIR_GEOMETRY_SRC
-	${CMAKE_CURRENT_SOURCE_DIR}/geometry.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/Polygon.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/DrawPolygon.cpp
+set(LIBRIR_GEOMETRY_SRC
+    ${CMAKE_CURRENT_SOURCE_DIR}/geometry.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Polygon.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/DrawPolygon.cpp
 )
-
-SET(LIBRIR_GEOMETRY_SRC ${LIBRIR_GEOMETRY_SRC} PARENT_SCOPE)
-
 
 add_library(geometry ${LIBRIR_GEOMETRY_SRC})
+add_library(librir::geometry ALIAS geometry)
 
-set(GEOMETRY_HEADERS 
-	${CMAKE_CURRENT_SOURCE_DIR}/Primitives.h
-	${CMAKE_CURRENT_SOURCE_DIR}/Polygon.h
-	${CMAKE_CURRENT_SOURCE_DIR}/DrawPolygon.h
-	${CMAKE_CURRENT_SOURCE_DIR}/geometry.h
+set(GEOMETRY_HEADERS
+    Primitives.h
+    Polygon.h
+    DrawPolygon.h
+    geometry.h
 )
 
-set(GEOMETRY_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
-
-target_include_directories(	geometry 
-							INTERFACE 	$<BUILD_INTERFACE:${GEOMETRY_INCLUDE_DIRS}>
-										$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+target_include_directories(geometry
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
-target_link_libraries(geometry tools)
+target_link_libraries(geometry PUBLIC tools)
 
-set_target_properties(geometry PROPERTIES
-	PUBLIC_HEADER "${GEOMETRY_HEADERS}"
+target_sources(
+    geometry
+    PUBLIC
+    FILE_SET geometry_public_headers
+    TYPE HEADERS
+    FILES
+    ${GEOMETRY_HEADERS}
 )
 
+target_sources(
+    geometry
+    INTERFACE
+    FILE_SET geometry_api_header
+    TYPE HEADERS
+    FILES
+    geometry.h
+)
+
+# Configure and install PackageConfig files
+generate_export_header(geometry)
+set_property(TARGET geometry PROPERTY VERSION ${PROJECT_VERSION})
+set_property(TARGET geometry PROPERTY SOVERSION ${PROJECT_VERSION_MAJOR})
+set_property(TARGET geometry PROPERTY
+    INTERFACE_geometry_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
+set_property(TARGET geometry APPEND PROPERTY
+    COMPATIBLE_INTERFACE_STRING geometry_MAJOR_VERSION
+)
+
+install(TARGETS geometry EXPORT GeometryTargets
+    # LIBRARY DESTINATION lib
+    # ARCHIVE DESTINATION lib
+    # RUNTIME DESTINATION bin
+    COMPONENT Geometry
+    INCLUDES DESTINATION include
+    FILE_SET geometry_public_headers
+    FILE_SET geometry_api_header DESTINATION include/api
+)
+
+# install(
+# TARGETS ${LIBRIR_TARGETS}
+# EXPORT GeometryTargets
+# )
+include(CMakePackageConfigHelpers)
+
+configure_package_config_file(GeometryConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/GeometryConfig.cmake
+    INSTALL_DESTINATION lib/cmake
+)
+
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/GeometryConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion)
+
+export(EXPORT GeometryTargets
+    FILE "${CMAKE_CURRENT_BINARY_DIR}/GeometryTargets.cmake"
+    NAMESPACE librir::
+)
+
+set(ConfigPackageLocation lib/cmake/librir)
+
+install(EXPORT GeometryTargets
+    FILE GeometryTargets.cmake
+    DESTINATION ${ConfigPackageLocation}
+    NAMESPACE librir::
+    EXPORT_LINK_INTERFACE_LIBRARIES
+)
+
+install(
+    FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/GeometryConfig.cmake
+    "${CMAKE_CURRENT_BINARY_DIR}/GeometryConfigVersion.cmake"
+    DESTINATION
+    ${ConfigPackageLocation}
+    COMPONENT
+    Devel
+)

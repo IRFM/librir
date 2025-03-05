@@ -14,7 +14,9 @@
 
 #include "IRFileLoader.h"
 #include "BaseCalibration.h"
+#ifdef USE_ZFILE
 #include "ZFile.h"
+#endif
 #include "h264.h"
 #include "HCCLoader.h"
 #include "Log.h"
@@ -125,6 +127,23 @@ namespace rir
 							// fseek(f, 128 + 5, SEEK_SET);
 							// fread(&pcr_enc, 1, sizeof(pcr_enc), f);
 		memcpy(&pcr_enc, buf + 128 + 5, sizeof(pcr_enc));
+
+		// special case: IR lab videos
+		if (pcr_header.Bits == 16 && pcr_header.X == 640 && pcr_header.Y == 512 && pcr_header.Frequency == 50)
+		{
+			if (infos)
+			{
+				*infos = pcr_header;
+				infos->TransfertSize = pcr_header.X * pcr_header.Y * 2;
+			}
+			if (start_images)
+				*start_images = sizeof(PCR_HEADER);
+			if (start_time)
+				*start_time = 0;
+			if (frame_count)
+				*frame_count = pcr_header.NbImages;
+			return BIN_FILE_PCR;
+		}
 
 		// test PCR file
 		if (pcr_header.Bits == 16 && ((abs(pcr_header.TransfertSize - (pcr_header.X * pcr_header.Y * 2)) < 2000) /*|| pcr_header.Frequency == 50 || pcr_header.Frequency == 25*/) && pcr_header.X > 0 && pcr_header.Y > 0 && pcr_header.X < 2000 && pcr_header.Y < 2000)
@@ -267,10 +286,11 @@ namespace rir
 			return NULL;
 		BinFile *f = new BinFile();
 		f->start = (0);
-		f->zfile = (NULL);
 		f->width = f->height = f->count = 0;
 		f->transferSize = 0;
+#ifdef USE_ZFILE
 		f->zfile = NULL;
+#endif
 		f->file = NULL;
 		// f->file.close();
 		f->type = 0;
@@ -309,6 +329,7 @@ namespace rir
 				f = NULL;
 			}
 		}
+#ifdef USE_ZFILE
 		else if (f->type == BIN_FILE_Z_COMPRESSED)
 		{
 			// f->file.close();
@@ -354,6 +375,7 @@ namespace rir
 			}
 			f->has_times = 1;
 		}
+#endif
 		else if (f->type == BIN_FILE_H264)
 		{
 			if (!f->h264.open(f->file))
@@ -460,8 +482,11 @@ namespace rir
 
 	static void bin_close_file(BinFile *f)
 	{
+#ifdef USE_ZFILE
 		if (f->zfile)
 			z_close_file(f->zfile);
+
+#endif
 		f->h264.close();
 		f->hcc.close();
 		if (f->other)
@@ -519,8 +544,10 @@ namespace rir
 			f->hcc.readImage(pos, 0, img);
 			return 0;
 		}
+#ifdef USE_ZFILE
 		else if (f->zfile)
 			return z_read_image(f->zfile, pos, img, timestamp);
+#endif
 		else
 		{
 			if (timestamp)
@@ -544,6 +571,18 @@ namespace rir
 		return f->times.data();
 	}
 
+	static void removeMotionGeneric(std::vector<PointF> *upper, unsigned short *img, int w, int h, int pos)
+	{
+		if ((*upper).size())
+		{
+
+			// Apply on the full image
+			std::vector<float> tmp(w * h);
+			translate(img, tmp.data(), 0.f, w, h, -(*upper)[pos].x(), -(*upper)[pos].y(), rir::TranslateNearest);
+			std::copy(tmp.begin(), tmp.end(), img);
+		}
+	}
+
 	class IRFileLoader::PrivateData
 	{
 	public:
@@ -565,10 +604,19 @@ namespace rir
 		int median_value;
 		Polygon bad_pixels;
 		BaseCalibration *calib;
+		std::map<std::string, std::string> attributes;
+
+		std::function<void(unsigned short *, int, int, int)> removeMotion;
+
+		std::vector<PointF> upper; // upper divertor or full view
 
 		PrivateData()
 			: file(NULL), type(0), min_T(0), min_T_height(0), store_it(false), motionCorrectionEnabled(false), saturate(false), bp_enabled(false), median_value(-1), calib(NULL)
 		{
+			removeMotion = [this](unsigned short *img, int w, int h, int pos)
+			{
+				removeMotionGeneric(&upper, img, w, h, pos);
+			};
 		}
 	};
 	IRFileLoader::IRFileLoader()
@@ -633,6 +681,16 @@ namespace rir
 	{
 		if (!m_data->bp_enabled)
 			return;
+
+		// Disable bad pixels with HCC files
+		if (isHCC())
+			return;
+		if (isH264())
+		{
+			auto it = fileAttributes()->globalAttributes().find("Type");
+			if (it != fileAttributes()->globalAttributes().end() && it->second == "HCC")
+				return;
+		}
 
 		unsigned short pixels[9];
 		// unsigned short buff[10];
@@ -708,7 +766,13 @@ namespace rir
 
 	void IRFileLoader::removeMotion(unsigned short *img, int w, int h, int pos)
 	{
-		// TODO
+		if (!m_data->motionCorrectionEnabled)
+			return;
+
+		if (m_data->removeMotion)
+		{
+			m_data->removeMotion(img, w, h, pos);
+		}
 	}
 
 	bool IRFileLoader::loadTranslationFile(const char *filename)
@@ -718,7 +782,7 @@ namespace rir
 		FileFloatStream str(filename);
 		str.readLine();
 		Array2D<float> ar = readFileFast<float>(str, &err);
-		if (err.size() || (ar.width != 4 && ar.width != 7))
+		if (err.size() || ar.width != 4)
 		{
 			logError(("error while loading motion correction file: " + err).c_str());
 			return false;
@@ -729,15 +793,13 @@ namespace rir
 			return false;
 		}
 
-		m_data->translation_points.resize(ar.height);
+		m_data->upper.resize(ar.height);
 
 		for (size_t i = 0; i < ar.height; ++i)
 		{
-			m_data->translation_points[i] = PointF(ar(i, 1), ar(i, 2));
+			m_data->upper[i] = PointF(ar(i, 1), ar(i, 2));
 		}
 		return true;
-
-		return false;
 	}
 	void IRFileLoader::enableMotionCorrection(bool enable)
 	{
@@ -746,6 +808,27 @@ namespace rir
 	bool IRFileLoader::motionCorrectionEnabled() const
 	{
 		return m_data->motionCorrectionEnabled;
+	}
+
+	IRFileLoader::motion_correction_function IRFileLoader::motionCorrectionFunction() const
+	{
+		return m_data->removeMotion;
+	}
+	void IRFileLoader::setMotionCorrectionFunction(const motion_correction_function &fun)
+	{
+		m_data->removeMotion = fun;
+	}
+
+	void IRFileLoader::setAttributes(const dict_type &attrs)
+	{
+		m_data->attributes = attrs;
+	}
+
+	const FileAttributes *IRFileLoader::fileAttributes() const
+	{
+		if (isH264())
+			return m_data->file->h264.fileAttributes();
+		return nullptr;
 	}
 
 	bool IRFileLoader::open(const char *filename)
@@ -910,7 +993,7 @@ namespace rir
 		else if (m_data->type == BIN_FILE_OTHER)
 			res = m_data->file->other->extractAttributes(attrs);
 
-		for (std::map<std::string, std::string>::const_iterator it = attributes.begin(); it != attributes.end(); ++it)
+		for (std::map<std::string, std::string>::const_iterator it = m_data->attributes.begin(); it != m_data->attributes.end(); ++it)
 			attrs.insert(*it);
 
 		return res;
@@ -927,6 +1010,12 @@ namespace rir
 			return true;
 		else if (calibration == 1)
 		{
+			if (m_data->calib->needPrepareCalibration())
+			{
+				dict_type d;
+				this->extractAttributes(d);
+				m_data->calib->prepareCalibration(d);
+			}
 			// apply the calibration
 			if (!m_data->calib->applyF(img, this->invEmissivities(), size, out, &m_data->saturate))
 				return false;
@@ -940,6 +1029,12 @@ namespace rir
 			return true;
 		else if (calibration == 1)
 		{
+			if (m_data->calib->needPrepareCalibration())
+			{
+				dict_type d;
+				this->extractAttributes(d);
+				m_data->calib->prepareCalibration(d);
+			}
 			// apply the calibration
 			if (!m_data->calib->apply(img, this->invEmissivities(), size, img, &m_data->saturate))
 				return false;
@@ -959,6 +1054,7 @@ namespace rir
 		// special case: other type with its own calibration
 		if (m_data->type == BIN_FILE_OTHER && m_data->calib && m_data->calib == m_data->file->other->calibration())
 		{
+
 			if (bin_read_image(m_data->file, pos, pixels, &time, calibration) != 0)
 				return false;
 
@@ -978,6 +1074,14 @@ namespace rir
 			int size = m_data->size.width * m_data->min_T_height;
 			for (int i = 0; i < size; ++i)
 				pixels[i] += m_data->min_T;
+		}
+
+		if (m_data->calib && m_data->calib->needPrepareCalibration())
+		{
+			// prepare calibration
+			dict_type d;
+			this->extractAttributes(d);
+			m_data->calib->prepareCalibration(d);
 		}
 
 		// no need to remove bad pixels of image already in temperature, it has already been done during compression
@@ -1039,5 +1143,4 @@ namespace rir
 			return true;
 		}
 	}
-
 }

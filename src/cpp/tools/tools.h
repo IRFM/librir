@@ -55,14 +55,6 @@ Log levels
     TOOLS_EXPORT int get_last_log_error(char *text, int *len);
 
     /**
-    For compatibility with older thermavip versions, new versions should NOT use these 3 functions
-    */
-
-    TOOLS_EXPORT void get_temp_directory(char *dirname);
-    TOOLS_EXPORT void get_default_temp_directory(char *dirname);
-    TOOLS_EXPORT int set_temp_directory(const char *dirname);
-
-    /**
     Object handler functions
     */
 
@@ -94,6 +86,13 @@ Log levels
     Returns 0 on error.
     */
     TOOLS_EXPORT int attrs_read_file_reader(void *file_reader);
+
+    /**
+    Read file attributes from an in-memory file.
+    This is a read-only version.
+    */
+    TOOLS_EXPORT int attrs_open_from_memory(void *ptr, int64_t size);
+
     /**
     Read file attributes.
     Returns the file attribute object handle.
@@ -186,14 +185,7 @@ Log levels
     TOOLS_EXPORT int64_t zstd_compress(char *src, int64_t srcSize, char *dst, int64_t dstSize, int level);
     TOOLS_EXPORT int64_t zstd_decompress(char *src, int64_t srcSize, char *dst, int64_t dstSize);
 
-#define RIR_BLOSC_NOSHUFFLE 0
-#define RIR_BLOSC_SHUFFLE 1
-#define RIR_BLOSC_BITSHUFFLE 2
-
-    TOOLS_EXPORT int64_t blosc_compress_zstd(char *src, int64_t srcSize, char *dst, int64_t dstSize, size_t typesize, int doshuffle, int level);
-    TOOLS_EXPORT int64_t blosc_decompress_zstd(char *src, int64_t srcSize, char *dst, int64_t dstSize);
-
-    TOOLS_EXPORT int unzip(const char *infile, const char *outfolder);
+      TOOLS_EXPORT int unzip(const char *infile, const char *outfolder);
 
 #ifdef __cplusplus
 }

@@ -224,7 +224,7 @@ namespace rir
 			std::swap(height, other.height);
 		}
 		Array2D(const Array2D &other)
-			: values(other.values()), width(other.width), height(other.height)
+			: values(other.values), width(other.width), height(other.height)
 		{
 		}
 		~Array2D() noexcept

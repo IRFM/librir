@@ -17,7 +17,7 @@
 
 namespace rir
 {
-	typedef std::map<std::string, std::string> dict_type;
+	
 
 	/**
 	Base class for IR video loaders.

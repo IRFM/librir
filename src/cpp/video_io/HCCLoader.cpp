@@ -3,15 +3,117 @@
 #include <cstdint>
 #include <chrono>
 #include <iomanip>
+#include <fstream>
 
 #include "ReadFileChunk.h"
 #include "HCCLoader.h"
 #include "Log.h"
 #include "Misc.h"
+#include "IRFileLoader.h"
+#include "FileAttributes.h"
 
 namespace rir
 {
 
+	void populate_map_with_header(rir::dict_type &mapper, HCCImageHeader &h)
+	{
+		mapper.clear();
+
+		/* 0d000 */
+		mapper["Signature"] = toString(h.Signature);
+		mapper["DeviceXMLMinorVersion"] = toString((std::uint16_t)h.DeviceXMLMinorVersion);
+		mapper["DeviceXMLMajorVersion"] = toString((std::uint16_t)h.DeviceXMLMajorVersion);
+		mapper["ImageHeaderLength"] = toString(h.ImageHeaderLength);
+		mapper["FrameID"] = toString(h.FrameID);
+		mapper["DataOffset"] = toString(h.DataOffset);
+		mapper["DataExp"] = toString((std::uint16_t)h.DataExp);
+		mapper["ExposureTime"] = toString(h.ExposureTime * 1e-8);
+		mapper["CalibrationMode"] = toString((std::uint16_t)h.CalibrationMode);
+		mapper["BPRApplied"] = toString((std::uint16_t)h.BPRApplied);
+		mapper["FrameBufferMode"] = toString((std::uint16_t)h.FrameBufferMode);
+		mapper["CalibrationBlockIndex"] = toString((std::uint16_t)h.CalibrationBlockIndex);
+		mapper["Width"] = toString(h.Width);
+		mapper["Height"] = toString(h.Height);
+		mapper["OffsetX"] = toString(h.OffsetX);
+		mapper["OffsetY"] = toString(h.OffsetY);
+		mapper["ReverseX"] = toString((std::uint16_t)h.ReverseX);
+		mapper["ReverseY"] = toString((std::uint16_t)h.ReverseY);
+		mapper["TestImageSelector"] = toString((std::uint16_t)h.TestImageSelector);
+		mapper["SensorWellDepth"] = toString((std::uint16_t)h.SensorWellDepth);
+		mapper["AcquisitionFrameRate"] = toString(h.AcquisitionFrameRate);
+		mapper["TriggerDelay"] = toString(h.TriggerDelay);
+		mapper["TriggerMode"] = toString((std::uint16_t)h.TriggerMode);
+		mapper["TriggerSource"] = toString((std::uint16_t)h.TriggerSource);
+		mapper["IntegrationMode"] = toString((std::uint16_t)h.IntegrationMode);
+		mapper["AveragingNumber"] = toString((std::uint16_t)h.AveragingNumber);
+		mapper["ExposureAuto"] = toString((std::uint16_t)h.ExposureAuto);
+		mapper["AECResponseTime"] = toString(h.AECResponseTime);
+		mapper["AECImageFraction"] = toString(h.AECImageFraction);
+		mapper["AECTargetWellFilling"] = toString(h.AECTargetWellFilling);
+		mapper["FWMode"] = toString((std::uint16_t)h.FWMode);
+		mapper["FWSpeedSetpoint"] = toString(h.FWSpeedSetpoint);
+		mapper["FWSpeed"] = toString(h.FWSpeed);
+		mapper["POSIXTime"] = toString(h.POSIXTime);
+		mapper["SubSecondTime"] = toString(h.SubSecondTime);
+		mapper["TimeSource"] = toString((std::uint16_t)h.TimeSource);
+		mapper["GPSModeIndicator"] = toString((std::uint16_t)h.GPSModeIndicator);
+		mapper["GPSLongitude"] = toString(h.GPSLongitude);
+		mapper["GPSLatitude"] = toString(h.GPSLatitude);
+		mapper["GPSAltitude"] = toString(h.GPSAltitude);
+		mapper["FWEncoderAtExposureStart"] = toString(h.FWEncoderAtExposureStart);
+		mapper["FWEncoderAtExposureEnd"] = toString(h.FWEncoderAtExposureEnd);
+		mapper["FWPosition"] = toString((std::uint16_t)h.FWPosition);
+		mapper["ICUPosition"] = toString((std::uint16_t)h.ICUPosition);
+		mapper["NDFilterPosition"] = toString((std::uint16_t)h.NDFilterPosition);
+		mapper["EHDRIExposureIndex"] = toString((std::uint16_t)h.EHDRIExposureIndex);
+		mapper["FrameFlag"] = toString((std::uint16_t)h.FrameFlag);
+		mapper["PostProcessed"] = toString((std::uint16_t)h.PostProcessed);
+		mapper["SensorTemperatureRaw"] = toString(h.SensorTemperatureRaw);
+		mapper["AlarmVector"] = toString(h.AlarmVector);
+		mapper["ExternalBlackBodyTemperature"] = toString(h.ExternalBlackBodyTemperature);
+		mapper["TemperatureSensor"] = toString(h.TemperatureSensor);
+		mapper["TemperatureInternalLens"] = toString(h.TemperatureInternalLens);
+		mapper["TemperatureExternalLens"] = toString(h.TemperatureExternalLens);
+		mapper["TemperatureInternalCalibrationUnit"] = toString(h.TemperatureInternalCalibrationUnit);
+		mapper["TemperatureExternalThermistor"] = toString(h.TemperatureExternalThermistor);
+		mapper["TemperatureFilterWheel"] = toString(h.TemperatureFilterWheel);
+		mapper["TemperatureCompressor"] = toString(h.TemperatureCompressor);
+		mapper["TemperatureColdFinger"] = toString(h.TemperatureColdFinger);
+		mapper["CalibrationBlockPOSIXTime"] = toString(h.CalibrationBlockPOSIXTime);
+		mapper["ExternalLensSerialNumber"] = toString(h.ExternalLensSerialNumber);
+		mapper["ManualFilterSerialNumber"] = toString(h.ManualFilterSerialNumber);
+		mapper["SensorID"] = toString((std::uint16_t)h.SensorID);
+		mapper["PixelDataResolution"] = toString((std::uint16_t)h.PixelDataResolution);
+		mapper["DeviceCalibrationFilesMajorVersion"] = toString((std::uint16_t)h.DeviceCalibrationFilesMajorVersion);
+		mapper["DeviceCalibrationFilesMinorVersion"] = toString((std::uint16_t)h.DeviceCalibrationFilesMinorVersion);
+		mapper["DeviceCalibrationFilesSubMinorVersion"] = toString((std::uint16_t)h.DeviceCalibrationFilesSubMinorVersion);
+		mapper["DeviceDataFlowMajorVersion"] = toString((std::uint16_t)h.DeviceDataFlowMajorVersion);
+		mapper["DeviceDataFlowMinorVersion"] = toString((std::uint16_t)h.DeviceDataFlowMinorVersion);
+		mapper["DeviceFirmwareMajorVersion"] = toString((std::uint16_t)h.DeviceFirmwareMajorVersion);
+		mapper["DeviceFirmwareMinorVersion"] = toString((std::uint16_t)h.DeviceFirmwareMinorVersion);
+		mapper["DeviceFirmwareSubMinorVersion"] = toString((std::uint16_t)h.DeviceFirmwareSubMinorVersion);
+		mapper["DeviceFirmwareBuildVersion"] = toString((std::uint16_t)h.DeviceFirmwareBuildVersion);
+		mapper["ActualizationPOSIXTime"] = toString(h.ActualizationPOSIXTime);
+		mapper["DeviceSerialNumber"] = toString(h.DeviceSerialNumber);
+		mapper["ExposureTime (s)"] = toString(h.ExposureTime * 1e-8);
+		mapper["TriggerDelay (us)"] = toString(h.TriggerDelay);
+		mapper["AECResponseTime (ms)"] = toString(h.AECResponseTime);
+		mapper["AECImageFraction (%)"] = toString(h.AECImageFraction);
+		mapper["AECTargetWellFilling (%)"] = toString(h.AECTargetWellFilling);
+		mapper["PostProcessed"] = h.PostProcessed == 1 ? "Yes" : "No";
+		mapper["TemperatureSensor (cC)"] = toString(h.TemperatureSensor);
+		mapper["TemperatureInternalLens (cC)"] = toString(h.TemperatureInternalLens);
+		mapper["TemperatureExternalLens (cC)"] = toString(h.TemperatureExternalLens);
+		mapper["TemperatureInternalCalibrationUnit (cC)"] = toString(h.TemperatureInternalCalibrationUnit);
+		mapper["TemperatureExternalThermistor (cC)"] = toString(h.TemperatureExternalThermistor);
+		mapper["TemperatureFilterWheel (cC)"] = toString(h.TemperatureFilterWheel);
+		mapper["TemperatureCompressor (cC)"] = toString(h.TemperatureCompressor);
+		mapper["TemperatureColdFinger (cC)"] = toString(h.TemperatureColdFinger);
+		mapper["FWPosition"] = toString((std::uint16_t)h.FWPosition);
+		mapper["ExternalBlackBodyTemperature (cC)"] = toString(h.ExternalBlackBodyTemperature);
+
+		mapper["Header"] = std::string((char *)&h, sizeof(h));
+	}
 	class HCCLoader::PrivateData
 	{
 	public:
@@ -104,28 +206,18 @@ namespace rir
 			d_data->timestamps[i] = static_cast<std::int64_t>(start);
 			start += sampling;
 		}
-
-		d_data->attributes["ExposureTime (s)"] = toString(d_data->header.ExposureTime * 1e-8);
-		d_data->attributes["TriggerDelay (us)"] = toString(d_data->header.TriggerDelay);
-		d_data->attributes["AECResponseTime (ms)"] = toString(d_data->header.AECResponseTime);
-		d_data->attributes["AECImageFraction (%)"] = toString(d_data->header.AECImageFraction);
-		d_data->attributes["AECTargetWellFilling (%)"] = toString(d_data->header.AECTargetWellFilling);
-		d_data->attributes["PostProcessed"] = toString(d_data->header.PostProcessed == 1 ? "Yes" : "No");
-		d_data->attributes["TemperatureSensor (cC)"] = toString(d_data->header.TemperatureSensor);
-		d_data->attributes["TemperatureInternalLens (cC)"] = toString(d_data->header.TemperatureInternalLens);
-		d_data->attributes["TemperatureExternalLens (cC)"] = toString(d_data->header.TemperatureExternalLens);
-		d_data->attributes["TemperatureInternalCalibrationUnit (cC)"] = toString(d_data->header.TemperatureInternalCalibrationUnit);
-		d_data->attributes["TemperatureExternalThermistor (cC)"] = toString(d_data->header.TemperatureExternalThermistor);
-		d_data->attributes["TemperatureFilterWheel (cC)"] = toString(d_data->header.TemperatureFilterWheel);
-		d_data->attributes["TemperatureCompressor (cC)"] = toString(d_data->header.TemperatureCompressor);
-		d_data->attributes["TemperatureColdFinger (cC)"] = toString(d_data->header.TemperatureColdFinger);
-
-		d_data->attributes["FileHeader"] = std::string((char *)&d_data->header, sizeof(d_data->header));
+		populate_map_with_header(d_data->attributes, d_data->header);
 
 		d_data->file = file_reader;
 		d_data->own = own;
 
 		return true;
+	}
+
+	void HCCLoader::setExternalBlackBodyTemperature(float temperature)
+	{
+		d_data->header.ExternalBlackBodyTemperature = temperature;
+		d_data->imageHeader.ExternalBlackBodyTemperature = temperature;
 	}
 
 	void HCCLoader::setBadPixelsEnabled(bool enable)
@@ -158,7 +250,7 @@ namespace rir
 		return d_data->imSize;
 	}
 
-	bool HCCLoader::readImage(int pos, int /*calibration*/, unsigned short *pixels)
+	bool HCCLoader::readImage(int pos, int calibration, unsigned short *pixels)
 	{
 		if (!isValid())
 			return false;
@@ -232,7 +324,24 @@ namespace rir
 		unsigned short *pix = (unsigned short *)d_data->image.data();
 		const bool little_endian = is_little_endian();
 
-		if (correct_bad_pixels || !little_endian)
+		if (correct_bad_pixels || !little_endian) {
+			size_t size = (size_t)d_data->header.Height * (size_t)d_data->header.Width;
+			unsigned short max = 0;
+			for (size_t i = 0; i < size; ++i) {
+				if (!little_endian)
+					pix[i] = swap_uint16(pix[i]);
+				if (pix[i] < 0xFFF1)
+					max = std::max(max, pix[i]);
+			}
+
+			//replace bad pixels by the maximum value
+			for (size_t i = 0; i < size; ++i) {
+				if (pix[i] >= 0xFFF1)
+					pix[i] = max;
+			}
+		}
+
+		/*if (correct_bad_pixels || !little_endian)
 		{
 
 			for (int y = 0; y < d_data->header.Height; ++y)
@@ -301,32 +410,36 @@ namespace rir
 									}
 								}
 							}
+
 						}
+						pix[index] = p;
 					}
 				}
-		}
+		}*/
 
 		memcpy(pixels, pix, d_data->header.Height * d_data->header.Width * 2);
 
-		d_data->imageAttributes.clear();
-		d_data->imageAttributes["Type"] = toString(type);
-		d_data->imageAttributes["ExposureTime (s)"] = toString(h.ExposureTime * 1e-8);
-		d_data->imageAttributes["TriggerDelay (us)"] = toString(h.TriggerDelay);
-		d_data->imageAttributes["AECResponseTime (ms)"] = toString(h.AECResponseTime);
-		d_data->imageAttributes["AECImageFraction (%)"] = toString(h.AECImageFraction);
-		d_data->imageAttributes["AECTargetWellFilling (%)"] = toString(h.AECTargetWellFilling);
-		d_data->imageAttributes["PostProcessed"] = h.PostProcessed == 1 ? "Yes" : "No";
-		d_data->imageAttributes["TemperatureSensor (cC)"] = toString(h.TemperatureSensor);
-		d_data->imageAttributes["TemperatureInternalLens (cC)"] = toString(h.TemperatureInternalLens);
-		d_data->imageAttributes["TemperatureExternalLens (cC)"] = toString(h.TemperatureExternalLens);
-		d_data->imageAttributes["TemperatureInternalCalibrationUnit (cC)"] = toString(h.TemperatureInternalCalibrationUnit);
-		d_data->imageAttributes["TemperatureExternalThermistor (cC)"] = toString(h.TemperatureExternalThermistor);
-		d_data->imageAttributes["TemperatureFilterWheel (cC)"] = toString(h.TemperatureFilterWheel);
-		d_data->imageAttributes["TemperatureCompressor (cC)"] = toString(h.TemperatureCompressor);
-		d_data->imageAttributes["TemperatureColdFinger (cC)"] = toString(h.TemperatureColdFinger);
-		d_data->imageAttributes["FWPosition"] = toString(h.FWPosition);
+		populate_map_with_header(d_data->imageAttributes, h);
 
-		d_data->imageAttributes["Header"] = std::string((char *)&h, sizeof(h));
+		d_data->imageAttributes["Type"] = toString(type);
+		// d_data->imageAttributes["ExposureTime (s)"] = toString(h.ExposureTime * 1e-8);
+		// d_data->imageAttributes["TriggerDelay (us)"] = toString(h.TriggerDelay);
+		// d_data->imageAttributes["AECResponseTime (ms)"] = toString(h.AECResponseTime);
+		// d_data->imageAttributes["AECImageFraction (%)"] = toString(h.AECImageFraction);
+		// d_data->imageAttributes["AECTargetWellFilling (%)"] = toString(h.AECTargetWellFilling);
+		// d_data->imageAttributes["PostProcessed"] = h.PostProcessed == 1 ? "Yes" : "No";
+		// d_data->imageAttributes["TemperatureSensor (cC)"] = toString(h.TemperatureSensor);
+		// d_data->imageAttributes["TemperatureInternalLens (cC)"] = toString(h.TemperatureInternalLens);
+		// d_data->imageAttributes["TemperatureExternalLens (cC)"] = toString(h.TemperatureExternalLens);
+		// d_data->imageAttributes["TemperatureInternalCalibrationUnit (cC)"] = toString(h.TemperatureInternalCalibrationUnit);
+		// d_data->imageAttributes["TemperatureExternalThermistor (cC)"] = toString(h.TemperatureExternalThermistor);
+		// d_data->imageAttributes["TemperatureFilterWheel (cC)"] = toString(h.TemperatureFilterWheel);
+		// d_data->imageAttributes["TemperatureCompressor (cC)"] = toString(h.TemperatureCompressor);
+		// d_data->imageAttributes["TemperatureColdFinger (cC)"] = toString(h.TemperatureColdFinger);
+		// d_data->imageAttributes["FWPosition"] = toString((int)h.FWPosition);
+		// d_data->imageAttributes["ExternalBlackBodyTemperature (cC)"] = toString(h.ExternalBlackBodyTemperature);
+
+		// d_data->imageAttributes["Header"] = std::string((char *)&h, sizeof(h));
 
 		return true;
 	}
@@ -387,4 +500,100 @@ namespace rir
 		d_data = new PrivateData();
 	}
 
+
+	bool HCC_extractTimesAndFWPos(const IRFileLoader* loader, std::int64_t* times, int* pos)
+	{
+		std::string fname = loader->filename();
+		if (fname.empty())
+			return false;
+
+		if (loader->isH264() ) {
+			const FileAttributes* attrs = loader->fileAttributes();
+			
+			size_t count = attrs->size();
+			for (size_t i = 0; i < count; ++i) {
+				times[i] = attrs->timestamp(i);
+
+				const auto& dict = attrs->attributes(i);
+				auto it = dict.find("FWPosition");
+				if (it == dict.end())
+					return false;
+				pos[i] = fromString<int>(it->second);
+			}
+			return true;
+		}
+
+		if (loader->isHCC()) {
+
+			std::ifstream fin(fname.c_str(), std::ios::binary);
+			HCCImageHeader h;
+			fin.read((char*)&h, sizeof(h));
+
+			size_t frame_size = h.ImageHeaderLength + h.Width * h.Height * 2;
+			double sampling = 1 / (h.AcquisitionFrameRate / 1000.0);
+			sampling *= 1000000000;
+
+			for (int i = 0; i < loader->size(); ++i) {
+				fin.seekg((std::uint64_t)i * frame_size);
+				fin.read((char*)&h, sizeof(h));
+				times[i] = (std::int64_t)(i * sampling);
+				pos[i] = h.FWPosition;
+			}
+			return true;
+		}
+		return false;
+	}
+
+	bool HCC_extractAllFWPos(const IRFileLoader* loader, int* pos, int* pos_count)
+	{
+		*pos_count = 0;
+		std::string fname = loader->filename();
+		if (fname.empty())
+			return false;
+
+		if (loader->isH264()) {
+
+			const FileAttributes* attrs = loader->fileAttributes();
+			
+			size_t count = attrs->size();
+			for (size_t i = 0; i < count; ++i) {
+
+				const auto& dict = attrs->attributes(i);
+				auto it = dict.find("FWPosition");
+				if (it == dict.end())
+					return false;
+				pos[(*pos_count)] = fromString<int>(it->second);
+				if (*pos_count && pos[(*pos_count)] == pos[0])
+					break;
+				else
+					++(*pos_count);
+			}
+			std::sort(pos, pos + *pos_count);
+			return true;
+		}
+		if (loader->isHCC()) {
+
+			std::ifstream fin(fname.c_str(), std::ios::binary);
+			HCCImageHeader h;
+			fin.read((char*)&h, sizeof(h));
+
+			size_t frame_size = h.ImageHeaderLength + h.Width * h.Height * 2;
+			double sampling = 1 / (h.AcquisitionFrameRate / 1000.0);
+			sampling *= 1000000000;
+			*pos_count = 0;
+			for (int i = 0; i < loader->size(); ++i) {
+				fin.seekg((std::uint64_t)i * frame_size);
+				fin.read((char*)&h, sizeof(h));
+				pos[(*pos_count)] = h.FWPosition;
+				if (*pos_count && pos[(*pos_count)] == pos[0])
+					break;
+				else
+					++(*pos_count);
+			}
+			return true;
+		}
+		return false;
+	}
+
 }
+

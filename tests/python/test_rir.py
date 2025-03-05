@@ -33,31 +33,21 @@ def test_zstd_decompress(c, data_bytes):
     rts.zstd_decompress(c) == data_bytes
 
 
-def test_blosc_compress_zstd(data_bytes):
-    rts.blosc_compress_zstd(data_bytes, 2, rts.BLOSC_SHUFFLE, 1)
-
-
-@pytest.fixture
-def compressed_blosc(data_bytes):
-    return rts.blosc_compress_zstd(data_bytes, 2, rts.BLOSC_SHUFFLE, 1)
-
-
-def test_blosc_decompress_zstd(compressed_blosc):
-    print(rts.blosc_decompress_zstd(compressed_blosc))
-
-
-def test_file_attributes():
-    attrs = fa.FileAttributes("attrs.test")
+def test_file_attributes(movie: IRMovie):
+    filename = movie.filename
+    attrs = fa.FileAttributes.from_filename(filename)
     attrs.attributes = {"toto": 2, "tutu": "tata"}
-    attrs.timestamps = range(11)
-    attrs.set_frame_attributes(10, {"toto": 2, "tutu": "tata"})
+    attrs.timestamps = range(movie.images)
+    attrs.set_frame_attributes(movie.images - 1, {"toto": 2, "tutu": "tata"})
     attrs.close()
 
-    attrs = fa.FileAttributes("attrs.test")
-    print(attrs.attributes)
-    print(attrs.frame_count())
-    print(attrs.frame_attributes(0))
-    print(attrs.frame_attributes(10))
+    attrs = fa.FileAttributes.from_filename(filename)
+    assert attrs.attributes == {"toto": b"2", "tutu": b"tata"}
+    assert attrs.frame_count() == movie.images
+    assert attrs.frame_attributes(movie.images - 1) == {"toto": b"2", "tutu": b"tata"}
+    attrs.close()
+
+    # os.unlink(filename)
 
 
 polygon = [[0, 0], [1, 0], [1.2, 0.2], [1.8, 0.1], [5, 5], [3.2, 5], [0, 9]]
@@ -97,8 +87,8 @@ def test_minimum_area_bbox():
     assert ge.minimum_area_bbox(polygon) != ([np.nan, np.nan], 0.0, 0.0, np.nan, np.nan)
 
 
-def test_translate():
-    global img
+def test_translate(img):
+    # global img
     img = np.ones((12, 12), dtype=np.float64)
     img = sp.translate(img, 1.2, 1.3, "constant", 0)
     print(img)
@@ -107,8 +97,8 @@ def test_translate():
         _img = sp.translate(_img, 1.2, 1.3, "constant", 0)
 
 
-def test_gaussian_filter():
-    global img
+def test_gaussian_filter(img):
+    # global img
     img = sp.gaussian_filter(img, 0.75)
     print(img)
 
@@ -142,30 +132,14 @@ def img():
     return img
 
 
-@pytest.fixture
-def jpegls_encoded(img):
-    return sp.jpegls_encode(img)
-
-
-def test_jpegls_encode(img):
-    c = sp.jpegls_encode(img)
-    print(len(c))
-
-
-def test_jpegls_decode(img, jpegls_encoded):
-    _img = sp.jpegls_decode(jpegls_encoded, 12, 20)
-    assert (_img == img).all()
-    print(img)
-
-
-def test_bad_pixels():
+def test_bad_pixels(img):
     img = np.ones((20, 12), dtype=np.uint16)
     b = bp.BadPixels(img)
     print(b.correct(img))
     del b
 
 
-def test_label_image():
+def test_label_image(img):
     polygon = [[0, 0], [1, 0], [1.2, 0.2], [1.8, 0.1], [5, 5], [3.2, 5], [0, 9]]
     polygon2 = [[15, 15], [16, 17], [14, 17]]
     img = np.zeros((20, 20), np.int32)

@@ -25,6 +25,26 @@ extern "C"
 
 #define MIN_SIZE_FOR_COMRPESSION 1000
 
+static inline char* mgetenv(const char* name)
+{
+#if defined( _MSC_VER) || defined(__MINGW32__)
+	static thread_local char buf[4096];
+	int len = (int)GetEnvironmentVariableA(name, buf, sizeof(buf) - 1);
+	if (len == 0) {
+		return nullptr;
+	}
+	else {
+		if ((size_t)len < sizeof(buf) - 1) {
+			buf[len] = 0;
+			return buf;
+		}
+		return nullptr;
+	}
+#else
+	return std::getenv(name);
+#endif
+}
+
 namespace rir
 {
 
@@ -149,11 +169,11 @@ namespace rir
 		std::string dirname;
 
 #ifdef _MSC_VER
-		char *tmp = std::getenv("TEMP");
+		char *tmp = mgetenv("TEMP");
 		if (!tmp)
-			tmp = std::getenv("TMP");
+			tmp = mgetenv("TMP");
 		if (!tmp)
-			tmp = std::getenv("TMPDIR");
+			tmp = mgetenv("TMPDIR");
 		if (!tmp)
 		{
 #ifdef P_tmpdir

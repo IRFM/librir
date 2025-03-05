@@ -1,7 +1,7 @@
 #include "signal_processing.h"
 #include "Filters.h"
 #include "tools.h"
-#include "charls.h"
+// #include "charls.h"
 
 extern "C"
 {
@@ -195,90 +195,6 @@ int resample_time_serie(double *sample_x, double *sample_y, int size, double *ti
 	return 0;
 }
 
-int jpegls_encode(unsigned short *img, int width, int height, int err, char *out, int out_size)
-{
-
-	charls_jpegls_encoder *enc = charls_jpegls_encoder_create();
-
-	charls_frame_info infos;
-	infos.width = width;
-	infos.height = height;
-	infos.bits_per_sample = 16;
-	infos.component_count = 1;
-
-	charls_jpegls_errc err1 = charls_jpegls_encoder_set_frame_info(enc, &infos);
-	if (err1 != charls::ApiResult::success)
-		return -1;
-	charls_jpegls_errc err2 = charls_jpegls_encoder_set_near_lossless(enc, err);
-	if (err2 != charls::ApiResult::success)
-		return -1;
-	charls_jpegls_errc err3 = charls_jpegls_encoder_set_destination_buffer(enc, out, out_size);
-	if (err3 != charls::ApiResult::success)
-		return -1;
-	charls_jpegls_errc err4 = charls_jpegls_encoder_encode_from_buffer(enc, img, width * height * 2, width * 2);
-	if (err4 != charls::ApiResult::success)
-		return -1;
-	size_t written = 0;
-	charls_jpegls_errc err5 = charls_jpegls_encoder_get_bytes_written(enc, &written);
-	if (err5 != charls::ApiResult::success)
-		return -1;
-
-	charls_jpegls_encoder_destroy(enc);
-	return (int)written;
-}
-
-int jpegls_decode(char *in, int in_size, unsigned short *img, int width, int height)
-{
-
-	charls_jpegls_decoder *dec = charls_jpegls_decoder_create();
-
-	charls_jpegls_errc err1 = charls_jpegls_decoder_set_source_buffer(dec, in, in_size);
-	if (err1 != charls::ApiResult::success)
-		return -1;
-	err1 = charls_jpegls_decoder_read_header(dec);
-	if (err1 != charls::ApiResult::success)
-		return -1;
-	err1 = charls_jpegls_decoder_decode_to_buffer(dec, img, width * height * 2, width * 2);
-	if (err1 != charls::ApiResult::success)
-		return -1;
-
-	charls_jpegls_decoder_destroy(dec);
-	return 0;
-}
-
-extern "C"
-{
-#include <jpeglib.h>
-}
-
-int jpeg_decode(char *input, int64_t isize, unsigned char *output)
-{
-	struct jpeg_decompress_struct cinfo;
-	struct jpeg_error_mgr jerr;
-	unsigned long location = 0;
-
-	cinfo.err = jpeg_std_error(&jerr);
-
-	// jpeg_create_decompress(&cinfo);
-	jpeg_CreateDecompress((&cinfo), JPEG_LIB_VERSION, (size_t)sizeof(struct jpeg_decompress_struct));
-	jpeg_mem_src(&cinfo, (unsigned char *)input, isize);
-
-	(void)jpeg_read_header(&cinfo, TRUE);
-	if (!jpeg_start_decompress(&cinfo))
-		return -1;
-	JSAMPLE *row[1];
-	while (cinfo.output_scanline < cinfo.image_height)
-	{
-		row[0] = reinterpret_cast<JSAMPLE *>(output) + location;
-		jpeg_read_scanlines(&cinfo, row, 1);
-		location += cinfo.image_width;
-	}
-	// wrap up decompression, destroy objects, free pointers and close open files
-	jpeg_finish_decompress(&cinfo);
-	jpeg_destroy_decompress(&cinfo);
-	return 0;
-}
-
 #include "BadPixels.h"
 int bad_pixels_create(unsigned short *first_image, int width, int height)
 {
@@ -397,4 +313,79 @@ int keep_largest_area(int type, void *src, int *dst, int w, int h, void *backgro
 		return -1;
 	}
 	return 0;
+}
+
+// fallthrough
+#ifndef __has_cpp_attribute
+#define __has_cpp_attribute(x) 0
+#endif
+#if __has_cpp_attribute(clang::fallthrough)
+#define SEQ_FALLTHROUGH() [[clang::fallthrough]]
+#elif __has_cpp_attribute(gnu::fallthrough)
+#define SEQ_FALLTHROUGH() [[gnu::fallthrough]]
+#else
+#define SEQ_FALLTHROUGH()
+#endif
+
+static std::uint64_t read_64(const void *p)
+{
+	std::uint64_t r;
+	memcpy(&r, p, sizeof(r));
+	return r;
+}
+size_t hash_bytes(void *_ptr, size_t len)
+{
+	static constexpr std::uint64_t m = 14313749767032793493ULL;
+	static constexpr std::uint64_t seed = 3782874213ULL;
+	static constexpr std::uint64_t r = 47ULL;
+
+	const unsigned char *ptr = static_cast<const unsigned char *>(_ptr);
+	std::uint64_t h = seed ^ (len * m);
+	const std::uint8_t *end = ptr + len - (sizeof(std::uint64_t) - 1);
+	while (ptr < end)
+	{
+		auto k = read_64(ptr);
+
+		k *= m;
+		k ^= k >> r;
+		k *= m;
+
+		h ^= k;
+		h *= m;
+
+		ptr += sizeof(std::uint64_t);
+	}
+
+	switch (len & 7U)
+	{
+	case 7U:
+		h ^= static_cast<std::uint64_t>(ptr[6U]) << 48U;
+		SEQ_FALLTHROUGH();
+	case 6U:
+		h ^= static_cast<std::uint64_t>(ptr[5U]) << 40U;
+		SEQ_FALLTHROUGH();
+	case 5U:
+		h ^= static_cast<std::uint64_t>(ptr[4U]) << 32U;
+		SEQ_FALLTHROUGH();
+	case 4U:
+		h ^= static_cast<std::uint64_t>(ptr[3U]) << 24U;
+		SEQ_FALLTHROUGH();
+	case 3U:
+		h ^= static_cast<std::uint64_t>(ptr[2U]) << 16U;
+		SEQ_FALLTHROUGH();
+	case 2U:
+		h ^= static_cast<std::uint64_t>(ptr[1U]) << 8U;
+		SEQ_FALLTHROUGH();
+	case 1U:
+		h ^= static_cast<std::uint64_t>(ptr[0U]);
+		h *= m;
+		SEQ_FALLTHROUGH();
+	default:
+		break;
+	}
+
+	h ^= h >> r;
+	h *= m;
+	h ^= h >> r;
+	return static_cast<size_t>(h);
 }

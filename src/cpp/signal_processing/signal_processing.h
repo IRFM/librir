@@ -70,15 +70,7 @@ extern "C"
     */
     SIGNAL_PROCESSING_EXPORT int resample_time_serie(double *sample_x, double *sample_y, int size, double *times, int times_size, int s, double padds, double *output, int *output_size);
 
-    /**
-     * Compress image using jpegls encoder.
-     * \a err specifies the maximum allowed error.
-     */
-    SIGNAL_PROCESSING_EXPORT int jpegls_encode(unsigned short *img, int width, int height, int err, char *out, int out_size);
-    /**
-     * Decompress image using jpegls decoder.
-     */
-    SIGNAL_PROCESSING_EXPORT int jpegls_decode(char *in, int in_size, unsigned short *img, int width, int height);
+
 
     /**
      * Decode a 12 bits JPEG image as used in old IR video file format (from Tore Supra)
@@ -102,6 +94,8 @@ extern "C"
     SIGNAL_PROCESSING_EXPORT int label_image(int type, void *src, int *dst, int w, int h, void *background, double *out_xy, int *out_area);
 
     SIGNAL_PROCESSING_EXPORT int keep_largest_area(int type, void *src, int *dst, int w, int h, void *background, int foreground);
+
+    SIGNAL_PROCESSING_EXPORT size_t hash_bytes(void* _ptr, size_t len);
 
 #ifdef __cplusplus
 }

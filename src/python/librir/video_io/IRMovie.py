@@ -36,6 +36,7 @@ from .rir_video_io import (
     get_image_time,
     load_image,
     open_camera_file,
+    open_camera_memory,
     set_emissivity,
     set_global_emissivity,
     support_emissivity,
@@ -48,6 +49,10 @@ logger.setLevel(logging.INFO)
 
 
 class CalibrationNotFound(Exception):
+    pass
+
+
+class InvalidMovie(Exception):
     pass
 
 
@@ -66,6 +71,7 @@ def create_pcr_header(rows, columns, frequency=50, bits=16):
 class IRMovie(object):
     _header_offset = 1024
     __tempfile__ = None
+    _file_attributes: Union[FileAttributes, None] = None
     handle = -1
     _calibration_nickname_mapper = {"DL": "Digital Level"}
     _th = None
@@ -74,10 +80,13 @@ class IRMovie(object):
     def from_filename(cls, filename):
         """Create an IRMovie object from a local filename"""
         handle = open_camera_file(str(filename))
-        return IRMovie(handle)
+        instance = IRMovie(handle)
+        instance._file_attributes = FileAttributes.from_filename(filename)
+        instance._file_attributes.attributes = get_global_attributes(instance.handle)
+        return instance
 
     @classmethod
-    def from_bytes(cls, data: bytes, times: List[float] = None, cthreads: int = 8):
+    def from_bytes(cls, data: bytes):
         """_summary_
 
         Args:
@@ -87,20 +96,18 @@ class IRMovie(object):
         Returns:
             _type_: _description_
         """
-        with tempfile.NamedTemporaryFile("wb", delete=False) as f:
-            filename = Path(f.name)
-            f.write(data)
 
-        with cls.from_filename(filename) as _instance:
-            _instance.__tempfile__ = filename
-            dst = Path(filename).parent / (f"{filename.stem}.h264")
-            _instance.to_h264(dst, times=times, cthreads=cthreads)
+        handle = open_camera_memory(data)
+        instance = cls(handle)
+        instance._file_attributes = FileAttributes.from_buffer(data)
+        instance._file_attributes.attributes = get_global_attributes(instance.handle)
 
-        instance = cls.from_filename(dst)
         return instance
 
     @classmethod
-    def from_numpy_array(cls, arr, attrs=None, times=None, cthreads: int = 8):
+    def from_numpy_array(
+        cls, arr: np.ndarray, attrs=None, times=None, cthreads: int = 8
+    ):
         """
         Create a IRMovie object via numpy arrays. It creates non-pulse indexed IRMovie
         object.
@@ -117,7 +124,17 @@ class IRMovie(object):
         else:
             raise ValueError("mismatch array shape. Must be 2D or 3D")
         data = header.astype(np.uint32).tobytes() + arr.astype(np.uint16).tobytes()
-        instance = cls.from_bytes(data, times=times, cthreads=cthreads)
+
+        with tempfile.NamedTemporaryFile("wb", delete=False) as f:
+            filename = Path(f.name)
+            f.write(data)
+
+        with cls.from_filename(filename) as _instance:
+            _instance.__tempfile__ = filename
+            dst = Path(filename).parent / (f"{filename.stem}.h264")
+            _instance.to_h264(dst, times=times, cthreads=cthreads)
+
+        instance = cls.from_filename(dst)
 
         if attrs is not None:
             instance.attributes = attrs
@@ -131,7 +148,7 @@ class IRMovie(object):
         """
         # check valid handle identifier
         if get_image_count(handle) < 0:
-            raise RuntimeError("Invalid ir_movie descriptor")
+            raise InvalidMovie("Invalid ir_movie descriptor")
 
         self.handle = handle
         self.times = None
@@ -143,8 +160,6 @@ class IRMovie(object):
         self._timestamps = None
         self._camstatus = None
         self._frame_attributes_d = {}
-        self._file_attributes = FileAttributes(self.filename)
-        self._file_attributes.attributes = get_global_attributes(self.handle)
         self._registration_file = None
 
         self.calibration = "DL"
@@ -283,7 +298,7 @@ class IRMovie(object):
     # def frame_attributes(self, frame_index):
     #     return self._file_attributes.frame_attributes(frame_index)
 
-    def load_pos(self, pos, calibration=None):
+    def load_pos(self, pos, calibration=None) -> np.ndarray:
         """
         Returns the image at given position using given calibration index (integer)
         """
@@ -323,7 +338,8 @@ class IRMovie(object):
 
     @property
     def filename(self):
-        return Path(get_filename(self.handle))  # local filename
+        _f = get_filename(self.handle)
+        return Path(_f) if _f else None  # local filename
 
     @property
     def calibration_files(self) -> List[str]:
@@ -350,12 +366,16 @@ class IRMovie(object):
 
     @property
     def is_file_uncompressed(self):
+        if self.filename is None:
+            return False
+
         statinfo = os.stat(self.filename)
         filesize = statinfo.st_size
         theoritical_uncompressed = (
-            self.images * self.image_size[1] * (self.image_size[0]) * 2 + 1024
+            self.images * ((self.image_size[1] * self.image_size[0] * 2) / 1e9)
+            + 1024 / 1e9
         )
-        return filesize == theoritical_uncompressed
+        return (filesize / 1e9) == theoritical_uncompressed
 
     @property
     def width(self):
@@ -370,26 +390,10 @@ class IRMovie(object):
     def data(self) -> np.ndarray:
         """
         Accessor to data contained in movie file.
-        There are two strategies for getting the data.
-
-            - Movie filename is uncompressed (.pcr format):
-                data is not read through librir C functions.
-                Instead, the whole data is read directly from the file to speed up
-                computation.
-                It can only work with calibration_index == 0
-
-            - Movie filename is compressed (.bin, .h264 formats):
-                Every image must be read individually and stacked up
 
         @return: 3D np.array representing IR data movie
         """
-        if self.is_file_uncompressed and (self._calibration_index == 0):
-            with open(self.filename, "rb") as f:
-                f.seek(self._header_offset)
-                data = np.fromfile(f, np.uint16, -1)
-            return np.reshape(data, (self.images,) + self.image_size)
-        else:
-            return self[:]
+        return self[:]
 
     @property
     def support_emissivity(self):
@@ -478,10 +482,13 @@ class IRMovie(object):
     @property
     def timestamps(self):
         if self._timestamps is None:
-            self._timestamps = np.array(
-                [get_image_time(self.handle, i) * 1e-9 for i in range(self.images)],
-                dtype=np.float64,
-            )
+            try:
+                self._timestamps = np.array(
+                    [get_image_time(self.handle, i) * 1e-9 for i in range(self.images)],
+                    dtype=np.float64,
+                )
+            except RuntimeError as e:
+                logger.warning(f"No timestamps in {self}")
         return self._timestamps
 
     @timestamps.setter
@@ -604,10 +611,16 @@ class IRMovie(object):
 
         h, w = self.image_size
         if times is None:
-            times = list(self.timestamps)
+            times = (
+                list(t * 1e9 for t in self.timestamps)
+                if self.timestamps is not None
+                else range(start_img, start_img + count)
+            )
         with IRSaver(dst_filename, w, h, h, clevel) as s:
             s.set_global_attributes(attrs)
             s.set_parameter("threads", cthreads)
+            # Force codec to be h264
+            s.set_parameter("codec", "h264")
             saved = 0
             for i in range(start_img, start_img + count):
                 img = self.load_pos(i, 0)
@@ -618,7 +631,7 @@ class IRMovie(object):
                     else frame_attributes[saved]
                 )
 
-                s.add_image(img, times[i] * 1e9, attributes=_frame_attributes)
+                s.add_image(img, times[i], attributes=_frame_attributes)
 
                 saved += 1
                 if saved % 100 == 0:

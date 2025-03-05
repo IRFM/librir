@@ -187,3 +187,4 @@ src/python/setup.py
 src/python/pyproject.toml
 src/python/README.md
 src/python/librir/libs
+install

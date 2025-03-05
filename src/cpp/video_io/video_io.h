@@ -44,6 +44,18 @@ extern "C"
 	\sa createFileReader
 	*/
 	IO_EXPORT int open_camera_file_reader(void *file_reader, int *file_format);
+
+	/**
+	Opens a camera video file from a memory reader (created with #createMemoryReader()) object and returns
+	the camera descriptor on success, NULL otherwise.
+	If \a file_format is not NULL, it will be set to the file type: FILE_FORMAT_PCR, FILE_FORMAT_WEST,
+	FILE_FORMAT_PCR_ENCAPSULATED, FILE_FORMAT_ZSTD_COMPRESSED, FILE_FORMAT_H264 or 0 on error.
+	The created camera object will take ownership of the file reader and will destroy it with #destroyMemoryReader()
+	on closing.
+	\sa createMemoryReader
+	*/
+	IO_EXPORT int open_camera_from_memory(void *ptr, int64_t size, int *file_format);
+
 	/**
 	Closes a previously opened camera or video file.
 	*/
@@ -114,35 +126,6 @@ extern "C"
 	Tells if given camera support custom emissivities (returns 1 or 0).
 	*/
 	IO_EXPORT int support_emissivity(int camera);
-
-	/**
-	Set the optical temperature for given camera in degree Celsius.
-	This should be the temperature of the B30.
-	Returns 0 on success, -1 on failure (if the camera does not support this feature).
-	*/
-	IO_EXPORT int set_optical_temperature(int camera, unsigned short temp_C);
-	/**
-	Returns the optical temperature (temperature of the B30).
-	Returns 0 on failure.
-	*/
-	IO_EXPORT unsigned short get_optical_temperature(int camera);
-
-	/**
-	Set the STEFI temperature for given camera in degree Celsius.
-	Returns 0 on success, -1 on failure (if the camera does not support this feature).
-	*/
-	IO_EXPORT int set_STEFI_temperature(int cam, unsigned short temp_C);
-	/**
-	Returns the STEFI temperature.
-	Returns 0 on failure.
-	*/
-	IO_EXPORT unsigned short get_STEFI_temperature(int cam);
-
-	/**
-	Returns 1 if the camera supports setting a custom optical temperature (temperature of the B30),
-	0 otherwise.
-	*/
-	IO_EXPORT int support_optical_temperature(int camera);
 
 	/**
 	Enable/disable bad pixels removal for given camera.
@@ -331,6 +314,8 @@ extern "C"
 
 	/*Internal use only*/
 	IO_EXPORT int correct_PCR_file(const char *filename, int width, int height, int freq);
+
+	IO_EXPORT int change_hcc_external_blackbody_temperature(const char *filename, float temperature);
 
 #ifdef __cplusplus
 }

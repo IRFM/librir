@@ -1,101 +1,119 @@
-# TODO: get blosc, minizip, jpeg-9b, charls from official repositories with FetchContent/find_package
+include(ExternalProject)
+include(FetchContent)
 
-IF(MSVC)
-SET(MINIZIP_SRC
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/adler32.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/compress.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/crc32.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/crc32.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/crypt.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/deflate.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/deflate.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/gzclose.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/gzguts.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/gzlib.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/gzread.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/gzwrite.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/infback.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/inffast.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/inffast.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/inffixed.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/inflate.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/inflate.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/inftrees.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/inftrees.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/ioapi.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/ioapi.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/iowin32.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/iowin32.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/miniunz.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/mztools.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/mztools.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/trees.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/trees.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/uncompr.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/unzip.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/unzip.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/zconf.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/zip.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/zip.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/zlib.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/zutil.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/zutil.h
-        PARENT_SCOPE
+set(3RD_64_INSTALL_DIR ${CMAKE_BINARY_DIR}/3rd-party-install CACHE INTERNAL "")
+
+if(BUILD_OFFLINE)
+    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        PROPERTY EP_UPDATE_DISCONNECTED 1)
+else()
+    # set(EP_DOWNLOAD_COMMAND DOWNLOAD_COMMAND 1)
+endif()
+
+cmake_policy(SET CMP0114 NEW)
+cmake_policy(SET CMP0135 NEW)
+
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.30.0")
+    cmake_policy(SET CMP0169 OLD)
+endif()
+
+set(ZSTD_INSTALL_DIR ${CMAKE_BINARY_DIR}/3rd-party-install)
+set(ZSTD_MINIMUM_VERSION 1.5.5)
+
+# we are statically building from ZSTD
+set(ZSTD_BUILD_SHARED OFF CACHE INTERNAL "" FORCE)
+FetchContent_Declare(
+    zstd
+    GIT_REPOSITORY "https://github.com/facebook/zstd.git"
+    GIT_TAG v${ZSTD_MINIMUM_VERSION}
+    OVERRIDE_FIND_PACKAGE
+    SOURCE_SUBDIR build/cmake
 )
-ELSE()
-SET(MINIZIP_SRC
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/adler32.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/compress.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/crc32.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/crc32.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/crypt.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/deflate.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/deflate.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/gzclose.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/gzguts.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/gzlib.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/gzread.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/gzwrite.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/infback.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/inffast.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/inffast.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/inffixed.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/inflate.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/inflate.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/inftrees.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/inftrees.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/ioapi.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/ioapi.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/miniunz.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/mztools.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/mztools.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/trees.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/trees.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/uncompr.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/unzip.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/unzip.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/zconf.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/zip.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/zip.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/zlib.h
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/zutil.c
-		${CMAKE_CURRENT_SOURCE_DIR}/minizip/zutil.h
-        PARENT_SCOPE
+FetchContent_GetProperties(zstd)
+
+if(NOT zstd_POPULATED)
+    FetchContent_Populate(zstd)
+    add_subdirectory(${zstd_SOURCE_DIR}/build/cmake ${zstd_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+
+set(ZSTD_INCLUDE_DIR ${zstd_SOURCE_DIR}/lib CACHE INTERNAL "")
+
+# minizip
+FetchContent_Declare(
+    minizip
+    GIT_REPOSITORY "https://github.com/zlib-ng/minizip-ng.git"
+    GIT_TAG 4.0.7
+    EXCLUDE_FROM_ALL
+    OVERRIDE_FIND_PACKAGE
 )
-ENDIF()
+message(STATUS "Fetching minizip")
+set(MZ_ZLIB OFF CACHE INTERNAL "" FORCE)
+set(MZ_BZIP2 OFF CACHE INTERNAL "" FORCE)
+set(MZ_LZMA OFF CACHE INTERNAL "" FORCE)
+set(MZ_ZSTD OFF CACHE INTERNAL "" FORCE)
+set(MZ_PKCRYPT OFF CACHE INTERNAL "" FORCE)
+set(MZ_WZAES OFF CACHE INTERNAL "" FORCE)
+set(MZ_ICONV OFF CACHE INTERNAL "" FORCE)
+set(MZ_OPENSSL OFF CACHE INTERNAL "" FORCE)
+set(MZ_LIBBSD OFF CACHE INTERNAL "" FORCE)
+set(ZSTD_DIR ${zstd_DIR} CACHE INTERNAL "" FORCE)
 
+FetchContent_GetProperties(minizip)
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/blosc)
-SET(BLOSC_SRC ${BLOSC_SRC} PARENT_SCOPE)
+if(NOT minizip_POPULATED)
+    FetchContent_Populate(minizip)
 
-SET(JPEG9B_DIR ${CMAKE_CURRENT_SOURCE_DIR}/jpeg-9b PARENT_SCOPE)
-SET(CHARLS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/charls PARENT_SCOPE)
+    # we need to add the subdirectory to get unzip.h compat interface
+    add_subdirectory(${minizip_SOURCE_DIR} ${minizip_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
 
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/jpeg-9b JPEG9B_SRC)
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR}/charls CHARLS_SRC)
+# set(ZSTD_INCLUDE_DIR ${CMAKE_BINARY_DIR}/_deps/zstd-src/lib CACHE INTERNAL "" FORCE)
+set(MINIZIP_SOURCES
+    ${minizip_SOURCE_DIR}/mz_crypt.c
+    ${minizip_SOURCE_DIR}/mz_os.c
+    ${minizip_SOURCE_DIR}/mz_strm.c
+    ${minizip_SOURCE_DIR}/mz_strm_buf.c
+    ${minizip_SOURCE_DIR}/mz_strm_mem.c
+    ${minizip_SOURCE_DIR}/mz_strm_split.c
+    ${minizip_SOURCE_DIR}/mz_zip.c
+    ${minizip_SOURCE_DIR}/mz_strm_zstd.c
 
-SET(JPEG9B_SRC ${JPEG9B_SRC} PARENT_SCOPE)
-SET(CHARLS_SRC ${CHARLS_SRC} PARENT_SCOPE)
+    # ${minizip_SOURCE_DIR}/mz_zip_rw.c
+    ${minizip_SOURCE_DIR}/mz_compat.c
 
+    # ZSTD
+    ${minizip_SOURCE_DIR}/mz_strm_zstd.c
+)
 
-SET(EXTRAS_INCLUDE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PARENT_SCOPE)
+if(MSVC OR WIN32)
+    list(APPEND MINIZIP_SOURCES ${minizip_SOURCE_DIR}/mz_os_win32.c)
+    list(APPEND MINIZIP_SOURCES ${minizip_SOURCE_DIR}/mz_strm_os_win32.c)
+elseif(LINUX)
+    list(APPEND MINIZIP_SOURCES ${minizip_SOURCE_DIR}/mz_os_posix.c)
+    list(APPEND MINIZIP_SOURCES ${minizip_SOURCE_DIR}/mz_strm_os_posix.c)
+endif()
+
+set(MINIZIP_HEADERS
+    ${minizip_SOURCE_DIR}/mz.h
+    ${minizip_SOURCE_DIR}/mz_os.h
+    ${minizip_SOURCE_DIR}/mz_crypt.h
+    ${minizip_SOURCE_DIR}/mz_strm.h
+    ${minizip_SOURCE_DIR}/mz_strm_buf.h
+    ${minizip_SOURCE_DIR}/mz_strm_mem.h
+    ${minizip_SOURCE_DIR}/mz_strm_split.h
+    ${minizip_SOURCE_DIR}/mz_strm_os.h
+    ${minizip_SOURCE_DIR}/mz_zip.h
+    ${minizip_SOURCE_DIR}/mz_strm_zstd.h
+
+    # Built 
+    ${minizip_BINARY_DIR}/unzip.h
+
+    # ZSTD
+    ${minizip_SOURCE_DIR}/mz_strm_zstd.h
+)
+
+set(MINIZIP_SRC ${MINIZIP_SOURCES} ${MINIZIP_HEADERS} PARENT_SCOPE)
+set(MINIZIP_HEADERS ${MINIZIP_HEADERS} CACHE INTERNAL "")
+set(MINIZIP_INCLUDE_DIR ${minizip_BINARY_DIR} ${minizip_SOURCE_DIR} CACHE INTERNAL "")
+
+include(FFMPEGHandling.cmake)

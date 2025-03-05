@@ -94,6 +94,11 @@ Create and return a FileAccess from a local file
 TOOLS_EXPORT FileAccess createFileAccess(const char *filename, int64_t chunk_size = 4096);
 
 /**
+Create and return a FileAccess working on a memory chunk
+*/
+TOOLS_EXPORT FileAccess createMemoryAccess( void *data, int64_t size);
+ 
+/**
 Create a file reader object from a #FileAccess object.
 This file reader can be passed to the librir function #open_camera_file_reader().
 */

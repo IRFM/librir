@@ -10,10 +10,6 @@ from ..low_level.misc import (
     toArray,
 )
 
-BLOSC_NOSHUFFLE = 0
-BLOSC_SHUFFLE = 1
-BLOSC_BITSHUFFLE = 2
-
 
 def zstd_compress_bound(size):
     """
@@ -81,65 +77,15 @@ def zstd_decompress(src):
     return out[0:ret]
 
 
-def blosc_compress_zstd(src, typesize, shuffle, level=1):
+def attrs_read_file_reader(data: bytes):
     """
-    Zstd interface.
-    Compress a bytes object and return the result.
+    Open attribute file reader and returns a handle to it
     """
-    _tools.blosc_compress_zstd.argtypes = [
-        ct.POINTER(ct.c_char),
-        ct.c_longlong,
-        ct.POINTER(ct.c_char),
-        ct.c_longlong,
-        ct.c_int,
-        ct.c_int,
-        ct.c_int,
-    ]
-
-    src = bytes(src)
-
-    outsize = zstd_compress_bound(len(src))
-
-    if sys.version_info[0] > 2:
-        out = bytes(outsize)
-    else:
-        out = "\00" * outsize
-    ret = _tools.blosc_compress_zstd(
-        src, len(src), out, outsize, int(typesize), int(shuffle), level
-    )
-    if ret < 0:
-        raise RuntimeError("'blosc_compress_zstd': unknown error")
-    return out[0:ret]
-
-
-def blosc_decompress_zstd(src):
-    """
-    Zstd interface.
-    Decompress a bytes object (previously compressed with zstd_compress) and return the result.
-    """
-    _tools.blosc_decompress_zstd.argtypes = [
-        ct.POINTER(ct.c_char),
-        ct.c_longlong,
-        ct.POINTER(ct.c_char),
-        ct.c_longlong,
-    ]
-    _tools.zstd_decompress_bound.argtypes = [ct.POINTER(ct.c_char), ct.c_longlong]
-
-    src = bytes(src)
-
-    outsize = _tools.zstd_decompress_bound(src, len(src)) + 64
-    if outsize < 0:
-        raise RuntimeError("'blosc_decompress_zstd': wrong input format")
-
-    if sys.version_info[0] > 2:
-        out = bytes(outsize)
-    else:
-        out = "\00" * outsize
-
-    ret = _tools.blosc_decompress_zstd(src, len(src), out, outsize)
-    if ret < 0:
-        raise RuntimeError("'zstd_decompress': unknown error")
-    return out[0:ret]
+    _tools.attrs_read_file_reader.argtypes = [ct.c_char_p]
+    tmp = _tools.attrs_read_file_reader(data)
+    if tmp < 0:
+        raise RuntimeError("An error occured while calling 'attrs_read_file_reader'")
+    return tmp
 
 
 def attrs_open_file(filename):
@@ -151,6 +97,19 @@ def attrs_open_file(filename):
     if tmp < 0:
         raise RuntimeError("An error occured while calling 'attrs_open_file'")
     return tmp
+
+
+def attrs_open_buffer(buf: bytes):
+    """
+    Open attributes from an in-memory file.
+    Attributes are read-only.
+    """
+    res = _tools.attrs_open_from_memory(
+        ct.cast(ct.c_char_p(buf), ct.c_void_p), len(buf)
+    )
+    if res == 0:
+        raise RuntimeError("cannot read attributes from memory")
+    return res
 
 
 def attrs_close(handle):
@@ -355,7 +314,8 @@ def attrs_timestamps(handle):
 
 def attrs_set_times(handle, times):
     _tools.attrs_set_times.argtypes = [ct.c_int, ct.POINTER(ct.c_int64), ct.c_int]
-    if type(times) != np.ndarray or times.dtype != np.int64:
+
+    if not isinstance(times, np.ndarray) or (times.dtype != np.int64):
         times = np.array(list(times), dtype=np.int64)
     tmp = _tools.attrs_set_times(
         handle, times.ctypes.data_as(ct.POINTER(ct.c_int64)), int(times.shape[0])
@@ -392,15 +352,15 @@ def attrs_set_frame_attributes(handle, frame, attributes):
     klens = []
     vlens = []
     for k, v in attributes.items():
-        if type(k) == bytes:
+        if isinstance(k, bytes):
             ks = k
-        elif type(k) == str:
+        elif isinstance(k, str):
             ks = k.encode("ascii")
         else:
             ks = str(k).encode("ascii")
-        if type(v) == bytes:
+        if isinstance(v, bytes):
             vs = v
-        elif type(v) == str:
+        elif isinstance(v, str):
             vs = v.encode("ascii")
         else:
             vs = str(v).encode("ascii")
@@ -448,15 +408,15 @@ def attrs_set_global_attributes(handle, attributes):
     klens = []
     vlens = []
     for k, v in attributes.items():
-        if type(k) == bytes:
+        if isinstance(k, bytes):
             ks = k
-        elif type(k) == str:
+        elif isinstance(k, str):
             ks = k.encode("utf8")
         else:
             ks = str(k).encode("utf8")
-        if type(v) == bytes:
+        if isinstance(v, bytes):
             vs = v
-        elif type(v) == str:
+        elif isinstance(v, str):
             vs = v.encode("utf8")
         else:
             vs = str(v).encode("utf8")

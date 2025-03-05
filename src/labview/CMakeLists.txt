@@ -1,1 +1,25 @@
 # TODO: some packaging to make it installable
+
+
+
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+    DESTINATION labview
+    FILES_MATCHING PATTERN "*"
+)
+
+
+install(IMPORTED_RUNTIME_ARTIFACTS ${LIBRIR_TARGETS} ${FFMPEG_SHARED_LIBRARIES} ${FFMPEG_ADDITIONAL_DEPENDENCIES}
+    # RUNTIME_DEPENDENCY_SET labview-set
+    # RUNTIME
+    DESTINATION labview/libs
+)
+
+
+# for development purposes
+install(IMPORTED_RUNTIME_ARTIFACTS ${LIBRIR_TARGETS}
+    RUNTIME_DEPENDENCY_SET labview-dev-set
+    RUNTIME
+    DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/libs
+)
+
+

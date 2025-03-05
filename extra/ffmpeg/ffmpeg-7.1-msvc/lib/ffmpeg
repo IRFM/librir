@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+if [[ -t 1 ]]; then
+/usr/bin/winpty "$( dirname ${BASH_SOURCE[0]} )/ffmpeg.exe" "$@"
+else "$( dirname ${BASH_SOURCE[0]} )/ffmpeg.exe" "$@"; fi
