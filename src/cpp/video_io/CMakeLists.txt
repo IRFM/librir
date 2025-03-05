@@ -10,7 +10,7 @@ if(BUILD_SHARED_LIBS)
 endif()
 
 # Set sources
-SET(LIBRIR_IO_SRC
+set(LIBRIR_IO_SRC
     BaseCalibration.cpp
     IRFileLoader.cpp
     h264.cpp
@@ -23,7 +23,7 @@ if(USE_ZFILE)
     list(APPEND LIBRIR_IO_SRC ZFile.cpp)
 endif()
 
-SET(LIBRIR_IO_SRC ${LIBRIR_IO_SRC} PARENT_SCOPE)
+set(LIBRIR_IO_SRC ${LIBRIR_IO_SRC} PARENT_SCOPE)
 
 set(IO_HEADERS
     IRVideoLoader.h
@@ -97,7 +97,7 @@ install(TARGETS video_io EXPORT VideoIOTargets
     FILE_SET video_io_api_header DESTINATION include/api
 )
 
-# install(
+# install( 
 # TARGETS ${LIBRIR_TARGETS}
 # EXPORT VideoIOTargets
 # )

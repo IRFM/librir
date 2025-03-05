@@ -25,27 +25,27 @@
 
 
 # SET(LIBRIR_TEST_SRC
-	# ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp
-	# )
+# ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp
+# )
 
 # #~ include_directories(${CMAKE_CURRENT_SOURCE_DIR}
-	# #~ ${TOOLS_HEADERS_DIR}
-	# #~ ${GEOMETRY_HEADERS_DIR}
-	# #~ ${SIGNAL_PROCESSING_HEADERS_DIR}
-	# #~ ${VIDEO_IO_HEADERS_DIR}
-	# #~ ${WEST_HEADERS_DIR}
-	# #~ ${ZSTD_INCLUDE_DIR}
-	# #~ )
+# #~ ${TOOLS_HEADERS_DIR}
+# #~ ${GEOMETRY_HEADERS_DIR}
+# #~ ${SIGNAL_PROCESSING_HEADERS_DIR}
+# #~ ${VIDEO_IO_HEADERS_DIR}
+# #~ ${WEST_HEADERS_DIR}
+# #~ ${ZSTD_INCLUDE_DIR}
+# #~ )
 
 
 # # include_directories(${ZSTD_INCLUDE_DIR})
 
 # if (MSVC)
-	# SET(FFMPEG_LIB_DIR ${CMAKE_SOURCE_DIR}/3rd_64/ffmpeg-4.3-msvc/lib)
-	# SET(FFMPEG_LIBS avdevice avformat avcodec swscale avutil swresample avfilter Vfw32 shlwapi strmbase)
+# SET(FFMPEG_LIB_DIR ${CMAKE_SOURCE_DIR}/3rd_64/ffmpeg-4.3-msvc/lib)
+# SET(FFMPEG_LIBS avdevice avformat avcodec swscale avutil swresample avfilter Vfw32 shlwapi strmbase)
 # ELSE()
-	# SET(FFMPEG_LIB_DIR ${CMAKE_SOURCE_DIR}/3rd_64/ffmpeg/install/lib)
-	# SET(FFMPEG_LIBS avdevice avformat avcodec swscale avutil swresample avfilter)
+# SET(FFMPEG_LIB_DIR ${CMAKE_SOURCE_DIR}/3rd_64/ffmpeg/install/lib)
+# SET(FFMPEG_LIBS avdevice avformat avcodec swscale avutil swresample avfilter)
 # ENDIF()
 # link_directories(${FFMPEG_LIB_DIR})
 
@@ -61,14 +61,14 @@
 # target_include_directories(test_west PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # set_target_properties(test_west PROPERTIES
-	# PUBLIC_HEADER "${TEST_HEADERS}"
-	# # LIBRARY_OUTPUT_DIRECTORY ${DESTINATION_DIR}
-	# # RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+# PUBLIC_HEADER "${TEST_HEADERS}"
+# # LIBRARY_OUTPUT_DIRECTORY ${DESTINATION_DIR}
+# # RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
 # )
 
 # add_test(NAME test_west 
-		 # WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/out
-		 # COMMAND test_west)
+# WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/out
+# COMMAND test_west)
 
 
 

@@ -3,9 +3,9 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(import
-	VERSION 0.0
-	DESCRIPTION "import"
-	LANGUAGES CXX C
+    VERSION 0.0
+    DESCRIPTION "import"
+    LANGUAGES CXX C
 )
 
 set(CMAKE_CXX_STANDARD 14)

@@ -3,10 +3,10 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(librir
-	VERSION 6.0.0
-	DESCRIPTION "librir"
-	HOMEPAGE_URL "https://github.com/IRFM/librir"
-	LANGUAGES CXX C
+    VERSION 6.0.0
+    DESCRIPTION "librir"
+    HOMEPAGE_URL "https://github.com/IRFM/librir"
+    LANGUAGES CXX C
 )
 
 set(CMAKE_CXX_STANDARD 14)
@@ -18,15 +18,15 @@ include(GenerateExportHeader)
 # option(LOCAL_INSTALL "Install locally" ON)
 set(FFMPEG_VERSION_REQUIRED "7.1" CACHE STRING "FFmpeg version to use")
 
-IF(NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-	IF(NOT MSVC)
-		SET(CMAKE_INSTALL_RPATH $ORIGIN)
+if(NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    if(NOT MSVC)
+        set(CMAKE_INSTALL_RPATH $ORIGIN)
 
-		SET(CMAKE_SKIP_BUILD_RPATH FALSE)
-		SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-		SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-	ENDIF()
-ENDIF()
+        set(CMAKE_SKIP_BUILD_RPATH FALSE)
+        set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+        set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+    endif()
+endif()
 
 option(ENABLE_H264 "Enable h264 capability for compression" ON)
 
@@ -38,16 +38,16 @@ add_definitions("-D_OPENMP")
 option(LIBRIR_ENABLE_ZSTD "Enable ZSTD support" ON)
 
 if(LIBRIR_ENABLE_ZSTD)
-	add_compile_definitions(HAVE_ZSTD)
-	add_compile_definitions(ZSTD_COMPRESS)
+    add_compile_definitions(HAVE_ZSTD)
+    add_compile_definitions(ZSTD_COMPRESS)
 endif()
 
-IF(WIN32)
-	add_compile_definitions(NOMINMAX)
-	add_compile_definitions(WIN64)
-	add_compile_definitions(DISABLE_WINRT_DEPRECATION)
-	add_compile_definitions(_WINDOWS)
-ENDIF()
+if(WIN32)
+    add_compile_definitions(NOMINMAX)
+    add_compile_definitions(WIN64)
+    add_compile_definitions(DISABLE_WINRT_DEPRECATION)
+    add_compile_definitions(_WINDOWS)
+endif()
 
 configure_file(rir_config.h.in rir_config.h)
 
@@ -68,7 +68,7 @@ include_directories(${RIR_CONFIG_DIR})
 option(BUILD_FFMPEG "build FFMPEG from source" ON)
 
 if(MSVC AND NOT FFMPEG_DIR)
-	set(BUILD_FFMPEG OFF)
+    set(BUILD_FFMPEG OFF)
 endif()
 
 add_subdirectory(extra)
@@ -91,7 +91,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/requirements.txt DESTINATION python)
 
 # for FFMPEG and additional artifacts
 install(IMPORTED_RUNTIME_ARTIFACTS video_io geometry signal_processing tools
-	DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 # Configure and install PackageConfig files
@@ -117,14 +117,14 @@ install(IMPORTED_RUNTIME_ARTIFACTS video_io geometry signal_processing tools
 include(CMakePackageConfigHelpers)
 
 configure_package_config_file(cmake/librirConfig.cmake.in
-	${CMAKE_CURRENT_BINARY_DIR}/librirConfig.cmake
-	INSTALL_DESTINATION lib/cmake
+    ${CMAKE_CURRENT_BINARY_DIR}/librirConfig.cmake
+    INSTALL_DESTINATION lib/cmake
 )
 
 write_basic_package_version_file(
-	${CMAKE_CURRENT_BINARY_DIR}/librirConfigVersion.cmake
-	VERSION ${PROJECT_VERSION}
-	COMPATIBILITY SameMajorVersion)
+    ${CMAKE_CURRENT_BINARY_DIR}/librirConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion)
 
 # export(EXPORT LibrirTargets
 # FILE "${CMAKE_CURRENT_BINARY_DIR}/librirConfig.cmake"
@@ -133,9 +133,9 @@ write_basic_package_version_file(
 set(ConfigPackageLocation lib/cmake/librir)
 
 install(
-	FILES
-	"${CMAKE_CURRENT_BINARY_DIR}/librirConfig.cmake"
-	DESTINATION lib/cmake/librir
+    FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/librirConfig.cmake"
+    DESTINATION lib/cmake/librir
 )
 
 # Generate librir.pc
