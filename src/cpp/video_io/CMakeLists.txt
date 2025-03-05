@@ -88,9 +88,9 @@ set_property(TARGET video_io APPEND PROPERTY
 )
 
 install(TARGETS video_io EXPORT VideoIOTargets
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin
+    # LIBRARY DESTINATION lib
+    # ARCHIVE DESTINATION lib
+    # RUNTIME DESTINATION bin
     COMPONENT VideoIO
     INCLUDES DESTINATION include
     FILE_SET video_io_public_headers

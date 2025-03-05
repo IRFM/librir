@@ -54,10 +54,10 @@ set_property(TARGET geometry APPEND PROPERTY
 )
 
 install(TARGETS geometry EXPORT GeometryTargets
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
+    # LIBRARY DESTINATION lib
+    # ARCHIVE DESTINATION lib
+    # RUNTIME DESTINATION bin
     COMPONENT Geometry
-    RUNTIME DESTINATION bin
     INCLUDES DESTINATION include
     FILE_SET geometry_public_headers
     FILE_SET geometry_api_header DESTINATION include/api

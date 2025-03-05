@@ -59,9 +59,9 @@ set_property(TARGET signal_processing APPEND PROPERTY
 )
 
 install(TARGETS signal_processing EXPORT SignalProcessingTargets
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin
+    # LIBRARY DESTINATION lib
+    # ARCHIVE DESTINATION lib
+    # RUNTIME DESTINATION bin
     COMPONENT SignalProcessing
     INCLUDES DESTINATION include
     FILE_SET signal_processing_public_headers

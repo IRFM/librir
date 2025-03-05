@@ -85,9 +85,9 @@ set_property(TARGET tools APPEND PROPERTY
 get_target_property(TOOLS_PUBLIC_HEADERS tools INTERFACE_SOURCES)
 install(TARGETS tools EXPORT ToolsTargets
 
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin
+    # LIBRARY DESTINATION lib
+    # ARCHIVE DESTINATION lib
+    # RUNTIME DESTINATION bin
     COMPONENT Tools
     INCLUDES DESTINATION include
     FILE_SET tools_public_headers
