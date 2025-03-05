@@ -83,14 +83,15 @@ target_include_directories(tools PRIVATE ${MINIZIP_INCLUDE_DIR})
 
 # Configure and install PackageConfig files
 generate_export_header(tools)
-set_property(TARGET tools PROPERTY NO_SONAME true)
-# set_property(TARGET tools PROPERTY VERSION ${PROJECT_VERSION})
-# set_property(TARGET tools PROPERTY SOVERSION ${PROJECT_VERSION_MAJOR})
-# set_property(TARGET tools PROPERTY
-#     INTERFACE_tools_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
-# set_property(TARGET tools APPEND PROPERTY
-#     COMPATIBLE_INTERFACE_STRING tools_MAJOR_VERSION
-# )
+# set_property(TARGET tools PROPERTY NO_SONAME true)
+# set_property(TARGET tools PROPERTY IMPORTED_NO_SONAME true)
+set_property(TARGET tools PROPERTY VERSION ${PROJECT_VERSION})
+set_property(TARGET tools PROPERTY SOVERSION ${PROJECT_VERSION_MAJOR})
+set_property(TARGET tools PROPERTY
+    INTERFACE_tools_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
+set_property(TARGET tools APPEND PROPERTY
+    COMPATIBLE_INTERFACE_STRING tools_MAJOR_VERSION
+)
 
 # get_target_property(TOOLS_PUBLIC_HEADERS tools INTERFACE_SOURCES)
 install(TARGETS tools EXPORT ToolsTargets
