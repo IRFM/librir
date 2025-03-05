@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(ffmpeg_librir
-    VERSION 4.3
+    VERSION 7.1
     DESCRIPTION "ffmpeg_librir"
 
     LANGUAGES CXX C
@@ -15,6 +15,7 @@ include(FetchContent)
 
 set(3RD_64_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
 option(FFMPEG_LOCAL_INSTALL "Install locally" ON)
+option(ENABLE_CUDA_FFMPEG "Enable CUDA acceleration for FFMPEG" OFF)
 
 IF(FFMPEG_LOCAL_INSTALL)
     set(3RD_64_INSTALL_DIR ${CMAKE_BINARY_DIR}/3rd-party-install)
@@ -112,6 +113,42 @@ ExternalProject_Add_StepTargets(x264 build)
 
 set(_PKG_CONFIG_PATH $ENV{PKG_CONFIG_PATH})
 
+set(FFMPEG_DEPENDENCIES kvazaar x264)
+
+if(ENABLE_CUDA_FFMPEG)
+    find_package(CUDAToolkit REQUIRED)
+
+    if(CUDAToolkit_FOUND)
+        FetchContent_Declare(
+            ffnvcodec
+            GIT_REPOSITORY https://git.videolan.org/git/ffmpeg/nv-codec-headers.git
+            GIT_TAG sdk/12.0
+        )
+        FetchContent_MakeAvailable(ffnvcodec)
+
+        set(NVCODEC_PREFIX_MODIFICATION_CMD sed -i "s#PREFIX = /usr/local#PREFIX = ${3RD_64_INSTALL_DIR}#g" ${CMAKE_BINARY_DIR}/_deps/ffnvcodec-src/Makefile)
+
+        ExternalProject_Add(ffnvcodec
+            SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/ffnvcodec-src
+            CONFIGURE_COMMAND ""
+            INSTALL_COMMAND ${NVCODEC_PREFIX_MODIFICATION_CMD} && $(MAKE) install
+            UPDATE_DISCONNECTED true
+            INSTALL_DIR ${3RD_64_INSTALL_DIR}
+            BUILD_IN_SOURCE true
+            DOWNLOAD_COMMAND ""
+        )
+        ExternalProject_Add_StepTargets(ffnvcodec install)
+
+        set(NVCC_FLAGS "-gencode arch=compute_52,code=sm_52 -O2")
+        set(CUDA_CONFIGURE_ARGS --enable-nonfree --enable-cuda-nvcc --enable-libnpp --extra-cflags=-I/usr/local/cuda/include --extra-cflags=-I${3RD_64_INSTALL_DIR}/include --extra-ldflags=-L/usr/local/cuda/lib64 --disable-static --enable-shared --nvccflags=${NVCC_FLAGS} --enable-nvenc --enable-nvdec --enable-opencl)
+
+    else()
+        message(STATUS "CUDA not found ! No GPU acceleration")
+        set(CUDA_CONFIGURE_ARGS)
+        set(FFMPEG_DEPENDENCIES kvazaar x264 ffnvcodec-install)
+    endif()
+endif()
+
 FetchContent_Declare(
     ffmpeg
     GIT_REPOSITORY https://git.ffmpeg.org/ffmpeg.git
@@ -133,11 +170,10 @@ ExternalProject_Add(ffmpeg
     UPDATE_DISCONNECTED true
     CONFIGURE_COMMAND ${FFMPEG_CONFIGURE_CMD} --prefix=<INSTALL_DIR>
     BUILD_COMMAND $(MAKE)
-
+    INSTALL_COMMAND make install
     INSTALL_DIR ${3RD_64_INSTALL_DIR}
     BUILD_IN_SOURCE true
-    DEPENDS kvazaar
-    DEPENDS x264
+    DEPENDS ${FFMPEG_DEPENDENCIES}
     DOWNLOAD_COMMAND ""
     EXCLUDE_FROM_ALL
 )
@@ -149,14 +185,14 @@ file(MAKE_DIRECTORY ${FFMPEG_INCLUDE_DIRS})
 file(MAKE_DIRECTORY ${FFMPEG_LIB_DIR})
 
 set(FFMPEG_SHARED_LIBRARIES_VERSIONS
-    58.91.100 # libavcodec
-    58.10.100 # libavdevice
-    7.85.100 # libavfilter
-    58.45.100 # libavformat
-    56.51.100 # libavutil
-    3.7.100 # libswresample
-    5.7.100 # libswscale
-    55.7.100 # libpostproc
+    61.19.101 # libavcodec
+    61.3.100 # libavdevice
+    10.4.100 # libavfilter
+    61.7.100 # libavformat
+    59.39.100 # libavutil
+    5.3.100 # libswresample
+    8.3.100 # libswscale
+    58.3.100 # libpostproc
 )
 set(FFMPEG_SHARED_LIBRARIES)
 
@@ -170,6 +206,7 @@ foreach(component version IN ZIP_LISTS REQUIRED_FFMPEG_COMPONENTS FFMPEG_SHARED_
     list(GET VERSION_LIST 0 ${component}_VERSION_MAJOR)
 
     set(${component}_LIBRARY_SONAME lib${component}.so.${${component}_VERSION_MAJOR})
+
     # set(${component}_MAJOR_SOVERSION_LIBRARY ${FFMPEG_LIB_DIR}/lib${component}.so.${${component}_VERSION_MAJOR})
     set(ACTUAL_${component}_LIBRARY ${FFMPEG_LIB_DIR}/lib${component}.so.${version})
 
@@ -178,6 +215,7 @@ foreach(component version IN ZIP_LISTS REQUIRED_FFMPEG_COMPONENTS FFMPEG_SHARED_
         INTERFACE_INCLUDE_DIRECTORIES ${FFMPEG_INCLUDE_DIRS}
         IMPORTED_SONAME "${${component}_LIBRARY_SONAME}"
     )
+
     # get_target_property(${component}_SOVERSION "FFMPEG::lib${component}" SOVERSION )
     message(STATUS "${component}_SOVERSION : ${${component}_LIBRARY_SONAME}")
 
