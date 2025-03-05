@@ -80,7 +80,7 @@ add_custom_target(copy_dlls_to_python_package_librir ALL
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_SOURCE_DIR}/librir/libs
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different
 	$<TARGET_FILE:video_io> $<TARGET_RUNTIME_DLLS:video_io>
-	$<TARGET_FILE:tools> $<TARGET_RUNTIME_DLLS:tools>
+	$<TARGET_FILE:tools> $<TARGET_LINKER_FILE:tools>.${PROJECT_VERSION} $<TARGET_RUNTIME_DLLS:tools>
 	$<TARGET_FILE:geometry> $<TARGET_RUNTIME_DLLS:geometry>
 	$<TARGET_FILE:signal_processing> $<TARGET_RUNTIME_DLLS:signal_processing>
 	${_ffmpeg_commands}

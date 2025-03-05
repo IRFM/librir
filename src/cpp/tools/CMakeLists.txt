@@ -1,3 +1,11 @@
+# cmake_minimum_required(VERSION 3.16)
+
+# project(tools
+# 	VERSION 6.0.0
+# 	DESCRIPTION "librir tools module"
+# 	LANGUAGES CXX C
+# )
+
 # Find or fetch ZSTD
 include(ExternalProject)
 include(FetchContent)
@@ -75,19 +83,21 @@ target_include_directories(tools PRIVATE ${MINIZIP_INCLUDE_DIR})
 
 # Configure and install PackageConfig files
 generate_export_header(tools)
-set_property(TARGET tools PROPERTY VERSION ${PROJECT_VERSION})
-set_property(TARGET tools PROPERTY SOVERSION ${PROJECT_VERSION_MAJOR})
-set_property(TARGET tools PROPERTY
-    INTERFACE_tools_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
-set_property(TARGET tools APPEND PROPERTY
-    COMPATIBLE_INTERFACE_STRING tools_MAJOR_VERSION
-)
-get_target_property(TOOLS_PUBLIC_HEADERS tools INTERFACE_SOURCES)
+set_property(TARGET tools PROPERTY NO_SONAME true)
+# set_property(TARGET tools PROPERTY VERSION ${PROJECT_VERSION})
+# set_property(TARGET tools PROPERTY SOVERSION ${PROJECT_VERSION_MAJOR})
+# set_property(TARGET tools PROPERTY
+#     INTERFACE_tools_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
+# set_property(TARGET tools APPEND PROPERTY
+#     COMPATIBLE_INTERFACE_STRING tools_MAJOR_VERSION
+# )
+
+# get_target_property(TOOLS_PUBLIC_HEADERS tools INTERFACE_SOURCES)
 install(TARGETS tools EXPORT ToolsTargets
 
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin
+    # LIBRARY DESTINATION lib
+    # ARCHIVE DESTINATION lib
+    # RUNTIME DESTINATION bin
     COMPONENT Tools
     INCLUDES DESTINATION include
     FILE_SET tools_public_headers

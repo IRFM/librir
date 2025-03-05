@@ -79,18 +79,19 @@ target_sources(
 
 # Configure and install PackageConfig files
 generate_export_header(video_io)
-set_property(TARGET video_io PROPERTY VERSION ${PROJECT_VERSION})
-set_property(TARGET video_io PROPERTY SOVERSION ${PROJECT_VERSION_MAJOR})
-set_property(TARGET video_io PROPERTY
-    INTERFACE_video_io_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
-set_property(TARGET video_io APPEND PROPERTY
-    COMPATIBLE_INTERFACE_STRING video_io_MAJOR_VERSION
-)
+set_property(TARGET video_io PROPERTY NO_SONAME true)
+# set_property(TARGET video_io PROPERTY VERSION ${PROJECT_VERSION})
+# set_property(TARGET video_io PROPERTY SOVERSION ${PROJECT_VERSION_MAJOR})
+# set_property(TARGET video_io PROPERTY
+#     INTERFACE_video_io_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
+# set_property(TARGET video_io APPEND PROPERTY
+#     COMPATIBLE_INTERFACE_STRING video_io_MAJOR_VERSION
+# )
 
 install(TARGETS video_io EXPORT VideoIOTargets
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-    RUNTIME DESTINATION bin
+    # LIBRARY DESTINATION lib
+    # ARCHIVE DESTINATION lib
+    # RUNTIME DESTINATION bin
     COMPONENT VideoIO
     INCLUDES DESTINATION include
     FILE_SET video_io_public_headers

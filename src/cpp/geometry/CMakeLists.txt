@@ -45,19 +45,20 @@ target_sources(
 
 # Configure and install PackageConfig files
 generate_export_header(geometry)
-set_property(TARGET geometry PROPERTY VERSION ${PROJECT_VERSION})
-set_property(TARGET geometry PROPERTY SOVERSION ${PROJECT_VERSION_MAJOR})
-set_property(TARGET geometry PROPERTY
-	INTERFACE_geometry_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
-set_property(TARGET geometry APPEND PROPERTY
-	COMPATIBLE_INTERFACE_STRING geometry_MAJOR_VERSION
-)
+set_property(TARGET geometry PROPERTY NO_SONAME true)
+# set_property(TARGET geometry PROPERTY VERSION ${PROJECT_VERSION})
+# set_property(TARGET geometry PROPERTY SOVERSION ${PROJECT_VERSION_MAJOR})
+# set_property(TARGET geometry PROPERTY
+# 	INTERFACE_geometry_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
+# set_property(TARGET geometry APPEND PROPERTY
+# 	COMPATIBLE_INTERFACE_STRING geometry_MAJOR_VERSION
+# )
 
 install(TARGETS geometry EXPORT GeometryTargets
-	LIBRARY DESTINATION lib
-	ARCHIVE DESTINATION lib
+	# LIBRARY DESTINATION lib
+	# ARCHIVE DESTINATION lib
+	# RUNTIME DESTINATION bin
 	COMPONENT Geometry
-	RUNTIME DESTINATION bin
 	INCLUDES DESTINATION include
 	FILE_SET geometry_public_headers
 	FILE_SET geometry_api_header DESTINATION include/api

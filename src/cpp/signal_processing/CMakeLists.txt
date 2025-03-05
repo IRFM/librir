@@ -50,18 +50,19 @@ target_sources(
 
 # Configure and install PackageConfig files
 generate_export_header(signal_processing)
-set_property(TARGET signal_processing PROPERTY VERSION ${PROJECT_VERSION})
-set_property(TARGET signal_processing PROPERTY SOVERSION ${PROJECT_VERSION_MAJOR})
-set_property(TARGET signal_processing PROPERTY
-	INTERFACE_signal_processing_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
-set_property(TARGET signal_processing APPEND PROPERTY
-	COMPATIBLE_INTERFACE_STRING signal_processing_MAJOR_VERSION
-)
+set_property(TARGET signal_processing PROPERTY NO_SONAME true)
+# set_property(TARGET signal_processing PROPERTY VERSION ${PROJECT_VERSION})
+# set_property(TARGET signal_processing PROPERTY SOVERSION ${PROJECT_VERSION_MAJOR})
+# set_property(TARGET signal_processing PROPERTY
+# 	INTERFACE_signal_processing_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
+# set_property(TARGET signal_processing APPEND PROPERTY
+# 	COMPATIBLE_INTERFACE_STRING signal_processing_MAJOR_VERSION
+# )
 
 install(TARGETS signal_processing EXPORT SignalProcessingTargets
-	LIBRARY DESTINATION lib
-	ARCHIVE DESTINATION lib
-	RUNTIME DESTINATION bin
+	# LIBRARY DESTINATION lib
+	# ARCHIVE DESTINATION lib
+	# RUNTIME DESTINATION bin
 	COMPONENT SignalProcessing
 	INCLUDES DESTINATION include
 	FILE_SET signal_processing_public_headers
