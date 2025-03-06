@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LUT_CALIBRATION_H
+#define LUT_CALIBRATION_H
 
 #include <string>
 #include <vector>
@@ -16,17 +17,19 @@ namespace rir
     /**
      * Base class for IR image calibration in surface temperature
      */
-    class BaseCalibration
+    class IO_EXPORT LutCalibration : public BaseCalibration
     {
+
     public:
         enum Features
         {
             SupportGlobalEmissivity = 0x01,
             SupportPixelEmissivity = 0x02,
         };
-
-        virtual ~BaseCalibration() {}
-        virtual std::string name() const;
+        LutCalibration(const std::string &lut);
+        LutCalibration();
+        virtual ~LutCalibration() { delete m_data; };
+        virtual std::string name() const { return "LutCalibration"; }
 
         /** Tells if this calibration object needs calls to prepareCalibration() before applying its calibraion through apply(). */
         virtual bool needPrepareCalibration() const { return false; }
@@ -34,7 +37,10 @@ namespace rir
         virtual bool prepareCalibration(const dict_type &attributes) { return true; }
 
         /**Return supported features as a combination of Features enum*/
-        virtual int supportedFeatures() const;
+        virtual int supportedFeatures() const
+        {
+            return (SupportGlobalEmissivity | SupportPixelEmissivity);
+        }
 
         /** Returns true if this calibration has its initial parmaters */
         virtual bool hasInitialParameters() const
@@ -43,11 +49,11 @@ namespace rir
         }
 
         /**Returns true if the calibration is valid, false otherwise*/
-        virtual bool isValid() const;
+        bool isValid() const;
         /**Returns potential warnings (with new line separators) emitted while building the calibration*/
-        virtual std::string error() const;
+        std::string error() const;
         /**Returns potential errors (with new line separators) emitted while building the calibration*/
-        virtual std::string warning() const;
+        std::string warning() const;
         /** Flip transmission factors. Default implementation does nothing.*/
         virtual bool flipTransmissions(bool fip_lr, bool flip_ud, int width, int height)
         {
@@ -57,17 +63,25 @@ namespace rir
             (void)height;
             return true;
         }
-
+        /**Returns the lut full file path*/
+        std::string lutFilename() const;
+        void setLutFilename(std::string lut_filename);
         /**Returns the list of calibration files required for this calibration*/
-        virtual StringList calibrationFiles() const;
+        virtual StringList calibrationFiles() const
+        {
+            StringList res;
+            res.push_back(lutFilename());
+
+            return res;
+        }
 
         /**Convert Digital Level value and Integration time to temperature (°C) for given integration time*/
-        virtual unsigned rawDLToTemp(unsigned DL, int ti) const;
+        unsigned rawDLToTemp(unsigned DL, int ti) const;
         /**Convert Digital Level value and Integration time to temperature (°C) for given integration time*/
-        virtual float rawDLToTempF(unsigned DL, int ti) const;
+        float rawDLToTempF(unsigned DL, int ti) const;
         /**Convert temperature (°C) to Digital Level for given Integration time*/
-        virtual unsigned tempToRawDL(unsigned temp, int ti) const;
-        virtual unsigned tempToRawDLF(float temp, int ti) const;
+        unsigned tempToRawDL(unsigned temp, int ti) const;
+        unsigned tempToRawDLF(float temp, int ti) const;
 
         /**
          * Returns the names of internal used tables (floating point matrices) used for calibration
@@ -79,8 +93,8 @@ namespace rir
         Apply inverted calibration (from T°C to DL).
         IT is the image of integration time (can be NULL for some implementations)
         */
-        virtual bool applyInvert(const unsigned short *T, const unsigned char *IT, unsigned int size, unsigned short *out) const;
-        virtual int applyInvert(const unsigned short *T, const unsigned char *IT, int index) const;
+        bool applyInvert(const unsigned short *T, const unsigned char *IT, unsigned int size, unsigned short *out) const;
+        int applyInvert(const unsigned short *T, const unsigned char *IT, int index) const;
         /**
         Calibrate input Digital Levels to surface temperature (C).
         @param DL input DL image
@@ -90,7 +104,7 @@ namespace rir
         @param saturate if not NULL, set to true if the calibration saturated, false otherwise
         Returns true on success, false otherwise.
         */
-        virtual bool apply(const unsigned short *DL, const std::vector<float> &inv_emissivities, unsigned int size, unsigned short *out, bool *saturate = NULL) const;
+        bool apply(const unsigned short *DL, const std::vector<float> &inv_emissivities, unsigned int size, unsigned short *out, bool *saturate = NULL) const;
 
         /**
         Calibrate input Digital Levels to temperature.
@@ -103,7 +117,13 @@ namespace rir
 
         This function performs a floating point calibration (precision < 1°C) and is slightly slower than #apply() function.
         */
-        virtual bool applyF(const unsigned short *DL, const std::vector<float> &inv_emissivities, unsigned int size, float *out, bool *saturate = NULL) const;
+        bool applyF(const unsigned short *DL, const std::vector<float> &inv_emissivities, unsigned int size, float *out, bool *saturate = NULL) const;
+
+    private:
+        class PrivateData;
+        PrivateData *m_data;
     };
 
 }
+
+#endif // LUT_CALIBRATION_H
