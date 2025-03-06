@@ -1,5 +1,4 @@
 import ctypes as ct
-import sys
 
 import numpy as np
 
@@ -33,14 +32,14 @@ def zstd_compress(src, level=0):
         ct.c_int,
     ]
 
+    if isinstance(src, str):
+        src = src.encode(errors="replace")
     src = bytes(src)
 
     outsize = zstd_compress_bound(len(src))
 
-    if sys.version_info[0] > 2:
-        out = bytes(outsize)
-    else:
-        out = "\00" * outsize
+    out = bytes(outsize)
+
     ret = _tools.zstd_compress(src, len(src), out, outsize, level)
     if ret < 0:
         raise RuntimeError("'zstd_compress': unknown error")
@@ -59,33 +58,20 @@ def zstd_decompress(src):
         ct.c_longlong,
     ]
     _tools.zstd_decompress_bound.argtypes = [ct.POINTER(ct.c_char), ct.c_longlong]
-
+    if isinstance(src, str):
+        src = src.encode(errors="replace")
     src = bytes(src)
 
     outsize = _tools.zstd_decompress_bound(src, len(src))
     if outsize < 0:
         raise RuntimeError("'zstd_decompress': wrong input format")
 
-    if sys.version_info[0] > 2:
-        out = bytes(outsize)
-    else:
-        out = "\00" * outsize
+    out = bytes(outsize)
 
     ret = _tools.zstd_decompress(src, len(src), out, outsize)
     if ret < 0:
         raise RuntimeError("'zstd_decompress': unknown error")
     return out[0:ret]
-
-
-def attrs_read_file_reader(data: bytes):
-    """
-    Open attribute file reader and returns a handle to it
-    """
-    _tools.attrs_read_file_reader.argtypes = [ct.c_char_p]
-    tmp = _tools.attrs_read_file_reader(data)
-    if tmp < 0:
-        raise RuntimeError("An error occured while calling 'attrs_read_file_reader'")
-    return tmp
 
 
 def attrs_open_file(filename):

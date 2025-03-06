@@ -25,12 +25,19 @@ def c(data_bytes):
 
 
 def test_zstd_compress(data_bytes):
-    c = rts.zstd_compress(data_bytes)
-    print(len(c))
+    rts.zstd_compress(data_bytes)
+    rts.zstd_compress(data_bytes.decode())
+    # FIXME: didn't find a way to make zstd_compress fail
+    # with pytest.raises(RuntimeError):
+    #     rts.zstd_compress()
 
 
 def test_zstd_decompress(c, data_bytes):
     rts.zstd_decompress(c) == data_bytes
+    with pytest.raises(RuntimeError):
+        rts.zstd_decompress(b"garbage")
+    with pytest.raises(RuntimeError):
+        rts.zstd_decompress("garbage")
 
 
 @pytest.fixture
@@ -61,6 +68,10 @@ def test_file_attribute_discard(file_attributes: fa.FileAttributes):
     assert not file_attributes.is_open()
 
     # assert file_attributes.attributes == {}
+
+
+def test_file_attribute_from_buffer(movie_as_buffer: IRMovie):
+    fa.FileAttributes.from_buffer(movie_as_buffer)
 
 
 def test_file_attribute_from_context(movie: IRMovie):

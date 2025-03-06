@@ -7,7 +7,7 @@ Created on Mon Jan 13 17:53:46 2020
 
 from os import PathLike
 import numpy as np
-from ..low_level.misc import *
+from ..low_level.misc import *  # noqa: F403
 from .rir_tools import (
     attrs_open_buffer,
     attrs_close,

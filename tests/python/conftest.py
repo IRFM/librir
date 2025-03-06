@@ -1,10 +1,8 @@
 import logging
-import struct
 
 import sys
 from pathlib import Path
 from typing import List
-from librir.tools import FileAttributes
 
 import numpy as np
 import pytest
@@ -165,6 +163,19 @@ def valid_2D_array(request):
 def movie(array):
     with IRMovie.from_numpy_array(array) as mov:
         yield mov
+
+
+@pytest.fixture(scope="session")
+def movie_wtih_calibration(array):
+    with IRMovie.from_numpy_array(array) as mov:
+        # calibration =
+        yield mov
+
+
+@pytest.fixture(scope="session")
+def movie_as_buffer(array):
+    with IRMovie.from_numpy_array(array) as mov:
+        yield mov.filename.read_bytes()
 
 
 @pytest.fixture(scope="session")

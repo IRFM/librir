@@ -261,3 +261,11 @@ def test_ir_movie_from_buffer(filename: Path):
         assert mov.times == original_movie.times
         assert mov.frames_attributes.compare(original_movie.frames_attributes).empty
         assert mov.attributes == original_movie.attributes
+
+
+def test_set_emissivity(movie: IRMovie):
+    old_emissivity = movie.emissivity
+    movie.emissivity = 0.95
+    assert movie.emissivity == 0.95
+    movie.emissivity = old_emissivity
+    assert movie.emissivity == old_emissivity
