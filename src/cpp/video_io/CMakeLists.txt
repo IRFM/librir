@@ -12,6 +12,7 @@ endif()
 # Set sources
 set(LIBRIR_IO_SRC
     BaseCalibration.cpp
+    LutCalibration.cpp
     IRFileLoader.cpp
     h264.cpp
     IRVideoLoader.cpp
@@ -29,6 +30,7 @@ set(IO_HEADERS
     IRVideoLoader.h
     IRFileLoader.h
     BaseCalibration.h
+    LutCalibration.h
     HCCLoader.h
     video_io.h
     h264.h
