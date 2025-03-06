@@ -9,8 +9,9 @@ import pytest
 @pytest.fixture
 def hcc_filename():
     p = os.environ.get("HCC_FILE_TEST", None)
-    if p is not None:
-        return Path(p)
+    if p is None:
+        return
+    return Path(p)
 
 
 def test_read_hcc_file(hcc_filename):

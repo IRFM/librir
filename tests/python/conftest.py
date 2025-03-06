@@ -1,11 +1,14 @@
 import logging
 
+import os
 import sys
 from pathlib import Path
 from typing import List
 
 import numpy as np
 import pytest
+
+os.environ["LIBRIR_DISABLE_JOBLIB"] = "1"
 from librir import IRMovie
 
 thismodule = sys.modules[__name__]

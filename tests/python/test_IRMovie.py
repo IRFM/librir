@@ -95,6 +95,69 @@ def test_save_movie_to_h264_from_slice(movie: IRMovie):
     npt.assert_array_equal(movie.data[start_image:], mov2.data)
 
 
+@pytest.mark.parametrize(
+    "slice_param",
+    argvalues=[
+        -1,
+        slice(-1),
+        # (1, 2),
+        # 0.0
+        [0],
+        np.array([0]),
+    ],
+    ids=[
+        "-1",
+        "slice(-1)",
+        # "(1, 2)",
+        # "0.0",
+        "[0]",
+        "np.ndarray([0])",
+    ],
+)
+def test_irmovie_getitem(movie: IRMovie, slice_param):
+    npt.assert_array_equal(movie[slice_param], movie.data[slice_param])
+    # npt.assert_array_equal(movie[-1:], movie.data[-1:])
+    # npt.assert_array_equal(movie[(1, 2)], movie.data[(1, 2)])
+
+
+@pytest.mark.parametrize(
+    "timestamp",
+    argvalues=[
+        # -1,
+        # slice(-1),
+        # (1, 2),
+        0.0,
+    ],
+    ids=[
+        # "-1",
+        # "slice(-1)",
+        # "(1, 2)",
+        "0.0",
+    ],
+)
+def test_irmovie_getitem_float(movie: IRMovie, timestamp):
+    npt.assert_array_equal(movie[timestamp], movie.load_secs(timestamp))
+
+
+def test_irmovie_frame_getter(movie: IRMovie):
+    npt.assert_array_equal(movie._frame_attribute_getter("yeah"), np.ndarray(()))
+
+
+def test_irmovie_iter(movie: IRMovie):
+    for i, img in enumerate(movie):
+        npt.assert_array_equal(img, movie.load_pos(i))
+
+
+def test_timestamps_setter(movie: IRMovie):
+    movie.timestamps = movie.timestamps
+
+
+def test_calibrate(movie: IRMovie):
+    img = movie[0]
+    movie.calibrate(img, 0)
+    # movie.timestamps = movie.timestamps
+
+
 def test_set_calibration(movie: IRMovie):
     movie.calibration = "DL"
     assert movie._calibration_index == 0
@@ -272,3 +335,23 @@ def test_set_emissivity(movie: IRMovie):
     assert movie.emissivity == 0.95
     movie.emissivity = old_emissivity
     assert movie.emissivity == old_emissivity
+
+
+def test_movie_is_compressed(movie: IRMovie):
+    movie.is_file_uncompressed
+
+
+def test_ir_movie_size(movie: IRMovie):
+    assert movie.height == movie.data.shape[-2]
+    assert movie.width == movie.data.shape[-1]
+
+
+def test_support_emissivity(movie: IRMovie):
+    # FIXME: this should pass after the calibration refacto
+    assert not movie.support_emissivity
+
+
+def test_tis(movie: IRMovie):
+    npt.assert_array_equal(movie.tis, (movie.data & (2**16 - 2**13)) >> 13)
+    movie.calibration = "Digital Level"
+    npt.assert_array_equal(movie.tis, (movie.data & (2**16 - 2**13)) >> 13)

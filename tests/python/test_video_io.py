@@ -14,8 +14,6 @@ from librir.video_io.rir_video_io import (
     get_emissivity,
     h264_get_high_errors,
     h264_get_low_errors,
-    set_emissivity,
-    set_global_emissivity,
     support_emissivity,
     video_file_format,
 )
@@ -104,9 +102,18 @@ def test_record_movie_with_lossy_compression(images):
 
     # add images
     for i in range(len(images)):
-        s.add_image_lossy(images[i], i * 1e6)
+        s.add_image_lossy(
+            images[i],
+            i * 1e6,
+            attributes={
+                "my_int_attribute": 1,
+                "my_str_attribute": "yeah",
+            },
+        )
     low_errors = h264_get_low_errors(s.handle)
+    npt.assert_array_equal(low_errors, s.get_low_errors())
     high_errors = h264_get_high_errors(s.handle)
+    npt.assert_array_equal(high_errors, s.get_high_errors())
     # close video
     s.close()
 
@@ -123,7 +130,7 @@ def test_record_movie_with_lossy_compression(images):
 
 
 def test_calibration_files(movie: IRMovie):
-    cfiles = movie.calibration_files
+    movie.calibration_files
 
 
 @pytest.fixture(scope="session")

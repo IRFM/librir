@@ -6,6 +6,7 @@ import tempfile
 from pathlib import Path
 from typing import List, Optional, Union
 
+from librir.low_level.misc import memory
 import numpy as np
 import pandas as pd
 
@@ -366,9 +367,6 @@ class IRMovie(object):
 
     @property
     def is_file_uncompressed(self):
-        if self.filename is None:
-            return False
-
         statinfo = os.stat(self.filename)
         filesize = statinfo.st_size
         theoritical_uncompressed = (
@@ -424,13 +422,13 @@ class IRMovie(object):
         set_emissivity(self.handle, emissivity_array)
 
     @property
-    @functools.lru_cache()
+    @memory.cache
     def tis(self):
         """
         Gives matrix of used integrations times for all images.
         :return:
         """
-        if self.calibration == "Digital Level":
+        if self.calibration == "DL":
             tis = (self.data & (2**16 - 2**13)) >> 13
         else:
             old_calib = self.calibration
@@ -455,10 +453,7 @@ class IRMovie(object):
 
             return arr
 
-        elif isinstance(item, tuple) and len(item) >= 2 and isinstance(item[0], int):
-            return self.__getitem__(item[0])[item[1:]]
-
-        elif isinstance(item, int):
+        elif isinstance(item, int) or isinstance(item, np.int_):
             if item < 0:
                 item = self.images + item
             return self.load_pos(item, self._calibration_index)
@@ -487,7 +482,7 @@ class IRMovie(object):
                     [get_image_time(self.handle, i) * 1e-9 for i in range(self.images)],
                     dtype=np.float64,
                 )
-            except RuntimeError as e:
+            except RuntimeError:
                 logger.warning(f"No timestamps in {self}")
         return self._timestamps
 
@@ -642,7 +637,7 @@ class IRMovie(object):
         return "IRMovie({})".format(self.filename)
 
     @property
-    @functools.lru_cache()
+    @memory.cache
     def frames_attributes(self) -> pd.DataFrame:
         if len(self._frame_attributes_d) != self.images:
             for i in range(self.images):

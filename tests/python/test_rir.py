@@ -1,6 +1,13 @@
+import shutil
 import librir.geometry as ge
+from librir.low_level.misc import get_memory_folder, toArray, toBytes, toCharP, toString
 import librir.signal_processing as sp
 import librir.signal_processing.BadPixels as bp
+from librir.signal_processing.rir_signal_processing import (
+    bad_pixels_correct,
+    keep_largest_area,
+    label_image,
+)
 import librir.tools.FileAttributes as fa
 import numpy as np
 import numpy.testing as npt
@@ -8,6 +15,36 @@ import pytest
 from librir.video_io import IRMovie, IRSaver, get_filename, video_file_format
 
 from librir import tools as rts
+
+
+def test_memory_folder():
+    folder = get_memory_folder()
+    shutil.rmtree(folder)
+    assert not folder.exists()
+    folder = get_memory_folder()
+    assert folder.exists()
+
+
+def test_to_string():
+    with pytest.raises(TypeError):
+        assert toString("a") == "a"
+    assert toString(b"a") == "a"
+    assert toString(b"\xe2\x82\xac") == "€"
+
+
+def test_to_array():
+    npt.assert_array_equal(toArray("a"), np.array(("a",), dtype="c"))
+
+
+def test_to_bytes():
+    assert toBytes(b"a") == "a"
+
+
+def test_to_charp():
+    # with pytest.raises(TypeError):
+    assert toCharP("a") == b"a"
+    assert toCharP(b"a") == b"a"
+    assert toCharP(1) == b"\x00"
 
 
 def test_zstd_compress_bound():
@@ -115,14 +152,29 @@ def test_polygon_interpolate():
 def test_draw_polygon(img):
     im = ge.draw_polygon(img, polygon, 1)
     print(im)
+    bad_img = img[np.newaxis, :]
+    with pytest.raises(RuntimeError):
+        ge.draw_polygon(bad_img, polygon, 1)
+    bad_img = img.astype(object)
+    with pytest.raises(RuntimeError):
+        ge.draw_polygon(bad_img, polygon, 1)
 
 
 def test_extract_polygon(img):
     print(ge.extract_polygon(img, 1))
+    bad_img = img[np.newaxis, :]
+    with pytest.raises(RuntimeError):
+        ge.extract_polygon(bad_img, 1)
+    bad_img = img.astype(object)
+    with pytest.raises(RuntimeError):
+        ge.extract_polygon(bad_img, 1)
+
+    ge.extract_polygon(img, 1, max_size=1)
 
 
-def tesextract_convex_hull():
-    print(ge.extract_convex_hull(polygon))
+def test_extract_convex_hull():
+    ge.extract_convex_hull(polygon)
+    assert ge.extract_convex_hull([]) == []
 
 
 def test_rdp_simplify_polygon():
@@ -134,8 +186,14 @@ def test_rdp_simplify_polygon2():
 
 
 def test_minimum_area_bbox():
-    print(ge.minimum_area_bbox(polygon))
+    ge.minimum_area_bbox(polygon)
+    assert ge.minimum_area_bbox([]) == ([0, 0], 0, 0, 0, 0)
     assert ge.minimum_area_bbox(polygon) != ([np.nan, np.nan], 0.0, 0.0, np.nan, np.nan)
+
+
+def test_count_pixel_in_polygon():
+    assert ge.count_pixel_in_polygon(polygon) >= 23
+    assert ge.count_pixel_in_polygon([]) == 0
 
 
 def test_translate(img):
@@ -188,6 +246,37 @@ def test_bad_pixels(img):
     b = bp.BadPixels(img)
     print(b.correct(img))
     del b
+
+
+def test_bad_pixels_correct_runtime_errors():
+    with pytest.raises(RuntimeError):
+        bad_pixels_correct(0, 0)
+
+
+def test_bad_pixels_label_image_runtime_errors():
+    wrong_dimension_image = np.ndarray((10, 10, 10))
+    with pytest.raises(RuntimeError):
+        label_image(wrong_dimension_image, 0)
+
+    wrong_dtype_image = np.ndarray((10, 10), dtype="object")
+    with pytest.raises(RuntimeError):
+        label_image(wrong_dtype_image, 0)
+
+    # with pytest.raises(RuntimeError):
+    #     label_image(np.Arr, 0)
+
+
+def test_bad_pixels_keep_largest_area_runtime_errors():
+    wrong_dimension_image = np.ndarray((10, 10, 10))
+    with pytest.raises(RuntimeError):
+        keep_largest_area(wrong_dimension_image, 0)
+
+    wrong_dtype_image = np.ndarray((10, 10), dtype="object")
+    with pytest.raises(RuntimeError):
+        keep_largest_area(wrong_dtype_image, 0)
+
+    # with pytest.raises(RuntimeError):
+    #     label_image(np.Arr, 0)
 
 
 def test_label_image(img):

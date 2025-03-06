@@ -164,7 +164,7 @@ def draw_polygon(img, polygon, fill_value):
     return img
 
 
-def extract_polygon(img, mask_value):
+def extract_polygon(img, mask_value, max_size=1000):
     """
     Extract a bounding polygon from a mask
     - img: input image
@@ -189,7 +189,7 @@ def extract_polygon(img, mask_value):
     data_type = img.dtype.name.encode()
     xy = np.zeros((1000, 2), dtype=np.int32)
     outsize = np.zeros((1), dtype=np.int32)
-    outsize[0] = 1000
+    outsize[0] = max_size
 
     tmp = _geometry.extract_polygon(
         img.ctypes.data_as(ct.c_void_p),
@@ -254,7 +254,7 @@ def extract_convex_hull(points):
             outxy.ctypes.data_as(ct.POINTER(ct.c_double)),
             outsize.ctypes.data_as(ct.POINTER(ct.c_int)),
         )
-    if tmp < 0:
+    if tmp < 0:  # pragma: no cover
         raise RuntimeError("extract_concave_hull: unknown error")
 
     return outxy[0 : outsize[0]]
@@ -295,7 +295,7 @@ def minimum_area_bbox(points):
     tmp = _geometry.minimum_area_bbox(
         xy.ctypes.data_as(ct.POINTER(ct.c_double)), len(xy), dx, dy, dw, dh, dwa, dha
     )
-    if tmp < 0:
+    if tmp < 0:  # pragma : no cover
         raise RuntimeError("minimum_area_bbox: unknown error")
 
     return (
@@ -330,7 +330,7 @@ def count_pixel_in_polygon(points):
         len(points),
         area.ctypes.data_as(ct.POINTER(ct.c_double)),
     )
-    if _tmp < 0:
+    if _tmp < 0:  # pragma : no cover
         raise RuntimeError("count_pixel_in_polygon: unknown error")
 
     return area[0]
