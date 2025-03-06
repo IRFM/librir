@@ -1,13 +1,13 @@
-from librir.video_io import IRMovie, IRSaver
-import numpy as np
-
 import librir.geometry as ge
 import librir.signal_processing as sp
 import librir.signal_processing.BadPixels as bp
-from librir.video_io import video_file_format, get_filename
 import librir.tools.FileAttributes as fa
-from librir import tools as rts
+import numpy as np
+import numpy.testing as npt
 import pytest
+from librir.video_io import IRMovie, IRSaver, get_filename, video_file_format
+
+from librir import tools as rts
 
 
 def test_zstd_compress_bound():
@@ -33,11 +33,47 @@ def test_zstd_decompress(c, data_bytes):
     rts.zstd_decompress(c) == data_bytes
 
 
-def test_file_attributes(movie: IRMovie):
+@pytest.fixture
+def file_attributes(movie: IRMovie):
+    filename = movie.filename
+    attrs = fa.FileAttributes.from_filename(filename)
+    return attrs
+
+
+@pytest.fixture
+def filled_file_attributes(file_attributes: fa.FileAttributes):
+    file_attributes.attributes = {"toto": 2, "tutu": "tata"}
+    return file_attributes
+
+
+def test_file_attribute_is_open(file_attributes: fa.FileAttributes):
+    assert file_attributes.is_open()
+
+
+def test_file_attribute_discard(file_attributes: fa.FileAttributes):
+    assert file_attributes.handle > 0
+
+    file_attributes.attributes = {"toto": 2, "tutu": "tata"}
+    assert file_attributes.attributes == {"toto": 2, "tutu": "tata"}
+    file_attributes.discard()
+    assert file_attributes.handle == 0
+    assert file_attributes.discard() is None
+    assert not file_attributes.is_open()
+
+    # assert file_attributes.attributes == {}
+
+
+def test_file_attribute_from_context(movie: IRMovie):
+    with fa.FileAttributes.from_filename(movie.filename) as file_attributes:
+        file_attributes
+
+
+def test_file_attributes_with_movie_data(movie: IRMovie):
     filename = movie.filename
     attrs = fa.FileAttributes.from_filename(filename)
     attrs.attributes = {"toto": 2, "tutu": "tata"}
     attrs.timestamps = range(movie.images)
+    npt.assert_array_equal(attrs.timestamps, np.array(range(movie.images)))
     attrs.set_frame_attributes(movie.images - 1, {"toto": 2, "tutu": "tata"})
     attrs.close()
 
@@ -48,6 +84,10 @@ def test_file_attributes(movie: IRMovie):
     attrs.close()
 
     # os.unlink(filename)
+
+
+def test_file_attributes_from_buffer(movie: IRMovie):
+    movie
 
 
 polygon = [[0, 0], [1, 0], [1.2, 0.2], [1.8, 0.1], [5, 5], [3.2, 5], [0, 9]]

@@ -87,9 +87,10 @@ class FileAttributes(object):
         Close the file without writting additional attributes.
         The FileAttributes object cannot be used anymore.
         """
-        if self.handle:
-            attrs_discard(self.handle)
-            self.handle = 0
+        if not self.handle:
+            return
+        attrs_discard(self.handle)
+        self.handle = 0
 
     def __del__(self):
         """
@@ -122,7 +123,7 @@ class FileAttributes(object):
     @timestamps.setter
     def timestamps(self, times):
         attrs_set_times(self.handle, times)
-        if type(times) != np.ndarray or times.dtype != np.int64:
+        if not isinstance(times, np.ndarray) or times.dtype != np.int64:
             times = np.array(list(times), dtype=np.int64)
         self._timestamps = times
 

@@ -126,6 +126,7 @@ def test_set_registration_file_to_IRMovie(
     movie_with_polygon_drawn.registration_file = reg_file
     movie_with_polygon_drawn[0]
     assert movie_with_polygon_drawn.registration
+    assert movie_with_polygon_drawn.registration_file.name == reg_file
 
     os.unlink(reg_file)
 
