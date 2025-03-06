@@ -13,6 +13,9 @@ on:
         required: false
         type: string
         default: "latest"
+    secrets:
+        CODECOV_TOKEN:
+          required: true
     # secrets:
     #   token:
     #     required: true
