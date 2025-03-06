@@ -38,6 +38,8 @@ jobs:
           python-version: ${{ matrix.python-version }} 
           compiler: ${{ matrix.compiler }}
           os: ubuntu-22.04
+        secrets:
+          codecov_token: ${{ secrets.CODECOV_TOKEN }}
 
     tests-windows:
       strategy:
@@ -50,3 +52,5 @@ jobs:
         python-version: ${{ matrix.python-version }} 
         compiler: ${{ matrix.compiler }}
         os: windows-latest
+      secrets:
+        codecov_token: ${{ secrets.CODECOV_TOKEN }}

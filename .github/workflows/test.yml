@@ -14,7 +14,7 @@ on:
         type: string
         default: "latest"
     secrets:
-        CODECOV_TOKEN:
+        codecov_token:
           required: true
     # secrets:
     #   token:
