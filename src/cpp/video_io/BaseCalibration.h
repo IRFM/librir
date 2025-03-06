@@ -30,17 +30,18 @@ namespace rir
 
 		virtual ~BaseCalibration() {}
 		virtual std::string name() const = 0;
-		
+
 		/** Tells if this calibration object needs calls to prepareCalibration() before applying its calibraion through apply(). */
-		virtual bool needPrepareCalibration() const {return false;}
+		virtual bool needPrepareCalibration() const { return false; }
 		/** Configure the calibration (and next call to apply()) based on raw image attributes */
-		virtual bool prepareCalibration(const dict_type & attributes) {return true;}
+		virtual bool prepareCalibration(const dict_type &attributes) { return true; }
 
 		/**Return supported features as a combination of Features enum*/
 		virtual int supportedFeatures() const = 0;
 
 		/** Returns true if this calibration has its initial parmaters */
-		virtual bool hasInitialParameters() const {
+		virtual bool hasInitialParameters() const
+		{
 			return true;
 		}
 
