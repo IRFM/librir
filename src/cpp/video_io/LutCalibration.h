@@ -120,8 +120,15 @@ namespace rir
         bool applyF(const unsigned short *DL, const std::vector<float> &inv_emissivities, unsigned int size, float *out, bool *saturate = NULL) const;
 
     private:
+        int parse_lut_filename(const std::string &lut_filename);
+
         class PrivateData;
         PrivateData *m_data;
+
+        std::vector<float> m_DL_to_temp;
+        // std::vector<unsigned> m_init_DL;
+        // std::vector<std::vector<float>> m_init_temp;
+        // std::vector<std::vector<unsigned short>> m_temp_toDL;
     };
 
 }

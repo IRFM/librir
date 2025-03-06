@@ -6,6 +6,7 @@ extern "C"
 }
 #include "Log.h"
 #include "IRFileLoader.h"
+#include "LutCalibration.h"
 #include "h264.h"
 #include "HCCLoader.h"
 #include "ReadFileChunk.h"
@@ -112,7 +113,7 @@ int open_camera_from_memory(void *ptr, int64_t size, int *file_format)
 		*file_format = 0;
 
 	IRFileLoader *loader = new IRFileLoader();
-	void *reader = createFileReader(createMemoryAccess(ptr,size)); 
+	void *reader = createFileReader(createMemoryAccess(ptr, size));
 
 	if (loader->openFileReader(reader))
 	{
@@ -398,6 +399,45 @@ int camera_saturate(int cam)
 		return -1;
 	}
 	return (int)l->saturate();
+}
+
+// int open_calibration(const int *lut_data)
+int open_lut_calibration(const char *lut_filename)
+{
+
+	LutCalibration *lut = new LutCalibration(lut_filename); // "SCD", diag, channel);
+	if (!lut->isValid())
+	{
+		delete lut;
+		return -1;
+	}
+	return set_void_ptr(lut);
+}
+
+int close_lut_calibration(int lut)
+{
+	void *lut_p = get_void_ptr(lut);
+	LutCalibration *l = static_cast<LutCalibration *>(lut_p);
+	if (!lut_p)
+		return -1;
+
+	delete l;
+	return 0;
+}
+
+int set_calibration(int cam, int calib)
+{
+	void *camera = get_void_ptr(cam);
+	if (!camera)
+		return -1;
+	IRVideoLoader *loader = static_cast<IRVideoLoader *>(camera);
+	void *calib_p = get_void_ptr(calib);
+	if (!calib_p)
+		return -1;
+	BaseCalibration *base_calib = static_cast<BaseCalibration *>(calib_p);
+
+	loader->setCalibration(base_calib);
+	return 0;
 }
 
 int calibration_files(int cam, char *dst, int *dstSize)

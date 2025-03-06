@@ -90,6 +90,7 @@ set_property(TARGET video_io APPEND PROPERTY
 )
 
 install(TARGETS video_io EXPORT VideoIOTargets
+
     # LIBRARY DESTINATION lib
     # ARCHIVE DESTINATION lib
     # RUNTIME DESTINATION bin
@@ -99,7 +100,7 @@ install(TARGETS video_io EXPORT VideoIOTargets
     FILE_SET video_io_api_header DESTINATION include/api
 )
 
-# install( 
+# install(
 # TARGETS ${LIBRIR_TARGETS}
 # EXPORT VideoIOTargets
 # )
@@ -137,4 +138,19 @@ install(
     ${ConfigPackageLocation}
     COMPONENT
     Devel
+)
+
+add_executable(test_lut_calib ${LIBRIR_IO_SRC})
+target_include_directories(test_lut_calib
+    PRIVATE $<BUILD_INTERFACE:${FFMPEG_INCLUDE_DIRS}>
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+)
+target_link_libraries(test_lut_calib PUBLIC video_io)
+
+target_link_libraries(test_lut_calib
+    PRIVATE
+    $<BUILD_INTERFACE:${FFMPEG_SHARED_LIBRARIES}>
+
+    # INTERFACE
+    # $<BUILD_INTERFACE:${FFMPEG_ADDITIONAL_DEPENDENCIES}>
 )
