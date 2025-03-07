@@ -121,8 +121,8 @@ if(ENABLE_CUDA_FFMPEG)
     if(CUDAToolkit_FOUND)
         FetchContent_Declare(
             ffnvcodec
-            GIT_REPOSITORY https://git.videolan.org/git/ffmpeg/nv-codec-headers.git
-            GIT_TAG sdk/12.0
+            GIT_REPOSITORY https://github.com/FFmpeg/nv-codec-headers.git
+            GIT_TAG sdk/${CUDAToolkit_VERSION_MAJOR}.0
         )
         FetchContent_MakeAvailable(ffnvcodec)
 
