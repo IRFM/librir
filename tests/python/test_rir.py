@@ -37,7 +37,7 @@ def test_to_array():
 
 
 def test_to_bytes():
-    assert toBytes(b"a") == "a"
+    assert toBytes("a") == b"a"
 
 
 def test_to_charp():

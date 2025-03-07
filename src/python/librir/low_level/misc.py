@@ -78,7 +78,7 @@ def toArray(string):
 
 def toBytes(ar):
     """Convert numpy array of char to bytes object"""
-    return bytes(ar)
+    return bytes(ar, encoding="utf8")
 
 
 def toCharP(obj):
