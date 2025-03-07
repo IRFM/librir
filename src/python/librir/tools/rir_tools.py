@@ -5,7 +5,6 @@ import numpy as np
 from ..low_level.misc import (
     _tools,
     toString,
-    toBytes,
     toArray,
 )
 
@@ -209,7 +208,7 @@ def attrs_global_attribute_value(handle, index):
             raise RuntimeError(
                 "An error occured while calling 'attrs_global_attribute_value'"
             )
-    return toBytes(key)
+    return key.tobytes()
 
 
 def attrs_frame_attribute_name(handle, frame, index):
@@ -275,7 +274,7 @@ def attrs_frame_attribute_value(handle, frame, index):
             raise RuntimeError(
                 "An error occured while calling 'attrs_frame_attribute_value'"
             )
-    return toBytes(key)
+    return key.tobytes()
 
 
 def attrs_frame_timestamp(handle, frame):

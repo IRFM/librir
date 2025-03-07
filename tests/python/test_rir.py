@@ -1,6 +1,6 @@
 import shutil
 import librir.geometry as ge
-from librir.low_level.misc import get_memory_folder, toArray, toBytes, toCharP, toString
+from librir.low_level.misc import get_memory_folder, toArray, toCharP, toString
 import librir.signal_processing as sp
 import librir.signal_processing.BadPixels as bp
 from librir.signal_processing.rir_signal_processing import (
@@ -34,10 +34,6 @@ def test_to_string():
 
 def test_to_array():
     npt.assert_array_equal(toArray("a"), np.array(("a",), dtype="c"))
-
-
-def test_to_bytes():
-    assert toBytes("a") == b"a"
 
 
 def test_to_charp():

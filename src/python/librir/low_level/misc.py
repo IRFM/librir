@@ -16,7 +16,6 @@ __all__ = [
     "__groups",
     "toString",
     "toArray",
-    "toBytes",
     "toCharP",
     "createZeroArrayHandle",
     "loadDlls",
@@ -74,11 +73,6 @@ def toArray(string):
         res[i] = bytes([b[i]])
 
     return res
-
-
-def toBytes(ar):
-    """Convert numpy array of char to bytes object"""
-    return bytes(ar, encoding="utf8")
 
 
 def toCharP(obj):
