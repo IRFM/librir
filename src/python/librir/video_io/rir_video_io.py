@@ -3,7 +3,7 @@ import logging
 
 import numpy as np
 import enum
-from ..low_level.misc import _video_io, toArray, toBytes, toString
+from ..low_level.misc import _video_io, toArray, toString
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -49,6 +49,7 @@ def open_camera_file(filename):
         raise RuntimeError("cannot read file " + filename)
     return res
 
+
 def open_camera_memory(buffer):
     """
     Open a video from a buffer.
@@ -65,18 +66,21 @@ def open_camera_memory(buffer):
     """
     pulse = np.zeros(1, dtype="i")
     res = _video_io.open_camera_from_memory(
-        ct.cast(ct.c_char_p(buffer),ct.c_void_p), len(buffer), pulse.ctypes.data_as(ct.POINTER(ct.c_int))
+        ct.cast(ct.c_char_p(buffer), ct.c_void_p),
+        len(buffer),
+        pulse.ctypes.data_as(ct.POINTER(ct.c_int)),
     )
     if res == 0:
         raise RuntimeError("cannot read video from memory ")
     return res
+
 
 def video_file_format(filename):
     """
     Returns the video file format of given video file
     """
     res = _video_io.video_file_format(str(filename).encode())
-    if res == 0:
+    if res <= 0:
         raise RuntimeError("cannot open file " + filename)
     return res
 
@@ -396,7 +400,7 @@ def get_attributes(camera):
             )
         if tmp < 0:
             raise RuntimeError("An error occured while calling 'get_attributes'")
-        _val = toBytes(value)[0 : vlen[0]]
+        _val = value.tobytes()[0 : vlen[0]]
 
         # some data cleaning on badly encoded attributes
         if _val.startswith(b"b'") and _val.endswith(b"'"):
@@ -449,7 +453,7 @@ def get_global_attributes(camera):
         if tmp < 0:
             raise RuntimeError("An error occured while calling 'get_global_attributes'")
         # print(toString(key),len(value),len(bytes(value)))
-        res[toString(key)] = toBytes(value)[0 : vlen[0]]
+        res[toString(key)] = value.tobytes()[0 : vlen[0]]
 
     return res
 
@@ -503,15 +507,15 @@ def h264_set_global_attributes(saver, attributes):
     klens = []
     vlens = []
     for k, v in attributes.items():
-        if type(k) == bytes:
+        if isinstance(k, bytes):
             ks = k
-        elif type(k) == str:
+        elif isinstance(k, str):
             ks = k.encode("utf8")
         else:
             ks = str(k).encode("utf8")
-        if type(v) == bytes:
+        if isinstance(v, bytes):
             vs = v
-        elif type(v) == str:
+        elif isinstance(v, str):
             vs = v.encode("utf8")
         else:
             vs = str(v).encode("utf8")

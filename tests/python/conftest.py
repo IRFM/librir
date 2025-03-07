@@ -1,13 +1,14 @@
 import logging
-import struct
 
+import os
 import sys
 from pathlib import Path
 from typing import List
-from librir.tools import FileAttributes
 
 import numpy as np
 import pytest
+
+os.environ["LIBRIR_DISABLE_JOBLIB"] = "1"
 from librir import IRMovie
 
 thismodule = sys.modules[__name__]
@@ -41,13 +42,13 @@ def generate_mock_movie_data_uniform(*shape):
 
     dl = np.zeros(shape, dtype=np.uint16)
     tis = np.zeros(shape, dtype=np.uint16)
-    step = 2**13
-    if n_images > 1:
-        step /= n_images - 2
+    # step = 2**13
+    # if n_images > 1:
+    #     step /= n_images - 2
 
     for i in range(n_images):
-        tis[i] = i % N_TIS
-        dl[i] = i * step
+        tis[i] = np.random.randint(0, N_TIS)
+        dl[i] = np.random.randint(0, 2**13 - 1)
 
     data = dl | (tis << 13)
 
@@ -165,6 +166,19 @@ def valid_2D_array(request):
 def movie(array):
     with IRMovie.from_numpy_array(array) as mov:
         yield mov
+
+
+@pytest.fixture(scope="session")
+def movie_wtih_calibration(array):
+    with IRMovie.from_numpy_array(array) as mov:
+        # calibration =
+        yield mov
+
+
+@pytest.fixture(scope="session")
+def movie_as_buffer(array):
+    with IRMovie.from_numpy_array(array) as mov:
+        yield mov.filename.read_bytes()
 
 
 @pytest.fixture(scope="session")

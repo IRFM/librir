@@ -1,5 +1,4 @@
 import ctypes as ct
-import sys
 
 import numpy as np
 

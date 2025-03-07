@@ -2,7 +2,6 @@ import ctypes as ct
 import glob
 import logging
 import os
-import sys
 import tempfile
 from pathlib import Path
 
@@ -17,7 +16,6 @@ __all__ = [
     "__groups",
     "toString",
     "toArray",
-    "toBytes",
     "toCharP",
     "createZeroArrayHandle",
     "loadDlls",
@@ -37,10 +35,9 @@ _video_io = None
 __groups = {}
 disable_cache_folder = os.getenv("LIBRIR_DISABLE_JOBLIB", False)
 
-def get_memory_folder(_memory_folder: Path = None):
-    _memory_folder = (
-        _memory_folder or os.getenv("LIBRIR_TEMP_FOLDER") or tempfile.gettempdir()
-    )
+
+def get_memory_folder():
+    _memory_folder = os.getenv("LIBRIR_TEMP_FOLDER") or tempfile.gettempdir()
     _memory_folder = Path(_memory_folder)
     if not _memory_folder.name.endswith("cache"):
         _memory_folder /= "cache"
@@ -51,50 +48,38 @@ def get_memory_folder(_memory_folder: Path = None):
 
     return _memory_folder
 
+
 default_folder = None if disable_cache_folder else get_memory_folder()
 memory = Memory(default_folder, verbose=0)
 
 
 def toString(ar):
     """Convert a numpy array of char to a string"""
-    if sys.version_info[0] > 2:
-        try:
-            return bytes(ar).decode("ascii").replace("\x00", "")
-        except UnicodeDecodeError:
-            return bytes(ar).decode("utf8").replace("\x00", "")
-    else:
-        return "".join(ar)
+    try:
+        return bytes(ar).decode("ascii").replace("\x00", "")
+    except UnicodeDecodeError:
+        return bytes(ar).decode("utf8").replace("\x00", "")
 
 
 def toArray(string):
     """Convert str or bytes object to numpy array of char"""
     res = np.zeros((len(string)), dtype="c")
-    if type(string) == bytes:
+    if isinstance(string, bytes):
         b = string
     else:
         b = str(string).encode("ascii")
-    if sys.version_info[0] >= 3:
-        for i in range(len(b)):
-            res[i] = bytes([b[i]])
-    else:
-        for i in range(len(b)):
-            res[i] = b[i]
+
+    for i in range(len(b)):
+        res[i] = bytes([b[i]])
+
     return res
-
-
-def toBytes(ar):
-    """Convert numpy array of char to bytes object"""
-    if sys.version_info[0] > 2:
-        return bytes(ar)
-    else:
-        return ar.tostring()
 
 
 def toCharP(obj):
     """Convert bytes or str object to char pointer"""
-    if type(obj) == str:
+    if isinstance(obj, str):
         return obj.encode("ascii")
-    elif type(obj) == bytes:
+    elif isinstance(obj, bytes):
         return obj
     else:
         return bytes(obj)

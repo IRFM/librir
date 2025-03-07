@@ -13,6 +13,9 @@ on:
         required: false
         type: string
         default: "latest"
+    secrets:
+        codecov_token:
+          required: true
     # secrets:
     #   token:
     #     required: true
@@ -51,6 +54,9 @@ jobs:
 
           - name: Upload coverage reports to Codecov
             uses: codecov/codecov-action@v5
+            with:
+              token: ${{ secrets.CODECOV_TOKEN }}
+              verbose: true
             env:
               CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
               

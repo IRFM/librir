@@ -48,8 +48,8 @@ def test_IRMovie_instantiation_with_3D_numpy_array(valid_3d_array):
 
 @pytest.mark.instantiation
 def test_IRMovie_instantiation_with_bad_numpy_array(bad_array):
-    with pytest.raises(ValueError) as e:
-        mov = IRMovie.from_numpy_array(bad_array)
+    with pytest.raises(ValueError):
+        IRMovie.from_numpy_array(bad_array)
 
 
 @pytest.mark.h264
@@ -93,6 +93,69 @@ def test_save_movie_to_h264_from_slice(movie: IRMovie):
     movie.to_h264(dest_filename, start_img=start_image)
     mov2 = IRMovie.from_filename(dest_filename)
     npt.assert_array_equal(movie.data[start_image:], mov2.data)
+
+
+@pytest.mark.parametrize(
+    "slice_param",
+    argvalues=[
+        -1,
+        slice(-1),
+        # (1, 2),
+        # 0.0
+        [0],
+        np.array([0]),
+    ],
+    ids=[
+        "-1",
+        "slice(-1)",
+        # "(1, 2)",
+        # "0.0",
+        "[0]",
+        "np.ndarray([0])",
+    ],
+)
+def test_irmovie_getitem(movie: IRMovie, slice_param):
+    npt.assert_array_equal(movie[slice_param], movie.data[slice_param])
+    # npt.assert_array_equal(movie[-1:], movie.data[-1:])
+    # npt.assert_array_equal(movie[(1, 2)], movie.data[(1, 2)])
+
+
+@pytest.mark.parametrize(
+    "timestamp",
+    argvalues=[
+        # -1,
+        # slice(-1),
+        # (1, 2),
+        0.0,
+    ],
+    ids=[
+        # "-1",
+        # "slice(-1)",
+        # "(1, 2)",
+        "0.0",
+    ],
+)
+def test_irmovie_getitem_float(movie: IRMovie, timestamp):
+    npt.assert_array_equal(movie[timestamp], movie.load_secs(timestamp))
+
+
+def test_irmovie_frame_getter(movie: IRMovie):
+    npt.assert_array_equal(movie._frame_attribute_getter("yeah"), np.ndarray(()))
+
+
+def test_irmovie_iter(movie: IRMovie):
+    for i, img in enumerate(movie):
+        npt.assert_array_equal(img, movie.load_pos(i))
+
+
+def test_timestamps_setter(movie: IRMovie):
+    movie.timestamps = movie.timestamps
+
+
+def test_calibrate(movie: IRMovie):
+    img = movie[0]
+    movie.calibrate(img, 0)
+    # movie.timestamps = movie.timestamps
 
 
 def test_set_calibration(movie: IRMovie):
@@ -261,3 +324,34 @@ def test_ir_movie_from_buffer(filename: Path):
         assert mov.times == original_movie.times
         assert mov.frames_attributes.compare(original_movie.frames_attributes).empty
         assert mov.attributes == original_movie.attributes
+
+
+def test_set_emissivity(movie: IRMovie):
+    pytest.skip(
+        "Calibration needs a big refactor before being able to provide emissivity changes"
+    )
+    old_emissivity = movie.emissivity
+    movie.emissivity = 0.95
+    assert movie.emissivity == 0.95
+    movie.emissivity = old_emissivity
+    assert movie.emissivity == old_emissivity
+
+
+def test_movie_is_compressed(movie: IRMovie):
+    movie.is_file_uncompressed
+
+
+def test_ir_movie_size(movie: IRMovie):
+    assert movie.height == movie.data.shape[-2]
+    assert movie.width == movie.data.shape[-1]
+
+
+def test_support_emissivity(movie: IRMovie):
+    # FIXME: this should pass after the calibration refacto
+    assert not movie.support_emissivity
+
+
+def test_tis(movie: IRMovie):
+    npt.assert_array_equal(movie.tis, (movie.data & (2**16 - 2**13)) >> 13)
+    movie.calibration = "Digital Level"
+    npt.assert_array_equal(movie.tis, (movie.data & (2**16 - 2**13)) >> 13)

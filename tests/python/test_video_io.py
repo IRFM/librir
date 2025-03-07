@@ -4,6 +4,7 @@ import time
 from pathlib import Path
 
 import numpy as np
+import numpy.testing as npt
 import pytest
 from librir.video_io import IRMovie, IRSaver
 from librir.video_io.rir_video_io import (
@@ -14,6 +15,7 @@ from librir.video_io.rir_video_io import (
     h264_get_high_errors,
     h264_get_low_errors,
     support_emissivity,
+    video_file_format,
 )
 
 
@@ -100,9 +102,18 @@ def test_record_movie_with_lossy_compression(images):
 
     # add images
     for i in range(len(images)):
-        s.add_image_lossy(images[i], i * 1e6)
+        s.add_image_lossy(
+            images[i],
+            i * 1e6,
+            attributes={
+                "my_int_attribute": 1,
+                "my_str_attribute": "yeah",
+            },
+        )
     low_errors = h264_get_low_errors(s.handle)
+    npt.assert_array_equal(low_errors, s.get_low_errors())
     high_errors = h264_get_high_errors(s.handle)
+    npt.assert_array_equal(high_errors, s.get_high_errors())
     # close video
     s.close()
 
@@ -119,7 +130,7 @@ def test_record_movie_with_lossy_compression(images):
 
 
 def test_calibration_files(movie: IRMovie):
-    cfiles = movie.calibration_files
+    movie.calibration_files
 
 
 @pytest.fixture(scope="session")
@@ -134,6 +145,12 @@ def pcr_filename(images):
     correct_PCR_file(filename, data.shape[0], data.shape[1], 50)
     yield filename
     os.unlink(filename)
+
+
+def test_video_file_format(pcr_filename):
+    assert video_file_format(pcr_filename) == FileFormat.PCR.value
+    with pytest.raises(RuntimeError):
+        video_file_format("nothing")
 
 
 def test_correct_PCR_file(pcr_filename, images):
@@ -151,8 +168,30 @@ def test_pcr2h264(pcr_filename):
         assert mov.video_file_format == FileFormat.H264.value
 
 
+# @pytest.mark.parametrize("emi", [0.25, 0.5])
+# def test_set_global_emissivity(movie: IRMovie, emi):
+#     data = movie.data
+#     set_global_emissivity(movie.handle, emi)
+#     data_with_new_emissivity = movie.data
+#     npt.assert_array_equal(data_with_new_emissivity, data / 2)
+
+
+# def test_set_emissivity(movie: IRMovie):
+#     data = movie.data
+#     emi = np.ones(data.shape) * 0.25
+
+#     set_emissivity(movie.handle, emi)
+#     data_with_new_emissivity = movie.data
+#     data_with_new_emissivity == data / 2
+
+#     with pytest.raises(RuntimeError):
+#         get_emissivity(-1, 1)
+
+
 def test_get_emissivity(movie: IRMovie):
     get_emissivity(movie.handle)
+    with pytest.raises(RuntimeError):
+        get_emissivity(-1)
 
 
 def test_support_emissivity(movie: IRMovie):

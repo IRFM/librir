@@ -153,7 +153,7 @@ class IRSaver(object):
 
         h264_add_image_lossless(self.handle, image, timestamp, attributes)
 
-    def add_image_lossy(self, image_DL: np.ndarray, timestamp, attributes=dict()):
+    def add_image_lossy(self, image_DL: np.ndarray, timestamp, attributes=None):
         """
         Add an image compressed in a lossy way.
         """
