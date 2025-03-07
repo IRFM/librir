@@ -81,39 +81,11 @@ add_subdirectory(tests)
 configure_file(requirements.txt.in requirements.txt @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/requirements.txt DESTINATION python)
 
-# install(
-# TARGETS ${LIBRIR_TARGETS}
-# PUBLIC_HEADER
-# LIBRARY COMPONENT Runtime
-# ARCHIVE COMPONENT Development
-# RUNTIME COMPONENT Runtime
-# )
-
 # for FFMPEG and additional artifacts
 install(IMPORTED_RUNTIME_ARTIFACTS video_io geometry signal_processing tools
     DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-# Configure and install PackageConfig files
-# generate_export_header(librir)
-# set_property(TARGET librir PROPERTY VERSION ${PROJECT_VERSION})
-# set_property(TARGET librir PROPERTY SOVERSION ${PROJECT_VERSION_MAJOR})
-# set_property(TARGET librir PROPERTY
-# INTERFACE_librir_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
-# set_property(TARGET librir APPEND PROPERTY
-# COMPATIBLE_INTERFACE_STRING librir_MAJOR_VERSION
-# )
-# install(TARGETS ${LIBRIR_TARGETS}
-# LIBRARY DESTINATION lib
-# ARCHIVE DESTINATION lib
-# RUNTIME DESTINATION bin
-# INCLUDES DESTINATION include
-# )
-
-# install(
-# TARGETS ${LIBRIR_TARGETS}
-# EXPORT LibrirTargets
-# )
 include(CMakePackageConfigHelpers)
 
 configure_package_config_file(cmake/librirConfig.cmake.in
@@ -126,10 +98,6 @@ write_basic_package_version_file(
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY SameMajorVersion)
 
-# export(EXPORT LibrirTargets
-# FILE "${CMAKE_CURRENT_BINARY_DIR}/librirConfig.cmake"
-# NAMESPACE librir::
-# )
 set(ConfigPackageLocation lib/cmake/librir)
 
 install(
