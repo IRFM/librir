@@ -48,8 +48,8 @@ def test_IRMovie_instantiation_with_3D_numpy_array(valid_3d_array):
 
 @pytest.mark.instantiation
 def test_IRMovie_instantiation_with_bad_numpy_array(bad_array):
-    with pytest.raises(ValueError) as e:
-        mov = IRMovie.from_numpy_array(bad_array)
+    with pytest.raises(ValueError):
+        IRMovie.from_numpy_array(bad_array)
 
 
 @pytest.mark.h264
