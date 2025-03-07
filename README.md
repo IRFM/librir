@@ -2,7 +2,7 @@
 [![Build on Windows](https://github.com/IRFM/librir/actions/workflows/build-windows.yml/badge.svg?branch=main)](https://github.com/IRFM/librir/actions/workflows/build-windows.yml)
 [![codecov](https://codecov.io/gh/IRFM/librir/graph/badge.svg?token=33OAGARS5K)](https://codecov.io/gh/IRFM/librir)
 
-# Librir
+# ![](large.png "librir") librir
 
 **Librir** is a C/C++/Python library dedicated to the manipulation of infrared videos. It is mainly used in the [CEA/IRFM/WEST](https://irfm.cea.fr/en/west/) tokamak to archive and read back infrared videos acquired by the infrared [diagnostic](https://www.sciencedirect.com/science/article/pii/S0920379619304120), and as a building block for [Cognitive Vision/Machine Learning applications](https://www.sciencedirect.com/science/article/pii/S092037962300220X).
 
