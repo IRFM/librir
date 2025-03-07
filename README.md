@@ -6,7 +6,7 @@
 
 **Librir** is a C/C++/Python library dedicated to the manipulation of infrared videos. It is mainly used in the [CEA/IRFM/WEST](https://irfm.cea.fr/en/west/) tokamak to archive and read back infrared videos acquired by the infrared [diagnostic](https://www.sciencedirect.com/science/article/pii/S0920379619304120), and as a building block for [Cognitive Vision/Machine Learning applications](https://www.sciencedirect.com/science/article/pii/S092037962300220X).
 
-**Librir** is divided into 4 small libraries:
+**Librir** is divided into 5 small libraries:
 
  - [tools](docs/tools.md): provides miscellaneous functions for file/folder management, datetime/string manipulation, etc...
  - [geometry](docs/geometry.md): provides various functions to manipulate 2D polygons.
@@ -23,12 +23,10 @@ While developped in C++14, Librir is mostly used through its Python interface. T
 Librir depends on the following C libraries:
 
 - [zstd](https://facebook.github.io/zstd/): generic compression library.
-- [blosc](https://www.blosc.org/): compression of numerical signals.
-- [libjpeg](http://libjpeg.sourceforge.net/): lossy image compression.
-- [charls](https://github.com/team-charls/charls): lossy/lossless jpegls image compression.
 - [ffmpeg](https://www.ffmpeg.org/): video compression/decompression.
 
-Librir directly embbeds the source code of these libraries which are compiled within the Librir compilation process. Only the ffmpeg library needs to be compiled separately. Note that Librir only supports versions 4.3 and 4.4 of ffmpeg, which must be compiled with at least [libx264](https://www.videolan.org/developers/x264.html) and [kvazaar](https://github.com/ultravideo/kvazaar) support.
+Librir provides automatic fetching for the source code of these libraries which are compiled within the Librir compilation process. 
+Note that Librir only supports version 7.1 of ffmpeg, which must be compiled with at least [libx264](https://www.videolan.org/developers/x264.html) and [kvazaar](https://github.com/ultravideo/kvazaar) support.
 
 As configuring/compiling ffmpeg is a heavy error prone task, its compilation is automated by Librir compilation steps:
 
@@ -41,16 +39,27 @@ CMake is required to compile Librir. Below example shows how to compile Librir o
 git clone https://github.com/IRFM/librir.git
 mkdir build
 cd build
-cmake ..
+cmake .. -DCMAKE_PREFIX_INSTALL=install
 make
 make install
-````
-This will install Librir locally in *build/install*. The *install* folder also contains the *librir* directory which is the python wrapper of the library. You can directly add the *install* folder to your Python library paths in order to use Librir from Python, or install it using the provided *setup.py*.
+```
 
-To perform a global installation, you must set the cmake option LOCAL_INSTALL to OFF.
+This will install Librir locally in *build/install*. The *install* folder also contains the *librir* directory which is the python wrapper of the library. 
+
+## Python distribution
+
+There is a `BUILD_WHEEL` CMake option to automatically build librir wheel and place the files in `install/dist` after successful compilation if there is a `pip` executable available.  
+
+```bash
+cmake .. -DCMAKE_PREFIX_INSTALL=install -DBUILD_WHEEL=ON
+```
+
+To perform a global installation, you must not set the cmake option CMAKE_PREFIX_INSTALL.
 To ease the compilation process, the scripts *build.sh* (Unix environments and Msys2) and *build.bat* (msvc build) are provided. Type ```build --help``` for more information.
 
-# Using Librir from Python or C++
+# Using Librir 
+
+## from C/C++
 
 Installing Librir will produce the *librir* folder within the installation directory. This module is directly importable from Python as long as you add the installation path to your *sys.path*. You can also install it within your Python environment using the provided *setup.py*
 To use Librir from C/C++ code, a *.pc* file is available in the installation folder and can be consumed by ```pkg-config```. For ```cmake``` users, Librir provides configuration files for the ```find_package``` function. Example:
@@ -70,6 +79,10 @@ add_executable(test test.cpp)
 target_link_libraries(test ${LIBRIR_LIBRARIES} )
 ```
 
+## From Python
+
+You can directly add the *install* folder to your Python library paths in order to use Librir from Python, or install it using the provided `pyproject.toml`.
+
 
 # Using Librir in Labview
 
@@ -87,4 +100,7 @@ Librir is developed and maintained by:
 - [Victor MONCADA](mailto:victor.moncada@cea.fr) (victor.moncada@cea.fr)
 - [Leo DUBUS](mailto:leo.dubus@cea.fr) (leo.dubus@cea.fr)
 - [Erwan GRELIER](mailto:erwan.grelier@cea.fr) (erwan.grelier@cea.fr)
+
+# Contributors
+
 - [Christian STARON](mailto:christian.staron@cea.fr) (christian.staron@cea.fr)

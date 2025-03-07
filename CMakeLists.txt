@@ -15,7 +15,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(GNUInstallDirs)
 include(GenerateExportHeader)
 
-# option(LOCAL_INSTALL "Install locally" ON)
 set(FFMPEG_VERSION_REQUIRED "7.1" CACHE STRING "FFmpeg version to use")
 
 if(NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
