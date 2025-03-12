@@ -38,6 +38,10 @@ set(TOOLS_HEADERS
 add_library(tools ${LIBRIR_TOOLS_SRC})
 add_library(librir::tools ALIAS tools)
 
+if(MSVC)
+    target_compile_definitions(tools PUBLIC UNICODE _UNICODE)
+endif()
+
 if(NOT WIN32)
     list(APPEND TOOLS_DEP_LIBS pthread)
 endif()

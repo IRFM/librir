@@ -31,21 +31,11 @@ option(ENABLE_H264 "Enable h264 capability for compression" ON)
 
 # TODO: get rid of these definitions. Either set them directly in code if mandatory
 # or set them as options in this file.
-add_definitions("-DUNICODE")
-add_definitions("-D_OPENMP")
-
 option(LIBRIR_ENABLE_ZSTD "Enable ZSTD support" ON)
 
 if(LIBRIR_ENABLE_ZSTD)
     add_compile_definitions(HAVE_ZSTD)
     add_compile_definitions(ZSTD_COMPRESS)
-endif()
-
-if(WIN32)
-    add_compile_definitions(NOMINMAX)
-    add_compile_definitions(WIN64)
-    add_compile_definitions(DISABLE_WINRT_DEPRECATION)
-    add_compile_definitions(_WINDOWS)
 endif()
 
 configure_file(rir_config.h.in rir_config.h)
