@@ -617,8 +617,10 @@ class IRMovie(object):
             # Force codec to be h264
             s.set_parameter("codec", "h264")
             saved = 0
+            _calibration = int(attrs.get("STORE_IT", b"0"))
+
             for i in range(start_img, start_img + count):
-                img = self.load_pos(i, 0)
+                img = self.load_pos(i, _calibration)
 
                 _frame_attributes = (
                     self.frame_attributes
