@@ -6,6 +6,7 @@ Created on Mon Jan 13 17:53:46 2020
 """
 
 from os import PathLike
+from typing import Dict
 import numpy as np
 from ..low_level.misc import *  # noqa: F403
 from .rir_tools import (
@@ -38,6 +39,8 @@ class FileAttributes(object):
 
     Use the discard() function to avoid writting attributes to the file.
     """
+
+    _attributes: Dict[str, bytes]
 
     @classmethod
     def from_buffer(cls, buffer: bytes):
@@ -128,7 +131,7 @@ class FileAttributes(object):
         self._timestamps = times
 
     @property
-    def attributes(self):
+    def attributes(self) -> Dict[str, bytes]:
         """Get/set the global file attributes"""
         return self._attributes
 
