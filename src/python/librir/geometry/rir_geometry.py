@@ -46,7 +46,7 @@ def polygon_interpolate(xy1, xy2, advance):
     return xyres[0 : sres[0]]
 
 
-def rdp_simplify_polygon(xy, epsilon=0):
+def rdp_simplify_polygon(xy, epsilon: float = 0):
     """
     Simplify polygon using Ramer-Douglas-Peucker algorithm.
     """
