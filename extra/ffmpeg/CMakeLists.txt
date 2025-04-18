@@ -38,7 +38,8 @@ cmake_policy(SET CMP0135 NEW)
 
 FetchContent_Declare(
     nasm
-    URL https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/nasm-2.15.05.tar.bz2
+    GIT_REPOSITORY https://github.com/netwide-assembler/nasm
+    GIT_TAG nasm-2.15.05
     EXCLUDE_FROM_ALL
     OVERRIDE_FIND_PACKAGE
 )
@@ -48,13 +49,14 @@ ExternalProject_Add(nasm
     DOWNLOAD_EXTRACT_TIMESTAMP true
     UPDATE_DISCONNECTED true
     INSTALL_DIR ${3RD_64_INSTALL_DIR}
-    CONFIGURE_COMMAND ./configure --prefix=<INSTALL_DIR>
+    CONFIGURE_COMMAND touch nasm.1 ndisasm.1 && ./autogen.sh && ./configure --prefix=<INSTALL_DIR>
     BUILD_COMMAND $(MAKE)
 
     # INSTALL_COMMAND $(MAKE) install
     BUILD_IN_SOURCE true
     DOWNLOAD_COMMAND ""
 )
+ExternalProject_Add_StepTargets(nasm build)
 ExternalProject_Add_StepTargets(nasm install)
 
 FetchContent_Declare(
