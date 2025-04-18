@@ -38,8 +38,7 @@ cmake_policy(SET CMP0135 NEW)
 
 FetchContent_Declare(
     nasm
-    GIT_REPOSITORY https://github.com/netwide-assembler/nasm
-    GIT_TAG nasm-2.15.05
+    URL https://www.nasm.us/pub/nasm/releasebuilds/2.15.05/nasm-2.15.05.tar.bz2
     EXCLUDE_FROM_ALL
     OVERRIDE_FIND_PACKAGE
 )
