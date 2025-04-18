@@ -54,6 +54,7 @@ target_include_directories(tools PRIVATE $<BUILD_INTERFACE:${ZSTD_INCLUDE_DIR}>)
 target_include_directories(tools
     PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${RIR_CONFIG_DIR}>
     $<INSTALL_INTERFACE:include>
 )
 
