@@ -4,6 +4,28 @@ import logging
 import numpy as np
 import enum
 from ..low_level.misc import _video_io, toArray, toString
+import sys
+import warnings
+
+
+def WrapMod(mod, deprecated):
+    """Return a wrapped object that warns about deprecated accesses"""
+    # deprecated = set(deprecated)
+
+    class Wrapper(object):
+        def __getattr__(self, attr):
+            if attr in deprecated:
+                warnings.warn(f"Property {attr} is deprecated. {deprecated[attr]}")
+
+            return getattr(mod, attr)
+
+        def __setattr__(self, attr, value):
+            if attr in deprecated:
+                warnings.warn(f"Property {attr} is deprecated. {deprecated[attr]}")
+            return setattr(mod, attr, value)
+
+    return Wrapper()
+
 
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -14,6 +36,17 @@ FILE_FORMAT_WEST = 2
 FILE_FORMAT_PCR_ENCAPSULATED = 3
 FILE_FORMAT_ZSTD_COMPRESSED = 4
 FILE_FORMAT_H264 = 5
+
+sys.modules[__name__] = WrapMod(
+    sys.modules[__name__],
+    deprecated={
+        "FILE_FORMAT_PCR": "Use FileFormat.PCR instead",
+        "FILE_FORMAT_WEST": "Use FileFormat.WEST instead",
+        "FILE_FORMAT_PCR_ENCAPSULATED": "Use FileFormat.PCR_ENCAPSULATED instead",
+        "FILE_FORMAT_ZSTD_COMPRESSED": "Use FileFormat.ZSTD_COMPRESSED instead",
+        "FILE_FORMAT_H264": "Use FileFormat.H264 instead",
+    },
+)
 
 
 class FileFormat(enum.Enum):
