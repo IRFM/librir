@@ -17,8 +17,6 @@ namespace rir
 
 	void populate_map_with_header(rir::dict_type &mapper, HCCImageHeader &h)
 	{
-		mapper.clear();
-
 		/* 0d000 */
 		mapper["Signature"] = toString(h.Signature);
 		mapper["DeviceXMLMinorVersion"] = toString((std::uint16_t)h.DeviceXMLMinorVersion);
@@ -198,6 +196,7 @@ namespace rir
 
 		d_data->attributes["Date"] = ss.str();
 		d_data->attributes["Size"] = toString(frame_count);
+		d_data->attributes["Type"] = "HCC";
 
 		d_data->timestamps.resize(frame_count);
 		double start = 0;
@@ -419,6 +418,7 @@ namespace rir
 
 		memcpy(pixels, pix, d_data->header.Height * d_data->header.Width * 2);
 
+		d_data->imageAttributes.clear();
 		populate_map_with_header(d_data->imageAttributes, h);
 
 		d_data->imageAttributes["Type"] = toString(type);

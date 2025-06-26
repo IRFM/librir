@@ -92,8 +92,8 @@ namespace rir
 		bool hasTimes() const;
 		bool hasCalibration() const;
 		bool is_in_T() const;
-		virtual BaseCalibration *calibration() const;
-		virtual bool setCalibration(BaseCalibration *calibration);
+		virtual CalibrationPtr calibration() const;
+		virtual bool setCalibration(const CalibrationPtr &calibration);
 
 		virtual bool supportBadPixels() const { return true; }
 		virtual void setBadPixelsEnabled(bool enable);
@@ -129,7 +129,7 @@ namespace rir
 		void removeBadPixels(unsigned short *img, int w, int h);
 		void removeMotion(unsigned short *img, int w, int h, int pos);
 
-		
+		const IRVideoLoader* internalLoader() const;
 
 	private:
 		class PrivateData;

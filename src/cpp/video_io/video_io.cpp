@@ -261,7 +261,7 @@ int flip_camera_calibration(int camera, int flip_rl, int flip_ud)
 	if (!c)
 		return -1;
 	IRVideoLoader *cam = (IRVideoLoader *)c;
-	BaseCalibration *full = cam->calibration();
+	BaseCalibration *full = cam->calibration().get();
 	if (!full)
 		return -2;
 	Size s = cam->imageSize();
@@ -625,6 +625,11 @@ int get_global_attribute(int cam, int index, char *key, int *key_len, char *valu
 }
 
 #include "h264.h"
+
+IO_EXPORT void set_ffmpeg_log_enabled(int enable)
+{
+	rir::setFFmpegLogEnabled((bool)enable);
+}
 
 struct H264
 {

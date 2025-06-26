@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <memory>
 
 #include "rir_config.h"
 #include "Misc.h"
@@ -19,7 +20,7 @@ namespace rir
 	/**
 	 * Base class for IR image calibration in surface temperature
 	 */
-	class BaseCalibration
+	class BaseCalibration : public BaseShared
 	{
 	public:
 		enum Features
@@ -108,6 +109,8 @@ namespace rir
 		virtual bool applyF(const unsigned short *DL, const std::vector<float> &inv_emissivities, unsigned int size, float *out, bool *saturate = NULL) const = 0;
 	};
 
+	using CalibrationPtr = std::shared_ptr<BaseCalibration>;
+
 	/**
 	 * Tool used to build a calibration object for a video file.
 	 */
@@ -133,14 +136,14 @@ namespace rir
 		 * Build a calibration object from a filename (possibly NULL) and a IRVideoLoader object(possibly NULL).
 		 * Might return NULL on error.
 		 */
-		virtual BaseCalibration *build(const char *filename, IRVideoLoader *loader) const = 0;
+		virtual CalibrationPtr build(const char *filename, IRVideoLoader *loader) const = 0;
 		/**
 		 * Build a calibration object from a pulse number, a camera view name and a IRVideoLoader object(possibly NULL).
 		 * Might return NULL on error.
 		 */
-		virtual BaseCalibration *build(double pulse, const char *view, IRVideoLoader *loader) const = 0;
+		virtual CalibrationPtr build(double pulse, const char *view, IRVideoLoader *loader) const = 0;
 
-		virtual BaseCalibration *buildEmpty() const = 0;
+		virtual CalibrationPtr buildEmpty() const = 0;
 	};
 
 	/**
@@ -157,7 +160,7 @@ namespace rir
 	Internally scan all registered CalibrationBuilder and, based on the result of probe member, returns the first
 	successfully built BaseCalibration object.
 	*/
-	IO_EXPORT BaseCalibration *buildCalibration(const char *filename, IRVideoLoader *loader);
-	IO_EXPORT BaseCalibration *buildCalibration(double pulse, const char *view, IRVideoLoader *loader);
+	IO_EXPORT CalibrationPtr buildCalibration(const char *filename, IRVideoLoader *loader);
+	IO_EXPORT CalibrationPtr buildCalibration(double pulse, const char *view, IRVideoLoader *loader);
 
 }

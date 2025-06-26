@@ -23,7 +23,7 @@ namespace rir
 	Base class for IR video loaders.
 	Note that usually, all IRVideoLoader should be used through a BinFileLoader proxy.
 	*/
-	class IO_EXPORT IRVideoLoader
+	class IO_EXPORT IRVideoLoader : public BaseShared
 	{
 		std::vector<float> m_invEmissivities;
 		float m_globalEmi;
@@ -105,6 +105,15 @@ namespace rir
 		virtual Size imageSize() const = 0;
 		/**Read a raw (digital levels) or calibrated (temperature) image */
 		virtual bool readImage(int pos, int calibration, unsigned short *pixels) = 0;
+		virtual bool readImageF(int pos, int calibration, float* pixels) {
+			if (!isValid())
+				return false;
+			std::vector<unsigned short> img(imageSize().width * imageSize().height);
+			if (!readImage(pos, calibration, img.data()))
+				return false;
+			std::copy(img.begin(), img.end(), pixels);
+			return true;
+		}
 		/**Retrieve the raw (DL) value at given position for the last read image*/
 		virtual bool getRawValue(int x, int y, unsigned short *value) const = 0;
 
@@ -125,9 +134,9 @@ namespace rir
 		virtual const char *typeName() const = 0;
 
 		/**Returns calibration object attached to this loader (if any) */
-		virtual BaseCalibration *calibration() const = 0;
+		virtual CalibrationPtr calibration() const = 0;
 
-		virtual bool setCalibration(BaseCalibration *calibration) = 0;
+		virtual bool setCalibration(const CalibrationPtr & calibration) = 0;
 
 		/**Returns supported calibration for this video reader.
 		For IR videos, this function should return something like ("Raw Data","Temperature").*/
@@ -144,16 +153,18 @@ namespace rir
 		/**
 		Calibrate an image using this video calibration
 		*/
-		virtual bool calibrate(unsigned short * /*img*/, float * /*out*/, int /*size*/, int /*calibration*/) { return true; }
+		virtual bool calibrate(unsigned short * /*img*/, float * /*out*/, int /*size*/, int /*calibration*/) { return false; }
 		/**
 		Calibrate in-place an image using this video calibration
 		*/
-		virtual bool calibrateInplace(unsigned short * /*img*/, int /*size*/, int /*calibration*/) { return true; }
+		virtual bool calibrateInplace(unsigned short * /*img*/, int /*size*/, int /*calibration*/) { return false; }
 
 		/**Returns all instances of IRVideoLoader currently existing*/
 		static std::vector<IRVideoLoader *> instances();
 		static void closeAll();
 	};
+
+	using IRVideoLoaderPtr = std::shared_ptr<IRVideoLoader>;
 
 	/**
 	 * Tool used to build a IRVideoLoader object from a video file.
@@ -178,15 +189,15 @@ namespace rir
 		 * If fileReader is not NULL, the IRVideoLoader must use it but does NOT take ownership of it.
 		 * Might return NULL on error.
 		 */
-		virtual IRVideoLoader *build(const char *filename, void *fileReader) const = 0;
+		virtual IRVideoLoaderPtr build(const char *filename, void *fileReader) const = 0;
 
-		virtual IRVideoLoader *buildEmpty() const = 0;
+		virtual IRVideoLoaderPtr buildEmpty() const = 0;
 	};
 
 	/**
 	 * Register a IRVideoLoaderBuilder object
 	 */
-	IO_EXPORT void registerIRVideoLoaderBuilder(IRVideoLoaderBuilder *builder);
+	IO_EXPORT bool registerIRVideoLoaderBuilder(IRVideoLoaderBuilder *builder);
 	/**
 	 * Returns the first found IRVideoLoaderBuilder object with given name
 	 */
@@ -196,7 +207,7 @@ namespace rir
 	Internally scan all registered IRVideoLoaderBuilder and, based on the result of probe member, returns the first
 	successfully built IRVideoLoader object.
 	*/
-	IO_EXPORT IRVideoLoader *buildIRVideoLoader(const char *filename, void *fileReader);
+	IO_EXPORT IRVideoLoaderPtr buildIRVideoLoader(const char *filename, void *fileReader);
 }
 
 #endif

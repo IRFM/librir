@@ -52,13 +52,13 @@ namespace rir
 
 	StringList IRVideoLoader::tableNames() const
 	{
-		if (auto *c = calibration())
+		if (auto c = calibration())
 			return c->tableNames();
 		return StringList();
 	}
 	std::vector<float> IRVideoLoader::getTable(const char *name) const
 	{
-		if (auto *c = calibration())
+		if (auto c = calibration())
 		{
 			auto p = c->getTable(name);
 			if (!p.first)
@@ -73,9 +73,11 @@ namespace rir
 
 	static std::vector<std::shared_ptr<IRVideoLoaderBuilder>> _builders;
 
-	void registerIRVideoLoaderBuilder(IRVideoLoaderBuilder *builder)
+	bool registerIRVideoLoaderBuilder(IRVideoLoaderBuilder *builder)
 	{
-		_builders.push_back(std::shared_ptr<IRVideoLoaderBuilder>(builder));
+		// push front
+		_builders.insert(_builders.begin(),std::shared_ptr<IRVideoLoaderBuilder>(builder));
+		return true;
 	}
 	/**
 	 * Returns the first found CalibrationBuilder object with given name
@@ -93,7 +95,7 @@ namespace rir
 	Internally scan all registered CalibrationBuilder and, based on the result of probe member, returns the first
 	successfully built BaseCalibration object.
 	*/
-	IRVideoLoader *buildIRVideoLoader(const char *filename, void *file_reader)
+	IRVideoLoaderPtr buildIRVideoLoader(const char *filename, void *file_reader)
 	{
 		std::vector<char> bytes;
 		if (filename)
@@ -123,15 +125,14 @@ namespace rir
 		{
 			if (_builders[i]->probe(filename, bytes.data(), bytes.size()))
 			{
-				if (IRVideoLoader *res = _builders[i]->build(filename, file_reader))
+				if (IRVideoLoaderPtr res = _builders[i]->build(filename, file_reader))
 				{
 					if (res->isValid())
 						return res;
-					delete res;
 				}
 			}
 		}
-		return NULL;
+		return IRVideoLoaderPtr();
 	}
 
 }

@@ -29,6 +29,11 @@ Defines utility functions used within librir
 
 namespace rir
 {
+	/// @brief Base class for objects stored in a shared_ptr
+	struct BaseShared
+	{
+		virtual ~BaseShared() {}
+	};
 
 	/**Vector of strings*/
 	typedef std::vector<std::string> StringList;

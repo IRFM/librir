@@ -63,7 +63,7 @@ namespace rir
 		void *file; // file reader created with createFileReader
 		H264_Loader h264;
 		HCCLoader hcc;
-		std::unique_ptr<IRVideoLoader> other;
+		IRVideoLoaderPtr other;
 		int type;
 		int has_times;
 		std::vector<float> pixels;
@@ -305,6 +305,18 @@ namespace rir
 			return NULL;
 		}
 
+		if (IRVideoLoaderPtr l = buildIRVideoLoader(filename, reader))
+		{
+			f->type = BIN_FILE_OTHER;
+			f->times = l->timestamps();
+			f->width = l->imageSize().width;
+			f->height = l->imageSize().height;
+			f->count = l->size();
+			f->has_times = 1;
+			f->other = std::move(l);
+			return f;
+		}
+
 		PCR_HEADER infos;
 		int64_t start_image, start_time;
 		char buf[2000];
@@ -313,22 +325,9 @@ namespace rir
 
 		if (f->type == BIN_FILE_UNKNOWN)
 		{
-			if (IRVideoLoader *l = buildIRVideoLoader(filename, reader))
-			{
-				f->type = BIN_FILE_OTHER;
-				f->times = l->timestamps();
-				f->width = l->imageSize().width;
-				f->height = l->imageSize().height;
-				f->count = l->size();
-				f->has_times = 1;
-				f->other = std::move(std::unique_ptr<IRVideoLoader>(l));
-			}
-			else
-			{
-				destroyFileReader(f->file);
-				delete f;
-				f = NULL;
-			}
+			destroyFileReader(f->file);
+			delete f;
+			f = NULL;
 		}
 #ifdef USE_ZFILE
 		else if (f->type == BIN_FILE_Z_COMPRESSED)
@@ -529,7 +528,8 @@ namespace rir
 		{
 			if (timestamp)
 				*timestamp = f->times[pos];
-			f->other->readImage(pos, calib, img);
+			if (f->other->readImage(pos, calib, img))
+				return 0;
 		}
 		else if (f->type == BIN_FILE_H264)
 		{
@@ -589,7 +589,7 @@ namespace rir
 	public:
 		Size size;
 		TimestampVector timestamps;
-		BinFile *file;
+		std::unique_ptr<BinFile> file;
 		std::string filename;
 		int type;
 		int min_T;
@@ -604,7 +604,7 @@ namespace rir
 		bool bp_enabled;
 		int median_value;
 		Polygon bad_pixels;
-		BaseCalibration *calib;
+		CalibrationPtr calib;
 		std::map<std::string, std::string> attributes;
 
 		std::function<void(unsigned short *, int, int, int)> removeMotion;
@@ -612,7 +612,7 @@ namespace rir
 		std::vector<PointF> upper; // upper divertor or full view
 
 		PrivateData()
-			: file(NULL), type(0), min_T(0), min_T_height(0), store_it(false), motionCorrectionEnabled(false), saturate(false), bp_enabled(false), median_value(-1), calib(NULL)
+			: type(0), min_T(0), min_T_height(0), store_it(false), motionCorrectionEnabled(false), has_times(false), saturate(false), bp_enabled(false), median_value(-1)
 		{
 			removeMotion = [this](unsigned short *img, int w, int h, int pos)
 			{
@@ -628,7 +628,6 @@ namespace rir
 	IRFileLoader::~IRFileLoader()
 	{
 		close();
-
 		delete m_data;
 	}
 
@@ -642,8 +641,8 @@ namespace rir
 	bool IRFileLoader::hasCalibration() const { return m_data->calib && m_data->calib->isValid(); }
 	bool IRFileLoader::is_in_T() const { return m_data->store_it; }
 
-	BaseCalibration *IRFileLoader::calibration() const { return m_data->calib; }
-	bool IRFileLoader::setCalibration(BaseCalibration *calibration)
+	CalibrationPtr IRFileLoader::calibration() const { return m_data->calib; }
+	bool IRFileLoader::setCalibration(const CalibrationPtr &calibration)
 	{
 		m_data->calib = calibration;
 		return true;
@@ -776,6 +775,13 @@ namespace rir
 		}
 	}
 
+	const IRVideoLoader* IRFileLoader::internalLoader() const
+	{
+		if (m_data->file && m_data->file->other)
+			return m_data->file->other.get();
+		return nullptr;
+	}
+
 	bool IRFileLoader::loadTranslationFile(const char *filename)
 	{
 		// Load translation file (csv file with tabulation separator)
@@ -836,19 +842,19 @@ namespace rir
 	{
 		m_data->has_times = false;
 		close();
-		m_data->file = bin_open_file_read(filename);
+		m_data->file.reset(bin_open_file_read(filename));
 		if (!m_data->file)
 			return false;
 
-		m_data->has_times = bin_has_times(m_data->file) != 0 ? true : false;
-		m_data->type = bin_file_type(m_data->file);
-		int size = bin_image_count(m_data->file);
+		m_data->has_times = bin_has_times(m_data->file.get()) != 0 ? true : false;
+		m_data->type = bin_file_type(m_data->file.get());
+		int size = bin_image_count(m_data->file.get());
 		m_data->timestamps.resize(size);
-		int64_t *times = bin_get_timestamps(m_data->file);
+		int64_t *times = bin_get_timestamps(m_data->file.get());
 		std::copy(times, times + size, m_data->timestamps.begin());
 
 		int w, h;
-		bin_image_size(m_data->file, &w, &h);
+		bin_image_size(m_data->file.get(), &w, &h);
 		m_data->size.width = w;
 		m_data->size.height = h;
 
@@ -873,7 +879,11 @@ namespace rir
 			m_data->min_T_height = imageSize().height - 3;
 		}
 
-		m_data->calib = buildCalibration(filename, this);
+		if (m_data->file->other)
+			m_data->calib = m_data->file->other->calibration();
+
+		if(!m_data->calib)
+			m_data->calib = buildCalibration(filename, this);
 
 		return true;
 	}
@@ -882,19 +892,19 @@ namespace rir
 	{
 		m_data->has_times = false;
 		close();
-		m_data->file = bin_open_file_from_file_reader(NULL, file_reader);
+		m_data->file.reset(bin_open_file_from_file_reader(nullptr, file_reader));
 		if (!m_data->file)
 			return false;
 
-		m_data->has_times = bin_has_times(m_data->file) != 0 ? true : false;
-		m_data->type = bin_file_type(m_data->file);
-		int size = bin_image_count(m_data->file);
+		m_data->has_times = bin_has_times(m_data->file.get()) != 0 ? true : false;
+		m_data->type = bin_file_type(m_data->file.get());
+		int size = bin_image_count(m_data->file.get());
 		m_data->timestamps.resize(size);
-		int64_t *times = bin_get_timestamps(m_data->file);
+		int64_t *times = bin_get_timestamps(m_data->file.get());
 		std::copy(times, times + size, m_data->timestamps.begin());
 
 		int w, h;
-		bin_image_size(m_data->file, &w, &h);
+		bin_image_size(m_data->file.get(), &w, &h);
 		m_data->size.width = w;
 		m_data->size.height = h;
 
@@ -916,24 +926,22 @@ namespace rir
 			m_data->min_T_height = imageSize().height - 3;
 		}
 
+		if (m_data->file->other)
+			m_data->calib = m_data->file->other->calibration();
+
 		// TODO: add buildCalibration for file_reader
-		m_data->calib = buildCalibration(NULL, this);
+		if(!m_data->calib)
+			m_data->calib = buildCalibration(nullptr, this);
 
 		return true;
 	}
 
 	void IRFileLoader::close()
 	{
-		if (m_data->calib)
-		{
-			if (m_data->file->other && m_data->file->other->calibration() != m_data->calib)
-				delete m_data->calib;
-			m_data->calib = NULL;
-		}
+		m_data->calib.reset();
 		if (m_data->file)
 		{
-			bin_close_file(m_data->file);
-			m_data->file = NULL;
+			bin_close_file(m_data->file.release());
 			m_data->type = 0;
 		}
 
@@ -942,6 +950,9 @@ namespace rir
 
 	StringList IRFileLoader::supportedCalibration() const
 	{
+		if (m_data->file->other && m_data->file->other->calibration() == m_data->calib)
+			return m_data->file->other->supportedCalibration();
+
 		StringList res;
 		res.push_back("Digital Level");
 		if (m_data->calib)
@@ -979,7 +990,7 @@ namespace rir
 	const std::map<std::string, std::string> &IRFileLoader::globalAttributes() const
 	{
 		static std::map<std::string, std::string> empty_map;
-		const std::map<std::string, std::string> &res = (m_data->type == BIN_FILE_H264) ? ((BinFile *)m_data->file)->h264.globalAttributes() : (m_data->type == BIN_FILE_HCC ? ((BinFile *)m_data->file)->hcc.globalAttributes() : (m_data->type == BIN_FILE_OTHER ? m_data->file->other->globalAttributes() : empty_map));
+		const std::map<std::string, std::string> &res = (m_data->type == BIN_FILE_H264) ? ((BinFile *)m_data->file.get())->h264.globalAttributes() : (m_data->type == BIN_FILE_HCC ? ((BinFile *)m_data->file.get())->hcc.globalAttributes() : (m_data->type == BIN_FILE_OTHER ? m_data->file->other->globalAttributes() : empty_map));
 
 		return res;
 	}
@@ -988,9 +999,9 @@ namespace rir
 	{
 		bool res = true;
 		if (m_data->type == BIN_FILE_H264)
-			res = ((BinFile *)m_data->file)->h264.extractAttributes(attrs);
+			res = ((BinFile *)m_data->file.get())->h264.extractAttributes(attrs);
 		else if (m_data->type == BIN_FILE_HCC)
-			res = ((BinFile *)m_data->file)->hcc.extractAttributes(attrs);
+			res = ((BinFile *)m_data->file.get())->hcc.extractAttributes(attrs);
 		else if (m_data->type == BIN_FILE_OTHER)
 			res = m_data->file->other->extractAttributes(attrs);
 
@@ -1056,7 +1067,7 @@ namespace rir
 		if (m_data->type == BIN_FILE_OTHER && m_data->calib && m_data->calib == m_data->file->other->calibration())
 		{
 
-			if (bin_read_image(m_data->file, pos, pixels, &time, calibration) != 0)
+			if (bin_read_image(m_data->file.get(), pos, pixels, &time, calibration) != 0)
 				return false;
 
 			removeBadPixels(pixels, imageSize().width, imageSize().height);
@@ -1064,7 +1075,7 @@ namespace rir
 			return true;
 		}
 
-		if (bin_read_image(m_data->file, pos, pixels, &time) != 0)
+		if (bin_read_image(m_data->file.get(), pos, pixels, &time) != 0)
 			return false;
 
 		bool is_in_T = m_data->store_it;

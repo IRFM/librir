@@ -76,6 +76,18 @@ extern "C"
 
 #include "BadPixels.h"
 
+namespace rir
+{
+	void setFFmpegLogEnabled(bool enable)
+	{
+		if (enable)
+			av_log_set_level(AV_LOG_INFO);
+		else
+			av_log_set_level(AV_LOG_QUIET);
+	}
+}
+
+
 static int decode(AVCodecContext *dec_ctx, AVFrame *frame, int *got_frame, AVPacket *pkt)
 {
 	int used = 0;
@@ -2739,6 +2751,8 @@ namespace rir
 
 	bool VideoGrabber::Open(const std::string &name, void *file_reader, int thread_count)
 	{
+		//TEST TOREMOVE
+		thread_count = 8;
 		{
 			m_thread_count = thread_count;
 			std::string sthread_count = toString(thread_count);
