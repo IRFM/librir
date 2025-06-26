@@ -26,37 +26,35 @@ namespace rir
 	Internally scan all registered CalibrationBuilder and, based on the result of probe member, returns the first
 	successfully built BaseCalibration object.
 	*/
-	BaseCalibration *buildCalibration(const char *filename, IRVideoLoader *loader)
+	CalibrationPtr buildCalibration(const char *filename, IRVideoLoader *loader)
 	{
 		for (size_t i = 0; i < _builders.size(); ++i)
 		{
 			if (_builders[i]->probe(filename, loader))
 			{
-				if (BaseCalibration *res = _builders[i]->build(filename, loader))
+				if (CalibrationPtr res = _builders[i]->build(filename, loader))
 				{
 					if (res->isValid())
 						return res;
-					delete res;
 				}
 			}
 		}
-		return NULL;
+		return CalibrationPtr();
 	}
-	BaseCalibration *buildCalibration(double pulse, const char *view, IRVideoLoader *loader)
+	CalibrationPtr buildCalibration(double pulse, const char *view, IRVideoLoader *loader)
 	{
 		for (size_t i = 0; i < _builders.size(); ++i)
 		{
 			if (_builders[i]->probe(pulse, view, loader))
 			{
-				if (BaseCalibration *res = _builders[i]->build(pulse, view, loader))
+				if (CalibrationPtr res = _builders[i]->build(pulse, view, loader))
 				{
 					if (res->isValid())
 						return res;
-					delete res;
 				}
 			}
 		}
-		return NULL;
+		return CalibrationPtr();
 	}
 
 }

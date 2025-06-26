@@ -8,6 +8,9 @@
 namespace rir
 {
 
+	IO_EXPORT void setFFmpegLogEnabled(bool enable);
+
+
 	class IO_EXPORT VideoDownsampler
 	{
 	public:
@@ -205,8 +208,8 @@ namespace rir
 		const std::vector<unsigned char> &lastIt() const;
 
 		/// @brief Reimplemented from IRVideoLoader
-		virtual BaseCalibration *calibration() const { return NULL; }
-		virtual bool setCalibration(BaseCalibration *calibration) { return false; }
+		virtual CalibrationPtr calibration() const { return CalibrationPtr(); }
+		virtual bool setCalibration(const CalibrationPtr&) { return false; }
 		/// @brief Reimplemented from IRVideoLoader
 		virtual bool getRawValue(int x, int y, unsigned short *value) const;
 		/// @brief Reimplemented from IRVideoLoader

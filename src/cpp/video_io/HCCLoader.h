@@ -131,8 +131,8 @@ namespace rir
 		virtual bool getRawValue(int x, int y, unsigned short *value) const;
 		virtual bool calibrate(unsigned short *img, float *out, int size, int calibration);
 		virtual bool calibrateInplace(unsigned short *img, int size, int calibration);
-		virtual bool setCalibration(BaseCalibration *calibration) { return false; }
-		virtual BaseCalibration* calibration() const { return nullptr; }
+		virtual bool setCalibration(const CalibrationPtr&) { return false; }
+		virtual CalibrationPtr calibration() const { return CalibrationPtr(); }
 		virtual const std::map<std::string, std::string> &globalAttributes() const;
 		virtual bool extractAttributes(std::map<std::string, std::string> &) const;
 		virtual void close();

@@ -211,6 +211,8 @@ extern "C"
 	Saving in h264
 	*/
 
+	IO_EXPORT void set_ffmpeg_log_enabled(int);
+
 	/**
 	Open output video file with given width and height.
 	In case of lossy compression, lossy_height  controls where the loss stops (in order to keep the last rows lossless).
@@ -316,6 +318,8 @@ extern "C"
 	IO_EXPORT int correct_PCR_file(const char *filename, int width, int height, int freq);
 
 	IO_EXPORT int change_hcc_external_blackbody_temperature(const char *filename, float temperature);
+
+	
 
 #ifdef __cplusplus
 }
