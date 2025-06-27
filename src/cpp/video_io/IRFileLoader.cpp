@@ -60,7 +60,7 @@ namespace rir
 		int64_t transferSize;
 		std::vector<int64_t> times;
 		void *zfile;
-		void *file; // file reader created with createFileReader
+		FileReaderPtr file; // file reader created with createFileReader
 		H264_Loader h264;
 		HCCLoader hcc;
 		IRVideoLoaderPtr other;
@@ -281,7 +281,7 @@ namespace rir
 		return 1;
 	}
 
-	static BinFile *bin_open_file_from_file_reader(const char *filename, void *reader)
+	static BinFile *bin_open_file_from_file_reader(const char *filename, const FileReaderPtr & reader)
 	{
 		if (!reader)
 			return NULL;
@@ -325,7 +325,6 @@ namespace rir
 
 		if (f->type == BIN_FILE_UNKNOWN)
 		{
-			destroyFileReader(f->file);
 			delete f;
 			f = NULL;
 		}
@@ -336,7 +335,6 @@ namespace rir
 			f->zfile = z_open_file_read(f->file);
 			if (!f->zfile)
 			{
-				destroyFileReader(f->file);
 				delete f;
 				f = NULL;
 				goto end;
@@ -348,7 +346,6 @@ namespace rir
 
 			if (f->count == 0)
 			{
-				destroyFileReader(f->file);
 				delete f;
 				f = NULL;
 				goto end;
@@ -380,7 +377,6 @@ namespace rir
 		{
 			if (!f->h264.open(f->file))
 			{
-				destroyFileReader(f->file);
 				delete f;
 				f = NULL;
 				goto end;
@@ -393,9 +389,8 @@ namespace rir
 		}
 		else if (f->type == BIN_FILE_HCC)
 		{
-			if (!f->hcc.openFileReader(f->file, false))
+			if (!f->hcc.openFileReader(f->file))
 			{
-				destroyFileReader(f->file);
 				delete f;
 				f = NULL;
 				goto end;
@@ -415,8 +410,6 @@ namespace rir
 				f->count = (unsigned)((s - start_image) / (infos.TransfertSize));
 			if (f->count == 0)
 			{
-				// f->file.close();
-				destroyFileReader(f->file);
 				delete f;
 				f = NULL;
 				goto end;
@@ -492,8 +485,6 @@ namespace rir
 		if (f->other)
 			f->other->close();
 		f->other.reset();
-		if (f->file)
-			destroyFileReader(f->file);
 		delete f;
 	}
 
@@ -562,6 +553,57 @@ namespace rir
 			// if (!f->file.read((char*)img, 2 * f->width*f->height))
 			//	return -1;
 
+			return 0;
+		}
+		return -1;
+	}
+
+	static int bin_read_imageF(BinFile* f, int pos, float* img, int64_t* timestamp, int calib = 0)
+	{
+		if (pos < 0 || pos >= (int)f->count)
+			return -1;
+
+		if (f->type == BIN_FILE_OTHER)
+		{
+			if (timestamp)
+				*timestamp = f->times[pos];
+			if (f->other->readImageF(pos, calib, img))
+				return 0;
+		}
+		else if (f->type == BIN_FILE_H264)
+		{
+			if (timestamp)
+				*timestamp = f->times[pos];
+			f->h264.readImageF(pos, 0, img);
+			return 0;
+		}
+		else if (f->type == BIN_FILE_HCC)
+		{
+			if (timestamp)
+				*timestamp = f->times[pos];
+			f->hcc.readImageF(pos, 0, img);
+			return 0;
+		}
+#ifdef USE_ZFILE
+		else if (f->zfile) {
+			std::vector<unsigned short> tmp(f->height * f->width);
+			int r = z_read_image(f->zfile, pos, tmp.data(), timestamp);
+			if (r == 0)
+				std::copy(tmp.begin(), tmp.end(), img);
+			return r;
+		}
+#endif
+		else
+		{
+			if (timestamp)
+				*timestamp = f->times[pos];
+
+			seekFile(f->file, f->start + f->transferSize * pos, AVSEEK_SET);
+
+			std::vector<unsigned short> tmp(f->height * f->width);
+			if (readFile(f->file, (char*)tmp.data(), 2 * f->width * f->height) != (int)(2 * f->width * f->height))
+				return -1;
+			std::copy(tmp.begin(), tmp.end(), img);
 			return 0;
 		}
 		return -1;
@@ -683,14 +725,9 @@ namespace rir
 			return;
 
 		// Disable bad pixels with HCC files
-		if (isHCC())
+		auto it = globalAttributes().find("Type");
+		if (it != globalAttributes().end() && it->second == "HCC")
 			return;
-		if (isH264())
-		{
-			auto it = fileAttributes()->globalAttributes().find("Type");
-			if (it != fileAttributes()->globalAttributes().end() && it->second == "HCC")
-				return;
-		}
 
 		unsigned short pixels[9];
 		// unsigned short buff[10];
@@ -888,7 +925,7 @@ namespace rir
 		return true;
 	}
 
-	bool IRFileLoader::openFileReader(void *file_reader)
+	bool IRFileLoader::openFileReader(const FileReaderPtr & file_reader)
 	{
 		m_data->has_times = false;
 		close();
@@ -1050,6 +1087,55 @@ namespace rir
 			// apply the calibration
 			if (!m_data->calib->apply(img, this->invEmissivities(), size, img, &m_data->saturate))
 				return false;
+			return true;
+		}
+		return false;
+	}
+
+	void IRFileLoader::setEmissivity(float emi)
+	{
+		IRVideoLoader::setEmissivity(emi);
+		if (m_data->file->other)
+			m_data->file->other->setEmissivity(emi);
+	}
+	bool IRFileLoader::setEmissivities(const float* emi, size_t size)
+	{
+		IRVideoLoader::setEmissivities(emi, size);
+		if (m_data->file->other)
+			return m_data->file->other->setEmissivities(emi, size);
+		return true;
+	}
+	bool IRFileLoader::setInvEmissivities(const float* inv_emi, size_t size)
+	{
+		IRVideoLoader::setInvEmissivities(inv_emi, size);
+		if (m_data->file->other)
+			return m_data->file->other->setInvEmissivities(inv_emi, size);
+		return true;
+	}
+
+	bool IRFileLoader::readImageF(int pos, int calibration, float* pixels)
+	{
+		if (pos < 0 || pos >= size() || !m_data->file)
+			return false;
+
+		int64_t time;
+
+		// special case: other type with its own calibration
+		if (m_data->type == BIN_FILE_OTHER && m_data->calib && m_data->calib == m_data->file->other->calibration())
+		{
+
+			if (bin_read_imageF(m_data->file.get(), pos, pixels, &time, calibration) != 0)
+				return false;
+
+			//TODO: enable back at some point (at least motion correction)
+			//removeBadPixels(pixels, imageSize().width, imageSize().height);
+			//removeMotion(pixels, imageSize().width, imageSize().height, pos);
+			return true;
+		}
+
+		std::vector<unsigned short> tmp(imageSize().width * imageSize().height);
+		if (readImage(pos, calibration, tmp.data())) {
+			std::copy(tmp.begin(), tmp.end(), pixels);
 			return true;
 		}
 		return false;

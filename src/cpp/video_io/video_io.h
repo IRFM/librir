@@ -43,7 +43,7 @@ extern "C"
 	on closing.
 	\sa createFileReader
 	*/
-	IO_EXPORT int open_camera_file_reader(void *file_reader, int *file_format);
+	//IO_EXPORT int open_camera_file_reader(void *file_reader, int *file_format);
 
 	/**
 	Opens a camera video file from a memory reader (created with #createMemoryReader()) object and returns
@@ -100,6 +100,7 @@ extern "C"
 	Returns 0 on success, -1 otherwise.
 	*/
 	IO_EXPORT int load_image(int camera, int pos, int calibration, unsigned short *pixels);
+	IO_EXPORT int load_imageF(int camera, int pos, int calibration, float* pixels);
 
 	/**
 	Apply given calibration to a DL image (inplace)

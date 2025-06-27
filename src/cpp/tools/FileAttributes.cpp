@@ -247,8 +247,9 @@ namespace rir
 		//}
 		// return pid;
 	}
-	bool FileAttributes::openReadOnly(void *file_access)
+	bool FileAttributes::openReadOnly(const FileReaderPtr &_file_access)
 	{
+		auto file_access = _file_access;
 		close();
 		size_t pos = posFile(file_access);
 		size_t fsize = fileSize(file_access);

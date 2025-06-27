@@ -5,6 +5,7 @@
 #include "Primitives.h"
 #include "BaseCalibration.h"
 #include "BadPixels.h"
+#include "ReadFileChunk.h"
 
 #include <string>
 #include <vector>
@@ -43,7 +44,7 @@ namespace rir
 		virtual bool motionCorrectionEnabled() const { return false; }
 
 		/**Set global scene emissivity*/
-		void setEmissivity(float emi)
+		virtual void setEmissivity(float emi)
 		{
 			if (emi != m_globalEmi || m_invEmissivities.empty())
 			{
@@ -54,7 +55,7 @@ namespace rir
 			}
 		}
 		/**Set per pixel emissivity*/
-		bool setEmissivities(const float *emi, size_t size)
+		virtual bool setEmissivities(const float *emi, size_t size)
 		{
 			if (size == 0)
 				return false;
@@ -71,7 +72,7 @@ namespace rir
 			m_globalEmi = 0;
 			return true;
 		}
-		bool setInvEmissivities(const float *inv_emi, size_t size)
+		virtual bool setInvEmissivities(const float *inv_emi, size_t size)
 		{
 			if (size == 0)
 				return false;
@@ -189,7 +190,7 @@ namespace rir
 		 * If fileReader is not NULL, the IRVideoLoader must use it but does NOT take ownership of it.
 		 * Might return NULL on error.
 		 */
-		virtual IRVideoLoaderPtr build(const char *filename, void *fileReader) const = 0;
+		virtual IRVideoLoaderPtr build(const char *filename, const FileReaderPtr &fileReader) const = 0;
 
 		virtual IRVideoLoaderPtr buildEmpty() const = 0;
 	};
@@ -207,7 +208,7 @@ namespace rir
 	Internally scan all registered IRVideoLoaderBuilder and, based on the result of probe member, returns the first
 	successfully built IRVideoLoader object.
 	*/
-	IO_EXPORT IRVideoLoaderPtr buildIRVideoLoader(const char *filename, void *fileReader);
+	IO_EXPORT IRVideoLoaderPtr buildIRVideoLoader(const char *filename, const FileReaderPtr &fileReader);
 }
 
 #endif
