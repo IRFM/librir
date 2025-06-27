@@ -85,7 +85,7 @@ Log levels
     Returns the file attribute object handle.
     Returns 0 on error.
     */
-    TOOLS_EXPORT int attrs_read_file_reader(void *file_reader);
+    //TOOLS_EXPORT int attrs_read_file_reader(void *file_reader);
 
     /**
     Read file attributes from an in-memory file.

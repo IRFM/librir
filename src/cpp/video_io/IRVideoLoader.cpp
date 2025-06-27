@@ -95,8 +95,9 @@ namespace rir
 	Internally scan all registered CalibrationBuilder and, based on the result of probe member, returns the first
 	successfully built BaseCalibration object.
 	*/
-	IRVideoLoaderPtr buildIRVideoLoader(const char *filename, void *file_reader)
+	IRVideoLoaderPtr buildIRVideoLoader(const char *filename, const FileReaderPtr &_file_reader)
 	{
+		auto file_reader = _file_reader;
 		std::vector<char> bytes;
 		if (filename)
 		{

@@ -71,7 +71,7 @@ int video_file_format(const char *filename)
 	return -1;
 }
 
-int open_camera_file_reader(void *file_reader, int *file_format)
+/*int open_camera_file_reader(void* file_reader, int* file_format)
 {
 	if (file_format)
 		*file_format = 0;
@@ -104,7 +104,7 @@ int open_camera_file_reader(void *file_reader, int *file_format)
 		logError(("Unable to open camera file: wrong file format"));
 		return 0;
 	}
-}
+}*/
 
 int open_camera_from_memory(void *ptr, int64_t size, int *file_format)
 {
@@ -112,7 +112,7 @@ int open_camera_from_memory(void *ptr, int64_t size, int *file_format)
 		*file_format = 0;
 
 	IRFileLoader *loader = new IRFileLoader();
-	void *reader = createFileReader(createMemoryAccess(ptr,size)); 
+	FileReaderPtr reader = createFileReader(createMemoryAccess(ptr,size)); 
 
 	if (loader->openFileReader(reader))
 	{
@@ -368,6 +368,22 @@ int load_image(int cam, int pos, int calibration, unsigned short *data)
 	}
 
 	if (l->readImage(pos, calibration, data))
+		return 0;
+	else
+		return -1;
+}
+
+int load_imageF(int cam, int pos, int calibration, float* pixels)
+{
+	void* camera = get_void_ptr(cam);
+	IRVideoLoader* l = static_cast<IRVideoLoader*>(camera);
+	if (!l)
+	{
+		logError("load_image: NULL camera");
+		return -1;
+	}
+
+	if (l->readImageF(pos, calibration, pixels))
 		return 0;
 	else
 		return -1;

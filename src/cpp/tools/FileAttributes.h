@@ -1,6 +1,7 @@
 #pragma once
 
 #include "rir_config.h"
+#include "ReadFileChunk.h"
 
 #include <map>
 #include <string>
@@ -36,7 +37,7 @@ namespace rir
 		/// @brief Open file attribute object in read-only mode using a file descriptor as returned by createFileReader()
 		/// @param file_access file descriptor
 		/// @return true on success, false otherwise
-		bool openReadOnly(void *file_access);
+		bool openReadOnly(const FileReaderPtr& file_access);
 		/// @brief Open file attribute object using a file path
 		/// @param filename local file name
 		/// @return true on success, false otherwise

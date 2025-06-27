@@ -2,7 +2,7 @@
 #define Z_FILE_H
 
 #include "rir_config.h"
-#include <stdint.h>
+#include "ReadFileChunk.h"
 
 /** @file
 
@@ -12,7 +12,7 @@ C interface to manage video files compressed with zstd
 /**
 Open in read-only mode given compressed BIN file and return an opaque handle on the file.
 */
-IO_EXPORT void *z_open_file_read(void *file_reader);
+IO_EXPORT void *z_open_file_read(const rir::FileReaderPtr &file_reader);
 /**
 Open in read-only mode given compressed BIN file stored in memory and return an opaque handle on the file.
 */

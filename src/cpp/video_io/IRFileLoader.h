@@ -8,6 +8,7 @@
 
 #include "IRVideoLoader.h"
 #include "BaseCalibration.h"
+#include "ReadFileChunk.h"
 
 /** @file
  */
@@ -81,7 +82,7 @@ namespace rir
 		~IRFileLoader();
 
 		bool open(const char *filename);
-		bool openFileReader(void *file_reader);
+		bool openFileReader(const FileReaderPtr & file_reader);
 
 		bool isPCR() const;
 		bool isBIN() const;
@@ -99,6 +100,10 @@ namespace rir
 		virtual void setBadPixelsEnabled(bool enable);
 		virtual bool badPixelsEnabled() const;
 
+		virtual void setEmissivity(float emi);
+		virtual bool setEmissivities(const float* emi, size_t size);
+		virtual bool setInvEmissivities(const float* inv_emi, size_t size);
+
 		virtual const char *typeName() const { return "IRFileLoader"; }
 		virtual bool saturate() const;
 		virtual std::string filename() const;
@@ -106,6 +111,7 @@ namespace rir
 		virtual const TimestampVector &timestamps() const;
 		virtual Size imageSize() const;
 		virtual bool readImage(int pos, int calibration, unsigned short *pixels);
+		virtual bool readImageF(int pos, int calibration, float* pixels);
 		virtual StringList supportedCalibration() const;
 		virtual bool isValid() const { return timestamps().size() > 0; }
 		virtual bool getRawValue(int x, int y, unsigned short *value) const;

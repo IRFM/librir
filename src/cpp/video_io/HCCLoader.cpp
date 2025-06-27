@@ -115,10 +115,10 @@ namespace rir
 	class HCCLoader::PrivateData
 	{
 	public:
-		void *file;
-		bool own;
-		bool badPixelsEnabled;
-		bool saturate;
+		FileReaderPtr file;
+		bool badPixelsEnabled = false;
+		bool saturate = false;
+		double sampling_ns = 0;
 		Size imSize;
 		TimestampVector timestamps;
 		HCCImageHeader header;
@@ -127,7 +127,7 @@ namespace rir
 		std::map<std::string, std::string> attributes;
 		std::map<std::string, std::string> imageAttributes;
 		std::vector<unsigned short> image;
-		PrivateData() : file(NULL), own(false), badPixelsEnabled(false), saturate(false)
+		PrivateData() : badPixelsEnabled(false), saturate(false)
 		{
 			memset(&header, 0, sizeof(header));
 			memset(&imageHeader, 0, sizeof(imageHeader));
@@ -144,27 +144,31 @@ namespace rir
 		delete d_data;
 	}
 
+	double HCCLoader::samplingTimeNs() const
+	{
+		return d_data->sampling_ns;
+	}
+
 	bool HCCLoader::open(const char *filename)
 	{
 		close();
-		void *p = createFileReader(createFileAccess(filename));
+		auto p = createFileReader(createFileAccess(filename));
 		if (!p)
 			return false;
 		d_data->filename = filename;
-		if (openFileReader(p, true))
+		if (openFileReader(p))
 			return true;
-
-		destroyFileReader(p);
 		return false;
 	}
 
-	bool HCCLoader::openFileReader(void *file_reader, bool own)
+	bool HCCLoader::openFileReader(const FileReaderPtr & reader)
 	{
 		if (d_data->filename.empty())
 			close();
 
-		seekFile(file_reader, 0, SEEK_SET);
-		std::uint64_t file_size = fileSize(file_reader);
+		auto file = reader;
+		seekFile(file, 0, SEEK_SET);
+		std::uint64_t file_size = fileSize(file);
 
 		if (file_size < (int)sizeof(HCCImageHeader))
 		{
@@ -172,7 +176,7 @@ namespace rir
 			return false;
 		}
 
-		readFile(file_reader, &d_data->header, sizeof(d_data->header));
+		readFile(file, &d_data->header, sizeof(d_data->header));
 
 		if (d_data->header.ImageHeaderLength > 6000 || d_data->header.Signature[0] != 'T' || d_data->header.Signature[1] != 'C')
 		{
@@ -182,11 +186,12 @@ namespace rir
 
 		double sampling = 1 / (d_data->header.AcquisitionFrameRate / 1000.0);
 		sampling *= 1000000000;
-
+		d_data->sampling_ns = sampling;
 		d_data->imSize = Size(d_data->header.Width, d_data->header.Height);
 		int frame_size = d_data->header.ImageHeaderLength + d_data->header.Width * d_data->header.Height * 2;
 		int frame_count = file_size / frame_size;
 
+		// Start time in milliseconds since epoch
 		std::uint64_t start_time = ((double)d_data->header.POSIXTime + d_data->header.SubSecondTime * 1e-7) * 1000;
 		// QDateTime dt = QDateTime::fromMSecsSinceEpoch(start_time);
 		std::chrono::system_clock::time_point tp{std::chrono::milliseconds{start_time}};
@@ -199,16 +204,12 @@ namespace rir
 		d_data->attributes["Type"] = "HCC";
 
 		d_data->timestamps.resize(frame_count);
-		double start = 0;
 		for (int i = 0; i < frame_count; i++)
-		{
-			d_data->timestamps[i] = static_cast<std::int64_t>(start);
-			start += sampling;
-		}
+			d_data->timestamps[i] = static_cast<std::int64_t>(i * sampling);
+		
 		populate_map_with_header(d_data->attributes, d_data->header);
 
-		d_data->file = file_reader;
-		d_data->own = own;
+		d_data->file = reader;
 
 		return true;
 	}
@@ -488,14 +489,6 @@ namespace rir
 
 	void HCCLoader::close()
 	{
-		if (d_data->file)
-		{
-			if (d_data->own)
-			{
-				destroyFileReader(d_data->file);
-			}
-		}
-
 		delete d_data;
 		d_data = new PrivateData();
 	}

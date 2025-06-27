@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IRVideoLoader.h"
+#include "ReadFileChunk.h"
 
 /** @file
  */
@@ -113,7 +114,7 @@ namespace rir
 		virtual ~HCCLoader();
 
 		bool open(const char *filename);
-		bool openFileReader(void *file_reader, bool own);
+		bool openFileReader(const FileReaderPtr & reader);
 
 		virtual bool supportBadPixels() const { return true; }
 		virtual void setBadPixelsEnabled(bool enable);
@@ -138,7 +139,7 @@ namespace rir
 		virtual void close();
 
 		void setExternalBlackBodyTemperature(float temperature);
-
+		double samplingTimeNs() const;
 	private:
 		class PrivateData;
 		PrivateData *d_data;

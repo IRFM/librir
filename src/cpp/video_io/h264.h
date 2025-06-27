@@ -180,7 +180,7 @@ namespace rir
 		/// @brief Open given file using a file reader object created with createFileReader()
 		/// @param file_reader file reader object
 		/// @return true on success, false otherwise
-		bool open(void *file_reader);
+		bool open(const FileReaderPtr &file_reader);
 
 		/// @brief Set the number of threads used to decompress each frame.
 		/// This number is bounded by the "slices" parameter set through H264_Saver::setParameter().

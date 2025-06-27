@@ -2621,9 +2621,9 @@ namespace rir
 	{
 	public:
 		VideoGrabber();
-		VideoGrabber(const std::string &name, void *file_access = NULL, int thread_count = H264_READ_THREADS);
+		VideoGrabber(const std::string &name, const FileReaderPtr& access = FileReaderPtr(), int thread_count = H264_READ_THREADS);
 		~VideoGrabber();
-		bool Open(const std::string &name, void *file_access = NULL, int thread_count = H264_READ_THREADS);
+		bool Open(const std::string &name, const FileReaderPtr& access = FileReaderPtr(), int thread_count = H264_READ_THREADS);
 		void Close();
 
 		int ComputeImageCount();
@@ -2691,6 +2691,8 @@ namespace rir
 		int numBytes;
 		AVPacket packet;
 		int frameFinished;
+
+		FileReaderPtr m_reader;
 	};
 
 	/*static void __destruct(AVPacket * pkt) {
@@ -2731,7 +2733,7 @@ namespace rir
 		m_GOP = -1;
 		m_thread_count = H264_READ_THREADS;
 	}
-	VideoGrabber::VideoGrabber(const std::string &name, void *file_reader, int thread_count)
+	VideoGrabber::VideoGrabber(const std::string &name, const FileReaderPtr &file_reader, int thread_count)
 	{
 		pFormatCtx = NULL;
 		pCodecCtx = NULL;
@@ -2749,8 +2751,20 @@ namespace rir
 		Close();
 	}
 
-	bool VideoGrabber::Open(const std::string &name, void *file_reader, int thread_count)
+
+	static int avReadFile(void* file_reader, uint8_t* outbuf, int buf_size)
 	{
+		return readFile2((FileReader*)file_reader, outbuf, buf_size);
+	}
+
+	static int64_t avSeekFile(void* file_reader, int64_t pos, int whence)
+	{
+		return seekFile((FileReader*)file_reader, pos, whence);
+	}
+
+	bool VideoGrabber::Open(const std::string &name, const FileReaderPtr& file_reader, int thread_count)
+	{
+		m_reader = file_reader;
 		//TEST TOREMOVE
 		thread_count = 8;
 		{
@@ -2777,14 +2791,14 @@ namespace rir
 			}
 			else if (file_reader)
 			{
-				seekFile(file_reader, 0, AVSEEK_SET);
+				seekFile(m_reader, 0, AVSEEK_SET);
 				unsigned char *buffer = (unsigned char *)av_malloc(4096);
 				AVIOContext *pIOCtx = avio_alloc_context(buffer, 4096, // internal Buffer and its size
 														 0,			   // bWriteable (1=true,0=false)
-														 file_reader,  // user data ; will be passed to our callback functions
-														 readFile2,
+					m_reader.get(),  // user data ; will be passed to our callback functions
+					avReadFile,
 														 0, // Write callback function (not used in this example)
-														 seekFile);
+														 avSeekFile);
 				pFormatCtx = (AVFormatContext *)avformat_alloc_context(); // av_malloc(sizeof(AVFormatContext));
 				pFormatCtx->pb = pIOCtx;
 #if LIBAVFORMAT_VERSION_MAJOR > 52
@@ -2986,6 +3000,7 @@ namespace rir
 		buffer = NULL;
 		m_file_open = false;
 		m_is_packet = false;
+		m_reader.reset();
 	}
 
 	const std::vector<unsigned short> &VideoGrabber::GetCurrentFrame()
@@ -3391,7 +3406,7 @@ namespace rir
 		int readThreadCount;
 		std::vector<std::vector<unsigned short>> firstImages;
 		std::vector<std::vector<unsigned short>> lastImages;
-		void *file_reader;
+		FileReaderPtr file_reader;
 		// ReadThread *th;
 	};
 
@@ -3437,7 +3452,7 @@ namespace rir
 		return &m_data->attrs;
 	}
 
-	bool H264_Loader::open(void *file_reader)
+	bool H264_Loader::open(const FileReaderPtr & file_reader)
 	{
 		int threads = m_data->readThreadCount;
 		if (threads <= 0)
@@ -3550,10 +3565,7 @@ namespace rir
 		m_data->grabber.Close();
 		m_data->attrs.close();
 		if (m_data->file_reader)
-		{
-			destroyFileReader(m_data->file_reader);
-			m_data->file_reader = NULL;
-		}
+			m_data->file_reader.reset();
 	}
 
 	std::string H264_Loader::filename() const

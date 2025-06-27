@@ -52,7 +52,7 @@ typedef struct ZFile
 
 	int readOnly;
 	FileAttributes attributes;
-	void *file_reader;
+	FileReaderPtr file_reader;
 	std::fstream file;
 	std::string filename;
 	unsigned char *mem;
@@ -110,7 +110,7 @@ static void destroyZFile(void *_f)
 	}
 }
 
-void *z_open_file_read(void *file_reader)
+void *z_open_file_read(const FileReaderPtr & file_reader)
 {
 	/*ZFile * res = createZFile();
 	res->file.open(filename, std::ios::binary|std::ios::in);// = fopen(filename, "rb");
@@ -130,14 +130,14 @@ void *z_open_file_read(void *file_reader)
 	/*res->file.seekg(0, std::ios::end);
 	res->tot_size = res->file.tellg();
 	res->file.seekg(0);*/
-	res->tot_size = fileSize(file_reader);
+	res->tot_size = fileSize(res->file_reader);
 
 	// read headers
 	// res->file.read((char*)&res->bheader, sizeof(res->bheader));
 	// res->file.read((char*)&res->btrigger, sizeof(res->btrigger));
-	seekFile(file_reader, 0, AVSEEK_SET);
-	readFile(file_reader, &res->bheader, sizeof(res->bheader));
-	readFile(file_reader, &res->btrigger, sizeof(res->btrigger));
+	seekFile(res->file_reader, 0, AVSEEK_SET);
+	readFile(res->file_reader, &res->bheader, sizeof(res->bheader));
+	readFile(res->file_reader, &res->btrigger, sizeof(res->btrigger));
 
 	// make sure BIN_HEADER is valid
 	if ((res->bheader.compression != 1 && res->bheader.compression != 2 && res->bheader.compression != 3) || res->bheader.version != 1 || res->bheader.triggers != 1)
@@ -156,13 +156,13 @@ void *z_open_file_read(void *file_reader)
 		res->buffer.resize((unsigned)zstd_compress_bound(res->btrigger.data_size_x * res->btrigger.data_size_y * 2));
 
 		// grab all images timestamps and positions in file
-		uint64_t pos = posFile(file_reader);		   // res->file.tellg();
+		uint64_t pos = posFile(res->file_reader);		   // res->file.tellg();
 		res->timestamps.resize(res->btrigger.samples); // = (int64_t*)malloc(sizeof(uint64_t) *res->btrigger.samples);
 		res->positions.resize(res->btrigger.samples);  // = (int64_t*)malloc(sizeof(uint64_t) *res->btrigger.samples);
 
 		bool has_partial_attributes = false;
 		bool has_attributes = false;
-		if (res->attributes.openReadOnly(file_reader))
+		if (res->attributes.openReadOnly(res->file_reader))
 		{
 			// the file contains attributes
 			// read timestamps and positions from the attributes if possible
@@ -195,7 +195,7 @@ void *z_open_file_read(void *file_reader)
 
 		if (!has_attributes)
 		{
-			seekFile(file_reader, pos, AVSEEK_SET);
+			seekFile(res->file_reader, pos, AVSEEK_SET);
 			if (res->btrigger.samples == 0)
 			{
 				// scan the file
@@ -203,20 +203,20 @@ void *z_open_file_read(void *file_reader)
 				res->positions.clear();
 				size_t table_size = res->attributes.tableSize();
 				// remove the attributes table size when looking for images
-				size_t max_size = fileSize(file_reader) - (has_partial_attributes ? table_size : 0);
+				size_t max_size = fileSize(res->file_reader) - (has_partial_attributes ? table_size : 0);
 				while (true)
 				{
 					uint32_t fsize = 0;
 					int64_t timestamp = 0;
-					int64_t pos = posFile(file_reader); // res->file.tellg();
+					int64_t pos = posFile(res->file_reader); // res->file.tellg();
 					if ((size_t)pos >= max_size)
 						break;
 
-					if (readFile(file_reader, &timestamp, sizeof(timestamp)) != sizeof(timestamp))
+					if (readFile(res->file_reader, &timestamp, sizeof(timestamp)) != sizeof(timestamp))
 						break;
-					if (readFile(file_reader, &fsize, sizeof(fsize)) != sizeof(fsize))
+					if (readFile(res->file_reader, &fsize, sizeof(fsize)) != sizeof(fsize))
 						break;
-					if (seekFile(file_reader, fsize, AVSEEK_CUR) < 0) // go to next
+					if (seekFile(res->file_reader, fsize, AVSEEK_CUR) < 0) // go to next
 						break;
 					res->timestamps.push_back(timestamp);
 					res->positions.push_back(pos);
@@ -230,20 +230,20 @@ void *z_open_file_read(void *file_reader)
 					uint32_t fsize = 0;
 					int64_t timestamp = 0;
 
-					res->positions[i] = posFile(file_reader); // res->file.tellg();
+					res->positions[i] = posFile(res->file_reader); // res->file.tellg();
 
-					if (readFile(file_reader, &timestamp, sizeof(timestamp)) != sizeof(timestamp))
+					if (readFile(res->file_reader, &timestamp, sizeof(timestamp)) != sizeof(timestamp))
 					{
 						res->btrigger.samples = i + 1;
 						break;
 					}
-					if (readFile(file_reader, &fsize, sizeof(fsize)) != sizeof(fsize))
+					if (readFile(res->file_reader, &fsize, sizeof(fsize)) != sizeof(fsize))
 					{
 						res->btrigger.samples = i + 1;
 						break;
 					}
 					res->timestamps[i] = timestamp;
-					if (seekFile(file_reader, fsize, AVSEEK_CUR) < 0)
+					if (seekFile(res->file_reader, fsize, AVSEEK_CUR) < 0)
 					{
 						res->btrigger.samples = i + 1;
 						break;
@@ -251,8 +251,7 @@ void *z_open_file_read(void *file_reader)
 				}
 			}
 		}
-		// res->file.seekg(pos);
-		seekFile(file_reader, pos, AVSEEK_SET);
+		seekFile(res->file_reader, pos, AVSEEK_SET);
 
 		return res;
 	}

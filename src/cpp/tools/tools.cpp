@@ -82,7 +82,7 @@ void rm_void_ptr(int index)
 		map_void_ptr().erase(it);
 }
 
-int attrs_read_file_reader(void *file_reader)
+static int attrs_read_file_reader(const FileReaderPtr &file_reader)
 {
 	FileAttributes *attrs = new FileAttributes();
 	if (!attrs->openReadOnly(file_reader))
@@ -95,9 +95,8 @@ int attrs_read_file_reader(void *file_reader)
 
 int attrs_open_from_memory(void *ptr, int64_t size)
 {
-	void *reader = createFileReader(createMemoryAccess(ptr, size));
+	auto reader = createFileReader(createMemoryAccess(ptr, size));
 	int res = attrs_read_file_reader(reader);
-	destroyFileReader(reader);
 	return res;
 }
 
