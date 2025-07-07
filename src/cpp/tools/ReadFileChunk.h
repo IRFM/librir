@@ -4,7 +4,7 @@
 
 #include <cstdint>
 #include <memory>
-
+#include <cstring>
 
 /** @file
 
