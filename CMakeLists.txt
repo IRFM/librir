@@ -40,6 +40,9 @@ endif()
 
 configure_file(rir_config.h.in rir_config.h)
 
+# Configure stenos_config.h and put in the stenos folder for FetchContent_Declare from other projects
+configure_file(rir_config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/src/cpp/rir_config.h @ONLY)
+
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/rir_config.h DESTINATION include)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/rir_config.h DESTINATION include/api)
 
@@ -48,6 +51,8 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 # for rir_config.h needed by all targets
 # include_directories(${CMAKE_CURRENT_BINARY_DIR})
 set(RIR_CONFIG_HEADER ${CMAKE_CURRENT_BINARY_DIR}/rir_config.h CACHE INTERNAL "")
+
+
 
 # get_filename_component(RIR_CONFIG_DIR ${RIR_CONFIG_HEADER} DIRECTORY )
 set(RIR_CONFIG_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE INTERNAL "")
