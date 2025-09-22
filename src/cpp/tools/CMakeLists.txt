@@ -42,7 +42,7 @@ if(MSVC)
     target_compile_definitions(tools PUBLIC UNICODE _UNICODE)
 endif()
 
-if(NOT WIN32)
+if(NOT WIN32 AND NOT CMAKE_HAVE_LIBC_PTHREAD)
     list(APPEND TOOLS_DEP_LIBS pthread)
 endif()
 
