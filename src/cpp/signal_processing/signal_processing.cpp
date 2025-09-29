@@ -1,6 +1,7 @@
 #include "signal_processing.h"
 #include "Filters.h"
 #include "tools.h"
+#include "BadPixels.h"
 // #include "charls.h"
 
 extern "C"
@@ -195,12 +196,13 @@ int resample_time_serie(double *sample_x, double *sample_y, int size, double *ti
 	return 0;
 }
 
-#include "BadPixels.h"
 int bad_pixels_create(unsigned short *first_image, int width, int height)
 {
-	BadPixels *bp = new BadPixels();
+
+	std::shared_ptr<BadPixels> bp(new BadPixels());
+
 	bp->init(first_image, width, height);
-	return set_void_ptr(bp);
+	return set_void_ptr(bp.get());
 }
 int bad_pixels_correct(int handle, unsigned short *in, unsigned short *out)
 {
@@ -217,7 +219,6 @@ void bad_pixels_destroy(int handle)
 		return;
 	else
 		rm_void_ptr(handle);
-	delete bp;
 }
 
 int label_image(int type, void *src, int *dst, int w, int h, void *background, double *out_xy, int *out_area)
