@@ -11,11 +11,11 @@ namespace rir
 	/**
 	 * Bad pixels correction for an IR video of unisgned short images
 	 */
-	class SIGNAL_PROCESSING_EXPORT BadPixels
+	class SIGNAL_PROCESSING_EXPORT BadPixels : public BaseShared
 	{
 	public:
 		BadPixels();
-		~BadPixels(){};
+		~BadPixels() {};
 
 		/**
 		 * Create the bad pixel list on the first image
