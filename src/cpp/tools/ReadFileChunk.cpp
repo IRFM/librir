@@ -190,24 +190,7 @@ namespace rir
 		}
 	};
 
-	struct FileReader
-	{
-		int64_t fileSize=0;
-		int64_t chunkSize=0;
-		int64_t chunkCount=0;
-		int64_t filePos=0;
-		int64_t currentChunk=0;
-		FileAccess access;
-		uint8_t* buffer = nullptr;
-		TmpFile* tmp = nullptr;
-
-		~FileReader()
-		{
-			if (buffer)
-				delete[] buffer;
-		}
-	};
-
+	
 	FileReaderPtr createFileReader(FileAccess&& access)
 	{
 		if (!access.opaque)
@@ -218,7 +201,6 @@ namespace rir
 		reader->filePos = 0;
 		reader->currentChunk = -1;
 		reader->buffer = new uint8_t[reader->chunkSize];
-		reader->tmp = nullptr;
 		return reader;
 	}
 

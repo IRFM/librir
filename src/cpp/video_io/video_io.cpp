@@ -71,13 +71,15 @@ int video_file_format(const char *filename)
 	return -1;
 }
 
-/*int open_camera_file_reader(void* file_reader, int* file_format)
+int open_camera_file_reader(void* file_reader, int* file_format)
 {
 	if (file_format)
 		*file_format = 0;
 
+	FileReaderPtr ptr = std::static_pointer_cast<FileReader>(static_cast<FileReader*>(file_reader)->shared_from_this());	
+
 	IRFileLoader *loader = new IRFileLoader();
-	if (loader->openFileReader(file_reader))
+	if (loader->openFileReader(ptr))
 	{
 		if (file_format)
 		{
@@ -104,7 +106,7 @@ int video_file_format(const char *filename)
 		logError(("Unable to open camera file: wrong file format"));
 		return 0;
 	}
-}*/
+}
 
 int open_camera_from_memory(void *ptr, int64_t size, int *file_format)
 {

@@ -9,6 +9,9 @@
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
+#include <memory>
+
+
 
 #ifndef _MSC_VER
 /**
@@ -30,10 +33,11 @@ Defines utility functions used within librir
 namespace rir
 {
 	/// @brief Base class for objects stored in a shared_ptr
-	struct BaseShared
+	struct BaseShared : std::enable_shared_from_this<BaseShared>
 	{
 		virtual ~BaseShared() {}
 	};
+	using BaseSharedPtr = std::shared_ptr<BaseShared>;
 
 	/**Vector of strings*/
 	typedef std::vector<std::string> StringList;

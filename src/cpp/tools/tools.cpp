@@ -37,9 +37,9 @@ int get_last_log_error(char *text, int *len)
 	return getLastErrorLog(text, len);
 }
 
-static std::map<int, void *> &map_void_ptr()
+static std::map<int, BaseSharedPtr> &map_void_ptr()
 {
-	static std::map<int, void *> inst;
+	static std::map<int, BaseSharedPtr> inst;
 	return inst;
 }
 static std::mutex &map_void_mutex()
@@ -53,8 +53,10 @@ int set_void_ptr(void *cam)
 	std::lock_guard<std::mutex> guard(map_void_mutex());
 	if (!cam)
 		return -1;
+
+	BaseSharedPtr ptr = static_cast<BaseShared*>(cam)->shared_from_this();
 	int i = 1;
-	std::map<int, void *>::const_iterator it = map_void_ptr().begin();
+	auto it = map_void_ptr().begin();
 	for (; it != map_void_ptr().end(); ++it, ++i)
 	{
 		if (it->first != i)
@@ -63,21 +65,21 @@ int set_void_ptr(void *cam)
 	if (it == map_void_ptr().end())
 		i = (int)map_void_ptr().size() + 1;
 
-	map_void_ptr()[i] = cam;
+	map_void_ptr()[i] = ptr;
 	return i;
 }
 void *get_void_ptr(int index)
 {
 	std::lock_guard<std::mutex> guard(map_void_mutex());
-	std::map<int, void *>::iterator it = map_void_ptr().find(index);
+	auto it = map_void_ptr().find(index);
 	if (it != map_void_ptr().end())
-		return it->second;
-	return NULL;
+		return it->second.get();
+	return nullptr;
 }
 void rm_void_ptr(int index)
 {
 	std::lock_guard<std::mutex> guard(map_void_mutex());
-	std::map<int, void *>::iterator it = map_void_ptr().find(index);
+	auto it = map_void_ptr().find(index);
 	if (it != map_void_ptr().end())
 		map_void_ptr().erase(it);
 }
@@ -116,7 +118,6 @@ void attrs_close(int handle)
 	if (!attrs)
 		return;
 	attrs->close();
-	delete attrs;
 	rm_void_ptr(handle);
 }
 void attrs_discard(int handle)
@@ -125,7 +126,6 @@ void attrs_discard(int handle)
 	if (!attrs)
 		return;
 	attrs->close();
-	delete attrs;
 	rm_void_ptr(handle);
 }
 int attrs_flush(int handle)

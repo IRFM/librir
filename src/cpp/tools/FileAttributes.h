@@ -2,6 +2,8 @@
 
 #include "rir_config.h"
 #include "ReadFileChunk.h"
+#include "Misc.h"
+
 
 #include <map>
 #include <string>
@@ -28,7 +30,7 @@ namespace rir
 	Note that this class add a binary content at the end of the video file. This works with MP4 video files as ffmpeg can ignore the trailer when reading back the video, but
 	this is not guaranteed to work with other formats.
 	*/
-	class TOOLS_EXPORT FileAttributes
+	class TOOLS_EXPORT FileAttributes : public BaseShared
 	{
 	public:
 		FileAttributes();

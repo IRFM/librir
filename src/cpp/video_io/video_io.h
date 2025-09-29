@@ -43,7 +43,7 @@ extern "C"
 	on closing.
 	\sa createFileReader
 	*/
-	//IO_EXPORT int open_camera_file_reader(void *file_reader, int *file_format);
+	IO_EXPORT int open_camera_file_reader(void *file_reader, int *file_format);
 
 	/**
 	Opens a camera video file from a memory reader (created with #createMemoryReader()) object and returns

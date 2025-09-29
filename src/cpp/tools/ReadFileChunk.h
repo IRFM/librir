@@ -1,6 +1,8 @@
 #pragma once
 
 #include "rir_config.h"
+#include "Misc.h"
+
 
 #include <cstdint>
 #include <memory>
@@ -74,6 +76,7 @@ namespace rir
 		destroy_opaque destroy = nullptr;
 
 		FileAccess() noexcept = default;
+		FileAccess(const FileAccess&) = delete;
 		FileAccess(FileAccess&& other) noexcept
 			:opaque(other.opaque),
 			infos(other.infos),
@@ -81,6 +84,7 @@ namespace rir
 			destroy(other.destroy) {
 			memset(&other, 0, sizeof(FileAccess));
 		}
+		FileAccess& operator=(const FileAccess& other) = delete;
 		FileAccess& operator=(FileAccess&& other) noexcept
 		{
 			opaque = (other.opaque);
@@ -97,7 +101,30 @@ namespace rir
 		}
 	};
 
-	struct FileReader;
+	class FileReader : public BaseShared
+	{
+		int64_t fileSize=0;
+		int64_t chunkSize=0;
+		int64_t chunkCount=0;
+		int64_t filePos=0;
+		int64_t currentChunk=0;
+		FileAccess access;
+		uint8_t* buffer = nullptr;
+
+		friend TOOLS_EXPORT std::shared_ptr<FileReader> createFileReader(FileAccess&&);
+		friend TOOLS_EXPORT int readFile(FileReader* file_reader, void* buf, int buf_size);
+		friend TOOLS_EXPORT int readFile2(FileReader* file_reader, uint8_t* outbuf, int buf_size);
+		friend TOOLS_EXPORT int64_t seekFile(FileReader* file_reader, int64_t pos, int whence);
+		friend TOOLS_EXPORT int64_t posFile(FileReader* file_reader);
+		friend TOOLS_EXPORT int64_t fileSize(FileReader* file_reader);
+	public:
+		~FileReader()
+		{
+			if (buffer)
+				delete[] buffer;
+		}
+	};
+
 	using FileReaderPtr = std::shared_ptr<FileReader>;
 
 	/**
