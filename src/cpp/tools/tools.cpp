@@ -54,7 +54,7 @@ int set_void_ptr(void *cam)
 	if (!cam)
 		return -1;
 
-	BaseSharedPtr ptr = static_cast<BaseShared*>(cam)->shared_from_this();
+	BaseSharedPtr ptr = static_cast<BaseShared *>(cam)->shared_from_this();
 	int i = 1;
 	auto it = map_void_ptr().begin();
 	for (; it != map_void_ptr().end(); ++it, ++i)
@@ -86,13 +86,14 @@ void rm_void_ptr(int index)
 
 static int attrs_read_file_reader(const FileReaderPtr &file_reader)
 {
-	FileAttributes *attrs = new FileAttributes();
+	std::shared_ptr<FileAttributes> attrs(new FileAttributes());
+
 	if (!attrs->openReadOnly(file_reader))
 	{
-		delete attrs;
+
 		return 0;
 	}
-	return set_void_ptr(attrs);
+	return set_void_ptr(attrs.get());
 }
 
 int attrs_open_from_memory(void *ptr, int64_t size)
@@ -104,13 +105,13 @@ int attrs_open_from_memory(void *ptr, int64_t size)
 
 int attrs_open_file(const char *filename)
 {
-	FileAttributes *attrs = new FileAttributes();
+	std::shared_ptr<FileAttributes> attrs(new FileAttributes());
 	if (!attrs->open(filename))
 	{
-		delete attrs;
+
 		return 0;
 	}
-	return set_void_ptr(attrs);
+	return set_void_ptr(attrs.get());
 }
 void attrs_close(int handle)
 {

@@ -18,7 +18,7 @@ int open_camera_file(const char *filename, int *file_format)
 	if (file_format)
 		*file_format = 0;
 
-	IRFileLoader *loader = new IRFileLoader();
+	std::shared_ptr<IRFileLoader> loader(new IRFileLoader());
 	if (loader->open(filename))
 	{
 		if (file_format)
@@ -38,11 +38,11 @@ int open_camera_file(const char *filename, int *file_format)
 			else
 				*file_format = FILE_FORMAT_OTHER;
 		}
-		return set_void_ptr(loader);
+		return set_void_ptr(loader.get());
 	}
 	else
 	{
-		delete loader;
+
 		logError(("Unable to open camera file " + std::string(filename) + ": wrong file format").c_str());
 		return 0;
 	}
@@ -71,14 +71,14 @@ int video_file_format(const char *filename)
 	return -1;
 }
 
-int open_camera_file_reader(void* file_reader, int* file_format)
+int open_camera_file_reader(void *file_reader, int *file_format)
 {
 	if (file_format)
 		*file_format = 0;
 
-	FileReaderPtr ptr = std::static_pointer_cast<FileReader>(static_cast<FileReader*>(file_reader)->shared_from_this());	
+	FileReaderPtr ptr = std::static_pointer_cast<FileReader>(static_cast<FileReader *>(file_reader)->shared_from_this());
 
-	IRFileLoader *loader = new IRFileLoader();
+	std::shared_ptr<IRFileLoader> loader(new IRFileLoader());
 	if (loader->openFileReader(ptr))
 	{
 		if (file_format)
@@ -98,11 +98,10 @@ int open_camera_file_reader(void* file_reader, int* file_format)
 			else
 				*file_format = FILE_FORMAT_OTHER;
 		}
-		return set_void_ptr(loader);
+		return set_void_ptr(loader.get());
 	}
 	else
 	{
-		delete loader;
 		logError(("Unable to open camera file: wrong file format"));
 		return 0;
 	}
@@ -113,8 +112,8 @@ int open_camera_from_memory(void *ptr, int64_t size, int *file_format)
 	if (file_format)
 		*file_format = 0;
 
-	IRFileLoader *loader = new IRFileLoader();
-	FileReaderPtr reader = createFileReader(createMemoryAccess(ptr,size)); 
+	std::shared_ptr<IRFileLoader> loader(new IRFileLoader());
+	FileReaderPtr reader = createFileReader(createMemoryAccess(ptr, size));
 
 	if (loader->openFileReader(reader))
 	{
@@ -135,11 +134,11 @@ int open_camera_from_memory(void *ptr, int64_t size, int *file_format)
 			else
 				*file_format = FILE_FORMAT_OTHER;
 		}
-		return set_void_ptr(loader);
+		return set_void_ptr(loader.get());
 	}
 	else
 	{
-		delete loader;
+
 		logError(("Unable to open camera file: wrong file format"));
 		return 0;
 	}
@@ -155,7 +154,7 @@ int close_camera(int cam)
 		return -1;
 	}
 	rm_void_ptr(cam);
-	delete l;
+
 	return 0;
 }
 
@@ -375,10 +374,10 @@ int load_image(int cam, int pos, int calibration, unsigned short *data)
 		return -1;
 }
 
-int load_imageF(int cam, int pos, int calibration, float* pixels)
+int load_imageF(int cam, int pos, int calibration, float *pixels)
 {
-	void* camera = get_void_ptr(cam);
-	IRVideoLoader* l = static_cast<IRVideoLoader*>(camera);
+	void *camera = get_void_ptr(cam);
+	IRVideoLoader *l = static_cast<IRVideoLoader *>(camera);
 	if (!l)
 	{
 		logError("load_image: NULL camera");
@@ -649,7 +648,7 @@ IO_EXPORT void set_ffmpeg_log_enabled(int enable)
 	rir::setFFmpegLogEnabled((bool)enable);
 }
 
-struct H264
+struct H264 : public BaseShared
 {
 	H264_Saver saver;
 	int width, height, lossy_height;
@@ -659,7 +658,8 @@ struct H264
 
 int h264_open_file(const char *filename, int width, int height, int lossy_height)
 {
-	H264 *saver = new H264();
+
+	std::shared_ptr<H264> saver(new H264());
 	saver->width = width;
 	saver->height = height;
 	saver->lossy_height = lossy_height;
@@ -669,11 +669,11 @@ int h264_open_file(const char *filename, int width, int height, int lossy_height
 		if (remove(filename) != 0)
 		{
 			logError("h264_open_file: cannot remove output file");
-			delete saver;
+
 			return 0;
 		}
 	}
-	return set_void_ptr(saver);
+	return set_void_ptr(saver.get());
 }
 
 void h264_close_file(int file)
@@ -686,7 +686,6 @@ void h264_close_file(int file)
 	}
 	saver->saver.close();
 	rm_void_ptr(file);
-	delete saver;
 }
 int h264_set_parameter(int file, const char *param, const char *value)
 {

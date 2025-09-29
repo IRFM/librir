@@ -10,11 +10,10 @@ namespace rir
 
 	IO_EXPORT void setFFmpegLogEnabled(bool enable);
 
-
 	class IO_EXPORT VideoDownsampler
 	{
 	public:
-		using callback_type = std::function<void(const unsigned short*, std::int64_t, const std::map<std::string, std::string>&)>;
+		using callback_type = std::function<void(const unsigned short *, std::int64_t, const std::map<std::string, std::string> &)>;
 
 		VideoDownsampler();
 		~VideoDownsampler();
@@ -22,11 +21,12 @@ namespace rir
 		bool open(int width, int height, int lossy_height, int factor, double factor_std, callback_type callback);
 		int close();
 
-		bool addImage(const unsigned short* img, std::int64_t timestamp, const std::map<std::string, std::string>& attributes);
-		bool addImage2(const unsigned short* img, std::int64_t timestamp, const std::map<std::string, std::string>& attributes);
+		bool addImage(const unsigned short *img, std::int64_t timestamp, const std::map<std::string, std::string> &attributes);
+		bool addImage2(const unsigned short *img, std::int64_t timestamp, const std::map<std::string, std::string> &attributes);
+
 	private:
 		class PrivateData;
-		PrivateData* d_data;
+		PrivateData *d_data;
 	};
 
 	/// @brief Class implementing lossless/lossy compression of infrared videos as described in article [].
@@ -39,7 +39,7 @@ namespace rir
 	///
 	/// This class should not be used to mix lossy and lossless frames within the same video file.
 	///
-	class IO_EXPORT H264_Saver
+	class IO_EXPORT H264_Saver : public BaseShared
 	{
 	public:
 		H264_Saver();
@@ -209,7 +209,7 @@ namespace rir
 
 		/// @brief Reimplemented from IRVideoLoader
 		virtual CalibrationPtr calibration() const { return CalibrationPtr(); }
-		virtual bool setCalibration(const CalibrationPtr&) { return false; }
+		virtual bool setCalibration(const CalibrationPtr &) { return false; }
 		/// @brief Reimplemented from IRVideoLoader
 		virtual bool getRawValue(int x, int y, unsigned short *value) const;
 		/// @brief Reimplemented from IRVideoLoader
@@ -233,7 +233,7 @@ namespace rir
 		/// @brief Reimplemented from IRVideoLoader
 		virtual bool extractAttributes(std::map<std::string, std::string> &) const;
 
-		const FileAttributes* fileAttributes() const;
+		const FileAttributes *fileAttributes() const;
 
 		bool readImageInternal(int pos, unsigned short *pixels);
 
