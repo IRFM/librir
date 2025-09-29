@@ -61,6 +61,8 @@ Log levels
     /**
      * Internally store \a cam pointer and returns an integer handle on it.
      * This function is thread safe.
+     * Passed object must inherit rir::BaseShared, and it will be stored
+     * as a std::shared_ptr<BaseShared>.
      */
     TOOLS_EXPORT int set_void_ptr(void *cam);
     /**
