@@ -74,9 +74,9 @@ def open_camera_file(filename):
     C signature:
     void * open_camera_file(const char * filename, int * file_format);
     """
-    pulse = np.zeros(1, dtype="i")
+    file_format = np.zeros(1, dtype="i")
     res = _video_io.open_camera_file(
-        filename.encode(), pulse.ctypes.data_as(ct.POINTER(ct.c_int))
+        filename.encode(), file_format.ctypes.data_as(ct.POINTER(ct.c_int))
     )
     if res == 0:
         raise RuntimeError("cannot read file " + filename)
