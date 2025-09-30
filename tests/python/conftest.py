@@ -1,7 +1,8 @@
 import logging
-
 import os
 import sys
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
+from os import devnull
 from pathlib import Path
 from typing import List
 
@@ -9,7 +10,9 @@ import numpy as np
 import pytest
 
 os.environ["LIBRIR_DISABLE_JOBLIB"] = "1"
-from librir import IRMovie
+
+
+from librir import IRMovie  # type: ignore
 
 thismodule = sys.modules[__name__]
 
@@ -22,6 +25,14 @@ base = Path(thismodule.__file__).parent
 IMAGES = 10
 N_TIS = 7
 DL_MAX_VALUE = 8192
+
+
+@contextmanager
+def suppress_stdout_stderr():
+    """A context manager that redirects stdout and stderr to devnull"""
+    with open(devnull, "w") as fnull:
+        with redirect_stderr(fnull) as err, redirect_stdout(fnull) as out:
+            yield (err, out)
 
 
 def add_noise(image, mean=0, var=0.5):

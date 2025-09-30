@@ -11,6 +11,7 @@ from librir import IRMovie
 from librir.video_io.IRMovie import CalibrationNotFound
 
 from librir.video_io.IRMovie import InvalidMovie
+from tests.python.conftest import suppress_stdout_stderr
 
 
 @pytest.mark.instantiation
@@ -18,7 +19,8 @@ def test_IRMovie_with_filename_as_input(filename):
     mov = IRMovie.from_filename(filename)
     assert type(mov) is IRMovie
     with pytest.raises(RuntimeError):
-        IRMovie.from_filename("")
+        with suppress_stdout_stderr():
+            IRMovie.from_filename("")
     assert mov.filename == filename
 
 
@@ -30,7 +32,8 @@ def test_IRMovie_with_handle_as_input(array):
         new_mov.__tempfile__ = None
         movie.__tempfile__ = None
         with pytest.raises(InvalidMovie):
-            IRMovie(0)
+            with suppress_stdout_stderr():
+                IRMovie(0)
 
 
 @pytest.mark.instantiation
@@ -49,7 +52,8 @@ def test_IRMovie_instantiation_with_3D_numpy_array(valid_3d_array):
 @pytest.mark.instantiation
 def test_IRMovie_instantiation_with_bad_numpy_array(bad_array):
     with pytest.raises(ValueError):
-        IRMovie.from_numpy_array(bad_array)
+        with suppress_stdout_stderr():
+            IRMovie.from_numpy_array(bad_array)
 
 
 @pytest.mark.h264
@@ -162,13 +166,15 @@ def test_set_calibration(movie: IRMovie):
     movie.calibration = "DL"
     assert movie._calibration_index == 0
     with pytest.raises(CalibrationNotFound):
-        movie.calibration = "T"
+        with suppress_stdout_stderr():
+            movie.calibration = "T"
 
     assert movie.calibration == "DL"
     assert movie._calibration_index == 0
 
     with pytest.raises(CalibrationNotFound):
-        movie.calibration = 1
+        with suppress_stdout_stderr():
+            movie.calibration = 1
 
 
 @pytest.mark.accessors
@@ -178,11 +184,14 @@ def test_load_pos_with_DL(movie: IRMovie):
         movie.load_pos(i, 0)
         movie.load_pos(i, "DL")
         with pytest.raises(CalibrationNotFound) as exc:
-            movie.load_pos(i, 1)
+            with suppress_stdout_stderr():
+                movie.load_pos(i, 1)
         with pytest.raises(CalibrationNotFound) as exc:
-            movie.load_pos(i, "T")
+            with suppress_stdout_stderr():
+                movie.load_pos(i, "T")
         with pytest.raises(CalibrationNotFound) as exc:
-            movie.load_pos(i, 3)
+            with suppress_stdout_stderr():
+                movie.load_pos(i, 3)
 
 
 # @pytest.mark.accessors

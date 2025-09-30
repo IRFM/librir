@@ -15,6 +15,7 @@ import pytest
 from librir.video_io import IRMovie, IRSaver, get_filename, video_file_format
 
 from librir import tools as rts
+from tests.python.conftest import suppress_stdout_stderr
 
 
 def test_memory_folder():
@@ -150,7 +151,8 @@ def test_draw_polygon(img):
     print(im)
     bad_img = img[np.newaxis, :]
     with pytest.raises(RuntimeError):
-        ge.draw_polygon(bad_img, polygon, 1)
+        with suppress_stdout_stderr():
+            ge.draw_polygon(bad_img, polygon, 1)
     bad_img = img.astype(object)
     with pytest.raises(RuntimeError):
         ge.draw_polygon(bad_img, polygon, 1)
