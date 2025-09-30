@@ -1,6 +1,7 @@
 [![Build on Linux](https://github.com/IRFM/librir/actions/workflows/build-linux.yml/badge.svg)](https://github.com/IRFM/librir/actions/workflows/build-linux.yml)
 [![Build on Windows](https://github.com/IRFM/librir/actions/workflows/build-windows.yml/badge.svg?branch=main)](https://github.com/IRFM/librir/actions/workflows/build-windows.yml)
 [![codecov](https://codecov.io/gh/IRFM/librir/graph/badge.svg?token=33OAGARS5K)](https://codecov.io/gh/IRFM/librir)
+![](python_badges.svg "")
 
 # ![](large.png "librir") librir
 
@@ -46,7 +47,7 @@ make install
 
 This will install Librir locally in *build/install*. The *install* folder also contains the *librir* directory which is the python wrapper of the library. 
 
-## Python distribution
+## Python wheel building
 
 There is a `BUILD_WHEEL` CMake option to automatically build librir wheel and place the files in `install/dist` after successful compilation if there is a `pip` executable available.  
 
