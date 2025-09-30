@@ -877,6 +877,10 @@ namespace rir
 
 	bool IRFileLoader::open(const char *filename)
 	{
+		std::ifstream f(filename);
+		if (!f.good())
+			return false;
+
 		m_data->has_times = false;
 		close();
 		m_data->file.reset(bin_open_file_read(filename));
