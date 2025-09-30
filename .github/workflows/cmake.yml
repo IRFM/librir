@@ -1,56 +1,53 @@
 name: build
-on: 
-
+on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main", "releases/**" ]
+    branches: ["main", "releases/**"]
   workflow_dispatch:
   workflow_call:
 
+jobs:
+  build-linux:
+    strategy:
+      matrix:
+        compiler: [latest, gcc-latest, clang, gcc-6.4.0, gcc-13.2.0]
+    uses: ./.github/workflows/build-linux.yml
+    with:
+      compiler: ${{ matrix.compiler }}
 
-jobs: 
-    build-linux:
-        strategy:
-          matrix:
-            compiler: [ latest, gcc-latest, clang, gcc-6.4.0, gcc-13.2.0]
-        uses: ./.github/workflows/build-linux.yml
-        with:
-          compiler: ${{ matrix.compiler }}
+  build-windows:
+    strategy:
+      matrix:
+        compiler: [latest, gcc-latest, gcc-6.4.0, gcc-13.2.0, clang]
+    uses: ./.github/workflows/build-windows.yml
+    with:
+      compiler: ${{ matrix.compiler }}
 
-        
-    build-windows:
-        strategy:
-          matrix:
-            compiler: [ latest, gcc-latest, gcc-6.4.0, gcc-13.2.0, clang]
-        uses: ./.github/workflows/build-windows.yml
-        with:
-          compiler: ${{ matrix.compiler }}
-      
-    tests-linux:
-        strategy:
-          matrix:
-            python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
-            compiler:  [ latest, gcc-latest, clang, gcc-6.4.0, gcc-13.2.0]
-        needs: build-linux
-        uses: ./.github/workflows/test.yml
-        with:
-          python-version: ${{ matrix.python-version }} 
-          compiler: ${{ matrix.compiler }}
-          os: ubuntu-22.04
-        secrets:
-          codecov_token: ${{ secrets.CODECOV_TOKEN }}
+  tests-linux:
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+        compiler: [latest, gcc-latest, clang, gcc-6.4.0, gcc-13.2.0]
+    needs: build-linux
+    uses: ./.github/workflows/test.yml
+    with:
+      python-version: ${{ matrix.python-version }}
+      compiler: ${{ matrix.compiler }}
+      os: ubuntu-22.04
+    secrets:
+      codecov_token: ${{ secrets.CODECOV_TOKEN }}
 
-    tests-windows:
-      strategy:
-        matrix:
-          python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
-          compiler: [ latest, gcc-latest, gcc-6.4.0, gcc-13.2.0, clang]
-      needs: build-windows
-      uses: ./.github/workflows/test.yml
-      with:
-        python-version: ${{ matrix.python-version }} 
-        compiler: ${{ matrix.compiler }}
-        os: windows-latest
-      secrets:
-        codecov_token: ${{ secrets.CODECOV_TOKEN }}
+  tests-windows:
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+        compiler: [latest, gcc-latest, gcc-6.4.0, gcc-13.2.0, clang]
+    needs: build-windows
+    uses: ./.github/workflows/test.yml
+    with:
+      python-version: ${{ matrix.python-version }}
+      compiler: ${{ matrix.compiler }}
+      os: windows-latest
+    secrets:
+      codecov_token: ${{ secrets.CODECOV_TOKEN }}
