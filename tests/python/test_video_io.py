@@ -12,6 +12,7 @@ from librir.video_io.rir_video_io import (
     camera_saturate,
     correct_PCR_file,
     get_emissivity,
+    set_emissivity,
     h264_get_high_errors,
     h264_get_low_errors,
     support_emissivity,
@@ -177,16 +178,17 @@ def test_pcr2h264(pcr_filename):
 #     npt.assert_array_equal(data_with_new_emissivity, data / 2)
 
 
-# def test_set_emissivity(movie: IRMovie):
-#     data = movie.data
-#     emi = np.ones(data.shape) * 0.25
+def test_set_emissivity(movie: IRMovie):
+    data = movie.data.copy()
+    emi = np.ones(data.shape[1:]) * 0.25
 
-#     set_emissivity(movie.handle, emi)
-#     data_with_new_emissivity = movie.data
-#     data_with_new_emissivity == data / 2
+    set_emissivity(movie.handle, emi)
+    readback_emi = get_emissivity(movie.handle)
+    npt.assert_array_equal(emi, readback_emi)
 
-#     with pytest.raises(RuntimeError):
-#         get_emissivity(-1, 1)
+    # data_with_new_emissivity = data / emi
+
+    # movie.data
 
 
 def test_get_emissivity(movie: IRMovie):

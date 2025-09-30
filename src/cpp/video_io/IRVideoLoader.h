@@ -67,7 +67,7 @@ namespace rir
 			for (size_t i = 0; i < _s; ++i)
 				m_invEmissivities[i] = 1.f / emi[i];
 			// fill missing values
-			for (size_t i = _s - 1; i < m_invEmissivities.size(); ++i)
+			for (size_t i = _s; i < m_invEmissivities.size(); ++i)
 				m_invEmissivities[i] = 1.f;
 			m_globalEmi = 0;
 			return true;

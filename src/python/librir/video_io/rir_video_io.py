@@ -270,7 +270,7 @@ def get_global_emissivity(camera):
 
 def set_emissivity(camera, emissivity_array):
     """Set the scene emissivity per pixel for given camera file"""
-    ar = np.array(emissivity_array, dtype=np.float)
+    ar = np.array(emissivity_array, dtype=np.float32)
     res = _video_io.set_emissivity(
         camera, ar.ctypes.data_as(ct.POINTER(ct.c_float)), ar.size
     )
