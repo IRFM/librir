@@ -26,6 +26,7 @@ from .rir_tools import (
     attrs_set_global_attributes,
     attrs_flush,
 )
+import atexit
 
 
 class FileAttributes(object):
@@ -67,6 +68,7 @@ class FileAttributes(object):
             key = attrs_global_attribute_name(self.handle, i)
             value = attrs_global_attribute_value(self.handle, i)
             self._attributes[key] = value
+        atexit.register(self.close)
 
     def close(self):
         """
@@ -95,11 +97,11 @@ class FileAttributes(object):
         attrs_discard(self.handle)
         self.handle = 0
 
-    def __del__(self):
-        """
-        Destructor, write attributes and close the file
-        """
-        self.close()
+    # def __del__(self):
+    #     """
+    #     Destructor, write attributes and close the file
+    #     """
+    #     self.close()
 
     def __enter__(self):
         return self

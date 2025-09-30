@@ -227,7 +227,8 @@ class IRMovie(object):
 
     def close(self):
         if self.handle > 0:
-            # self._file_attributes.close()
+            if self._file_attributes is not None:
+                self._file_attributes.close()
             close_camera(self.handle)
             self.handle = -1
 
