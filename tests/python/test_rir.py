@@ -203,34 +203,60 @@ def test_translate(img):
         _img = np.ones((12, 12, 12), dtype=np.float64)
         _img = sp.translate(_img, 1.2, 1.3, "constant", 0)
 
+    with pytest.raises(RuntimeError):
+        _img = sp.translate(_img, 1.2, 1.3, strategy="background", background=None)
+
+    with pytest.raises(RuntimeError):
+        img = np.ones((12, 12), dtype=np.str_)
+        img = sp.translate(img, 1.2, 1.3, "constant", 0)
+
 
 def test_gaussian_filter(img):
     # global img
     img = sp.gaussian_filter(img, 0.75)
-    print(img)
+    with pytest.raises(RuntimeError):
+        img = sp.gaussian_filter(np.ones(3), 0.75)
 
 
 def test_find_median_pixel():
     img = np.array(range(100), dtype=np.uint16)
     img.shape = (10, 10)
-    print(sp.find_median_pixel(img, 0.5))
-    print(sp.find_median_pixel(img, 0.2))
+    mask = np.ones(img.shape)
+    sp.find_median_pixel(img, 0.5)
+    sp.find_median_pixel(img, 0.2)
+    sp.find_median_pixel(img, 0.2, mask=mask)
+    with pytest.raises(RuntimeError):
+        img = sp.find_median_pixel(np.ones(3), 0.75)
 
 
 def test_extract_times():
     times1 = [0, 0.2, 1, 1.5, 2.3, 3.3, 4, 5]
     times2 = [-1, 3, 4, 4.3, 4.7]
-    print(sp.extract_times((times1, times2), "union"))
-    print(sp.extract_times((times1, times2), "inter"))
+
+    sp.extract_times((times1, times2), "union")
+    sp.extract_times((times1, times2), "inter")
+    with pytest.raises(RuntimeError):
+        sp.extract_times((), "inter")
+    with pytest.raises(RuntimeError):
+        sp.extract_times((times1, times2), "whatever")
+
+    sp.extract_times((times1, range(10000)), "union")
 
 
 def test_resample_time_serie():
     x = range(10)
     y = range(10)
     times = [0, 0.2, 1, 1.5, 2.3, 3.3, 4, 5, 5.6, 9.9, 10, 12, 13]
-    print(sp.resample_time_serie(x, y, times))
-    print(sp.resample_time_serie(x, y, times, 0))
-    print(sp.resample_time_serie(x, y, times, None, False))
+    sp.resample_time_serie(x, y, times)
+    sp.resample_time_serie(x, y, times, 0)
+    sp.resample_time_serie(x, y, times, None, False)
+
+    with pytest.raises(RuntimeError):
+        sp.resample_time_serie([], y, times)
+    with pytest.raises(RuntimeError):
+        sp.resample_time_serie(x, y, [])
+    with pytest.raises(RuntimeError):
+        sp.resample_time_serie(list(x) + list(x), y, times)
 
 
 @pytest.fixture
@@ -283,9 +309,9 @@ def test_label_image(img):
     img = np.zeros((20, 20), np.int32)
     img = ge.draw_polygon(img, polygon, 5)
     img = ge.draw_polygon(img, polygon2, 5)
-    print(img)
-    print(sp.label_image(img))
-    print(sp.keep_largest_area(img))
+    img
+    sp.label_image(img)
+    sp.keep_largest_area(img)
 
 
 def test_ir_saver_movie():

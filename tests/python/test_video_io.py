@@ -1,4 +1,5 @@
 import os
+import shutil
 import tempfile
 import time
 from pathlib import Path
@@ -9,13 +10,25 @@ import pytest
 from librir.video_io import IRMovie, IRSaver
 from librir.video_io.rir_video_io import (
     FileFormat,
+    calibrate_image,
     camera_saturate,
+    close_camera,
     correct_PCR_file,
     get_emissivity,
+    get_filename,
+    get_image_size,
+    get_image_time,
+    h264_add_loss,
+    h264_close_file,
+    h264_open_file,
+    load_image,
+    open_camera_memory,
     set_emissivity,
     h264_get_high_errors,
     h264_get_low_errors,
+    set_global_emissivity,
     support_emissivity,
+    supported_calibrations,
     video_file_format,
 )
 from tests.python.conftest import suppress_stdout_stderr
@@ -170,12 +183,13 @@ def test_pcr2h264(pcr_filename):
         assert mov.video_file_format == FileFormat.H264.value
 
 
-# @pytest.mark.parametrize("emi", [0.25, 0.5])
-# def test_set_global_emissivity(movie: IRMovie, emi):
-#     data = movie.data
-#     set_global_emissivity(movie.handle, emi)
-#     data_with_new_emissivity = movie.data
-#     npt.assert_array_equal(data_with_new_emissivity, data / 2)
+@pytest.mark.parametrize("emi", [0.5])
+def test_set_global_emissivity(movie: IRMovie, emi):
+    data = movie.data
+    set_global_emissivity(movie.handle, emi)
+    data_with_new_emissivity = calibrate_image(movie.handle, data, 0)
+    # FIXME: Emissivity is not taken care of so far.
+    # npt.assert_array_equal(data_with_new_emissivity, data / 2)
 
 
 def test_set_emissivity(movie: IRMovie):
@@ -212,3 +226,56 @@ def test_enable_bad_pixels(movie: IRMovie):
 
 def test_camera_saturate(movie: IRMovie):
     camera_saturate(movie.handle)
+
+
+def test_open_camera_memory(movie: IRMovie):
+    movie.filename
+    data = movie.filename.read_bytes()
+    handle = open_camera_memory(data)
+
+    with pytest.raises(RuntimeError):
+        open_camera_memory(bytes())
+
+    close_camera(handle)
+
+
+def test_get_filename(movie: IRMovie):
+    get_filename(movie.handle)
+    with pytest.raises(RuntimeError):
+        get_filename(0)
+
+
+def test_get_image_time(movie: IRMovie):
+    get_image_time(movie.handle, 0)
+    with pytest.raises(RuntimeError):
+        with suppress_stdout_stderr():
+            get_image_time(0, 0)
+
+
+def test_get_image_size(movie: IRMovie):
+    get_image_size(movie.handle)
+    with pytest.raises(RuntimeError):
+        get_image_size(0)
+
+
+def test_supported_calibrations(movie: IRMovie):
+    supported_calibrations(movie.handle)
+    with pytest.raises(RuntimeError):
+        supported_calibrations(0)
+
+
+def test_load_image(movie: IRMovie):
+    load_image(movie.handle, 0, 0)
+    with pytest.raises(RuntimeError):
+        load_image(0, 0, 0)
+    with pytest.raises(RuntimeError):
+        load_image(movie.handle, movie.images + 1, 0)
+
+
+# def test_h264_add_loss(movie: IRMovie):
+#     with tempfile.NamedTemporaryFile(delete=False) as f:
+#         pass
+#     saver = h264_open_file(f, movie.width, movie.height, lossy_height=None)
+#     h264_add_loss(saver, movie[0])
+#     h264_close_file(saver)
+#     shutil.rmtree(f.name)
