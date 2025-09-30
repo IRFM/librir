@@ -10,7 +10,7 @@ authors = [
     {name = "Erwan GRELIER", email = "erwan.grelier@cea.fr"},
 ]
 description = "Librir is a C/C++/Python library to manipulate infrared video and building Cognitive Vision/Machine Learning applications."
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 keywords = ["infrared", "imagery", "fusion"]
 license = {text = "BSD-3-Clause"}
 classifiers = [
