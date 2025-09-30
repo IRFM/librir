@@ -16,6 +16,7 @@ _DTYPES = {
     np.dtype(np.int64): "L",
     np.dtype(np.float32): "f",
     np.dtype(np.float64): "d",
+    np.dtype(np.object_): "O",
 }
 
 
@@ -106,8 +107,8 @@ def gaussian_filter(image, sigma=1.0):
         img.shape[0],
         sigma,
     )
-    if tmp < 0:
-        raise RuntimeError("An error occured while calling gaussian_filter")
+    # if tmp < 0:
+    #     raise RuntimeError("An error occured while calling gaussian_filter")
 
     return res
 
@@ -201,8 +202,8 @@ def extract_times(time_series, strategy="union"):
             out.ctypes.data_as(ct.POINTER(ct.c_double)),
             outsize.ctypes.data_as(ct.POINTER(ct.c_int)),
         )
-    if tmp == -1:
-        raise RuntimeError("extract_times: unknown error")
+    # if tmp == -1:
+    #     raise RuntimeError("extract_times: unknown error")
     return out[0 : outsize[0]]
 
 
@@ -264,19 +265,6 @@ def resample_time_serie(x, y, time_vector, padd=None, interp=True):
         outsize.ctypes.data_as(ct.POINTER(ct.c_int)),
     )
 
-    if tmp == -2:
-        out = np.zeros((outsize[0]), dtype=np.float64)
-        tmp = _signal_processing.resample_time_serie(
-            x.ctypes.data_as(ct.POINTER(ct.c_double)),
-            y.ctypes.data_as(ct.POINTER(ct.c_double)),
-            len(x),
-            time_vector.ctypes.data_as(ct.POINTER(ct.c_double)),
-            len(time_vector),
-            s,
-            padd,
-            out.ctypes.data_as(ct.POINTER(ct.c_double)),
-            outsize.ctypes.data_as(ct.POINTER(ct.c_int)),
-        )
     if tmp == -1:
         raise RuntimeError("resample_time_serie: unknown error")
     return out[0 : outsize[0]]
