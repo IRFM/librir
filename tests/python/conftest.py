@@ -173,7 +173,7 @@ def valid_2D_array(request):
     yield arr
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def movie(array):
     with IRMovie.from_numpy_array(array) as mov:
         yield mov
