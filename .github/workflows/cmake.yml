@@ -11,7 +11,7 @@ jobs:
   build-linux:
     strategy:
       matrix:
-        compiler: [latest, gcc-latest, clang, gcc-6.4.0, gcc-13.2.0]
+        compiler: [latest, gcc-13.2.0, clang]
     uses: ./.github/workflows/build-linux.yml
     with:
       compiler: ${{ matrix.compiler }}
@@ -19,7 +19,7 @@ jobs:
   build-windows:
     strategy:
       matrix:
-        compiler: [latest, gcc-latest, gcc-6.4.0, gcc-13.2.0, clang]
+        compiler: [latest, gcc-13.2.0, clang]
     uses: ./.github/workflows/build-windows.yml
     with:
       compiler: ${{ matrix.compiler }}
@@ -28,7 +28,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
-        compiler: [latest, gcc-latest, clang, gcc-6.4.0, gcc-13.2.0]
+        compiler: [latest, gcc-13.2.0, clang]
     needs: build-linux
     uses: ./.github/workflows/test.yml
     with:
