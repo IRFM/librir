@@ -110,4 +110,11 @@ if(PIP_EXECUTABLE AND BUILD_WHEEL)
     install(CODE "execute_process(COMMAND ${PIP_EXECUTABLE} wheel ${CMAKE_CURRENT_SOURCE_DIR} -w ${CMAKE_INSTALL_PREFIX}/dist --no-deps)")
 endif()
 
-# add_custom_command()
+# On Linux plateforms:
+# Copy west shared libs to python/librir_west/libs with links, at it is not properly done by cmake install
+if(UNIX AND NOT APPLE)
+	install(CODE "execute_process(COMMAND cp --verbose -a ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/libtools.so.${CMAKE_PROJECT_VERSION} ${CMAKE_INSTALL_PREFIX}/python/librir/libs/)")
+	install(CODE "execute_process(COMMAND cp --verbose -a ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/libgeometry.so.${CMAKE_PROJECT_VERSION} ${CMAKE_INSTALL_PREFIX}/python/librir/libs/)")
+	install(CODE "execute_process(COMMAND cp --verbose -a ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/libsignal_processing.so.${CMAKE_PROJECT_VERSION} ${CMAKE_INSTALL_PREFIX}/python/librir/libs/)")
+	install(CODE "execute_process(COMMAND cp --verbose -a ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/libvideo_io.so.${CMAKE_PROJECT_VERSION} ${CMAKE_INSTALL_PREFIX}/python/librir/libs/)")
+endif()
