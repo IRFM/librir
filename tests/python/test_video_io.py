@@ -236,7 +236,7 @@ def test_open_camera_memory(movie: IRMovie):
     with pytest.raises(RuntimeError):
         open_camera_memory(bytes())
 
-    close_camera(handle)
+    # close_camera(handle)
 
 
 def test_get_filename(movie: IRMovie):
