@@ -188,3 +188,4 @@ src/python/pyproject.toml
 src/python/README.md
 src/python/librir/libs
 install
+src/cpp/rir_config.h
