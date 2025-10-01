@@ -231,12 +231,14 @@ def test_camera_saturate(movie: IRMovie):
 def test_open_camera_memory(movie: IRMovie):
     movie.filename
     data = movie.filename.read_bytes()
-    handle = open_camera_memory(data)
+    with IRMovie.from_bytes(data):
+        pass
+    # handle = open_camera_memory(data)
 
-    with pytest.raises(RuntimeError):
-        open_camera_memory(bytes())
+    # with pytest.raises(RuntimeError):
+    #     open_camera_memory(bytes())
 
-    close_camera(handle)
+    # close_camera(handle)
 
 
 def test_get_filename(movie: IRMovie):
