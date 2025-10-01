@@ -1,17 +1,15 @@
 name: Build on Windows
-on: 
-
+on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main", "releases/**"  ]
+    branches: ["main", "releases/**"]
   workflow_dispatch:
     inputs:
       compiler:
         required: false
         type: string
         default: clang
-          
   workflow_call:
     inputs:
       compiler:
@@ -20,35 +18,19 @@ on:
         default: clang
 
 jobs:
-    build-windows:
-        runs-on: windows-latest
-    
-        steps:
-        - uses: actions/checkout@v4
-
-
-        - name: Install compiler ${{ inputs.compiler || 'clang' }}
-          id: install_cc
-          uses: rlalik/setup-cpp-compiler@master
-          with:
-            compiler: ${{ inputs.compiler || 'clang' }}
-            
-        # - name: Set up Python ${{ inputs.python-version }}
-          
-        #   uses: actions/setup-python@v4
-        #   with:
-        #     python-version: ${{ inputs.python-version }}        
-
-    
-        # - name: Install python dependencies
-        #   run: |
-        #     python -m pip install --upgrade pip       
-
-        - name: Build on Windows
-          run: ./build.bat
-
-        - name: Upload artifact
-          uses: actions/upload-artifact@v4
-          with:
-            name: install-librir-windows-latest-${{ inputs.compiler || 'clang' }}
-            path: build/install
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install compiler ${{ inputs.compiler || 'clang' }}
+        id: install_cc
+        uses: rlalik/setup-cpp-compiler@master
+        with:
+          compiler: ${{ inputs.compiler || 'clang' }}
+      - name: Build on Windows
+        run: ./build.bat
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: install-librir-windows-latest-${{ inputs.compiler || 'clang' }}
+          path: build/install

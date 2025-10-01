@@ -1,17 +1,15 @@
 name: Build on Linux
-on: 
-
+on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main", "releases/**" ]
+    branches: ["main", "releases/**"]
   workflow_dispatch:
     inputs:
       compiler:
         required: false
         type: string
         default: latest
-          
   workflow_call:
     inputs:
       compiler:
@@ -20,30 +18,25 @@ on:
         default: latest
 
 jobs:
-    
-    build-linux:
-      runs-on: ubuntu-22.04
-      steps:
-        - uses: actions/checkout@v4
-
-        - name: Cache Dependencies
-          id: cache-dependencies
-          uses: actions/cache@v4
-          with:
-            path: build/3rd-party-install
-            key: ${{ github.ref }}-3rd_64
-
-        - name: Install compiler ${{ inputs.compiler || 'latest' }}
-          id: install_cc
-          uses: rlalik/setup-cpp-compiler@master
-          with:
-            compiler: ${{ inputs.compiler || 'latest' }}
-              
-        - name: Build on Linux
-          run: ./build.sh
-
-        - name: Upload artifact
-          uses: actions/upload-artifact@v4
-          with:
-            name: install-librir-ubuntu-22.04-${{ inputs.compiler || 'latest' }}
-            path: build/install
+  build-linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Dependencies
+        id: cache-dependencies
+        uses: actions/cache@v4
+        with:
+          path: build/3rd-party-install
+          key: ${{ github.ref }}-3rd_64
+      - name: Install compiler ${{ inputs.compiler || 'latest' }}
+        id: install_cc
+        uses: rlalik/setup-cpp-compiler@master
+        with:
+          compiler: ${{ inputs.compiler || 'latest' }}
+      - name: Build on Linux
+        run: ./build.sh
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: install-librir-ubuntu-22.04-${{ inputs.compiler || 'latest' }}
+          path: build/install
