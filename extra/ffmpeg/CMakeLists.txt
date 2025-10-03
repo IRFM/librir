@@ -164,7 +164,9 @@ set(FFMPEG_CONFIGURE_CMD
     export LD_LIBRARY_PATH=${3RD_64_INSTALL_DIR}/lib:$ENV{LD_LIBRARY_PATH} &&
     export PKG_CONFIG_PATH=${3RD_64_INSTALL_DIR}/lib/pkgconfig:$ENV{PKG_CONFIG_PATH} &&
     export OPENSSL_LIBS="-L/usr/lib64 -llibeay32 -lssleay32 -llibcrypto -luser32 -lgdi32 -lwsock32 -lws2_32" &&
-    ./configure --arch=native --enable-asm --disable-libvpx --disable-libaom --disable-static --enable-shared --enable-libx264 --enable-libkvazaar --extra-cflags=-DKVZ_STATIC_LIB --enable-gpl --enable-rpath --enable-pic --disable-debug)
+    export LDSOFLAGS="-Wl,-rpath,\\\$$\\$$$$ORIGIN" && # This monstruosity is due to makefile substitions in ffmpeg configure 
+    # export LDEXEFLAGS=-Wl,-rpath,\''$$ORIGIN/../lib'\' &&
+    ./configure --arch=native --enable-asm --disable-libvpx --disable-libaom --disable-static --enable-shared --enable-libx264 --enable-libkvazaar --extra-cflags=-DKVZ_STATIC_LIB --enable-gpl --enable-pic --disable-debug)
 
 ExternalProject_Add(ffmpeg
     SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/ffmpeg-src
@@ -200,6 +202,7 @@ set(FFMPEG_SHARED_LIBRARIES)
 
 foreach(component version IN ZIP_LISTS REQUIRED_FFMPEG_COMPONENTS FFMPEG_SHARED_LIBRARIES_VERSIONS)
     add_library("FFMPEG::lib${component}" SHARED IMPORTED GLOBAL)
+    set_target_properties("FFMPEG::lib${component}" PROPERTIES INSTALL_RPATH "$ORIGIN")
     add_dependencies("FFMPEG::lib${component}" ffmpeg)
 
     set(${component}_LIBRARY_NAME lib${component}.so)
