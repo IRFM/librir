@@ -119,12 +119,12 @@ set(FFMPEG_DEPENDENCIES kvazaar x264)
 
 if(ENABLE_CUDA_FFMPEG)
     find_package(CUDAToolkit REQUIRED)
-
+    option(FFNVCODEC_CUDA_VERSION_TAG "CUDA ncodec version tag to download from on https://github.com/FFmpeg/nv-codec-headers.git" sdk/${CUDAToolkit_VERSION_MAJOR}.0)
     if(CUDAToolkit_FOUND)
         FetchContent_Declare(
             ffnvcodec
             GIT_REPOSITORY https://github.com/FFmpeg/nv-codec-headers.git
-            GIT_TAG sdk/${CUDAToolkit_VERSION_MAJOR}.0
+            GIT_TAG ${FFNVCODEC_CUDA_VERSION_TAG}
         )
         FetchContent_MakeAvailable(ffnvcodec)
 
