@@ -120,8 +120,10 @@ set(_PKG_CONFIG_PATH $ENV{PKG_CONFIG_PATH})
 set(FFMPEG_DEPENDENCIES kvazaar x264)
 
 if(ENABLE_CUDA_FFMPEG)
-    find_package(CUDAToolkit REQUIRED)
-    if(CUDAToolkit_FOUND)
+    if(BUILD_CUDA_FFMPEG)
+        find_package(CUDAToolkit REQUIRED)
+    endif()
+    # if(CUDAToolkit_FOUND)
         FetchContent_Declare(
             ffnvcodec
             GIT_REPOSITORY https://github.com/FFmpeg/nv-codec-headers.git
@@ -146,7 +148,8 @@ if(ENABLE_CUDA_FFMPEG)
             set(NVCC_FLAGS "-gencode arch=compute_52,code=sm_52 -O2")
             set(CUDA_CONFIGURE_ARGS --enable-nonfree --enable-cuda-nvcc --enable-libnpp --extra-cflags=-I/usr/local/cuda/include --extra-cflags=-I${3RD_64_INSTALL_DIR}/include --extra-ldflags=-L/usr/local/cuda/lib64 --disable-static --enable-shared --nvccflags=${NVCC_FLAGS} --enable-nvenc --enable-nvdec --enable-opencl)
         endif()
-    else()
+    # else()
+    if(BUILD_CUDA_FFMPEG AND NOT CUDAToolkit_FOUND)
         message(STATUS "CUDA not found ! No GPU acceleration")
         set(CUDA_CONFIGURE_ARGS)
         set(FFMPEG_DEPENDENCIES kvazaar x264 ffnvcodec-install)
