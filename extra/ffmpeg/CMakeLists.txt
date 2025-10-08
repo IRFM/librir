@@ -16,6 +16,8 @@ include(FetchContent)
 set(3RD_64_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
 option(FFMPEG_LOCAL_INSTALL "Install locally" ON)
 option(ENABLE_CUDA_FFMPEG "Enable CUDA acceleration for FFMPEG" OFF)
+option(BUILD_CUDA_FFMPEG "Build CUDA acceleration for FFMPEG. Useful for offline compilation" ${ENABLE_CUDA_FFMPEG})
+option(FFNVCODEC_CUDA_VERSION_TAG "CUDA ncodec version tag to download from on https://github.com/FFmpeg/nv-codec-headers.git" sdk/${CUDAToolkit_VERSION_MAJOR}.0)
 
 IF(FFMPEG_LOCAL_INSTALL)
     set(3RD_64_INSTALL_DIR ${CMAKE_BINARY_DIR}/3rd-party-install)
@@ -119,7 +121,6 @@ set(FFMPEG_DEPENDENCIES kvazaar x264)
 
 if(ENABLE_CUDA_FFMPEG)
     find_package(CUDAToolkit REQUIRED)
-    option(FFNVCODEC_CUDA_VERSION_TAG "CUDA ncodec version tag to download from on https://github.com/FFmpeg/nv-codec-headers.git" sdk/${CUDAToolkit_VERSION_MAJOR}.0)
     if(CUDAToolkit_FOUND)
         FetchContent_Declare(
             ffnvcodec
@@ -127,23 +128,24 @@ if(ENABLE_CUDA_FFMPEG)
             GIT_TAG ${FFNVCODEC_CUDA_VERSION_TAG}
         )
         FetchContent_MakeAvailable(ffnvcodec)
+        if (BUILD_CUDA_FFMPEG)
 
-        set(NVCODEC_PREFIX_MODIFICATION_CMD sed -i "s#PREFIX = /usr/local#PREFIX = ${3RD_64_INSTALL_DIR}#g" ${CMAKE_BINARY_DIR}/_deps/ffnvcodec-src/Makefile)
+            set(NVCODEC_PREFIX_MODIFICATION_CMD sed -i "s#PREFIX = /usr/local#PREFIX = ${3RD_64_INSTALL_DIR}#g" ${CMAKE_BINARY_DIR}/_deps/ffnvcodec-src/Makefile)
 
-        ExternalProject_Add(ffnvcodec
-            SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/ffnvcodec-src
-            CONFIGURE_COMMAND ""
-            INSTALL_COMMAND ${NVCODEC_PREFIX_MODIFICATION_CMD} && $(MAKE) install
-            UPDATE_DISCONNECTED true
-            INSTALL_DIR ${3RD_64_INSTALL_DIR}
-            BUILD_IN_SOURCE true
-            DOWNLOAD_COMMAND ""
-        )
-        ExternalProject_Add_StepTargets(ffnvcodec install)
-
-        set(NVCC_FLAGS "-gencode arch=compute_52,code=sm_52 -O2")
-        set(CUDA_CONFIGURE_ARGS --enable-nonfree --enable-cuda-nvcc --enable-libnpp --extra-cflags=-I/usr/local/cuda/include --extra-cflags=-I${3RD_64_INSTALL_DIR}/include --extra-ldflags=-L/usr/local/cuda/lib64 --disable-static --enable-shared --nvccflags=${NVCC_FLAGS} --enable-nvenc --enable-nvdec --enable-opencl)
-
+            ExternalProject_Add(ffnvcodec
+                SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/ffnvcodec-src
+                CONFIGURE_COMMAND ""
+                INSTALL_COMMAND ${NVCODEC_PREFIX_MODIFICATION_CMD} && $(MAKE) install
+                UPDATE_DISCONNECTED true
+                INSTALL_DIR ${3RD_64_INSTALL_DIR}
+                BUILD_IN_SOURCE true
+                DOWNLOAD_COMMAND ""
+            )
+            ExternalProject_Add_StepTargets(ffnvcodec install)
+            
+            set(NVCC_FLAGS "-gencode arch=compute_52,code=sm_52 -O2")
+            set(CUDA_CONFIGURE_ARGS --enable-nonfree --enable-cuda-nvcc --enable-libnpp --extra-cflags=-I/usr/local/cuda/include --extra-cflags=-I${3RD_64_INSTALL_DIR}/include --extra-ldflags=-L/usr/local/cuda/lib64 --disable-static --enable-shared --nvccflags=${NVCC_FLAGS} --enable-nvenc --enable-nvdec --enable-opencl)
+        endif()
     else()
         message(STATUS "CUDA not found ! No GPU acceleration")
         set(CUDA_CONFIGURE_ARGS)
