@@ -20,10 +20,12 @@ option(BUILD_CUDA_FFMPEG "Build CUDA acceleration for FFMPEG. Useful for offline
 option(FFNVCODEC_CUDA_VERSION_TAG "CUDA ncodec version tag to download from on https://github.com/FFmpeg/nv-codec-headers.git" sdk/${CUDAToolkit_VERSION_MAJOR}.0)
 
 IF(FFMPEG_LOCAL_INSTALL)
-    set(3RD_64_INSTALL_DIR ${CMAKE_BINARY_DIR}/3rd-party-install)
+    set(3RD_64_INSTALL_DIR 3rd-party-install)
 endif()
 
-set(3RD_64_INSTALL_DIR ${3RD_64_INSTALL_DIR} CACHE INTERNAL "")
+cmake_path(ABSOLUTE_PATH 3RD_64_INSTALL_DIR BASE_DIRECTORY ${CMAKE_BINARY_DIR} OUTPUT_VARIABLE 3RD_64_INSTALL_DIR)
+
+set(3RD_64_INSTALL_DIR ${3RD_64_INSTALL_DIR} CACHE INTERNAL "" FORCE)
 
 option(BUILD_OFFLINE "Build offline" OFF)
 
@@ -122,32 +124,34 @@ set(FFMPEG_DEPENDENCIES kvazaar x264)
 if(ENABLE_CUDA_FFMPEG)
     if(BUILD_CUDA_FFMPEG)
         find_package(CUDAToolkit REQUIRED)
+        message(STATUS "CUDA CUDAToolkit_FOUND : ${CUDAToolkit_FOUND}")
     endif()
     # if(CUDAToolkit_FOUND)
-        FetchContent_Declare(
-            ffnvcodec
-            GIT_REPOSITORY https://github.com/FFmpeg/nv-codec-headers.git
-            GIT_TAG ${FFNVCODEC_CUDA_VERSION_TAG}
+    FetchContent_Declare(
+        ffnvcodec
+        GIT_REPOSITORY https://github.com/FFmpeg/nv-codec-headers.git
+        GIT_TAG ${FFNVCODEC_CUDA_VERSION_TAG}
+    )
+    FetchContent_MakeAvailable(ffnvcodec)
+    if (BUILD_CUDA_FFMPEG)
+        message(STATUS "configuring ffnvcodec")
+
+        set(NVCODEC_PREFIX_MODIFICATION_CMD sed -i "s#PREFIX = /usr/local#PREFIX = ${3RD_64_INSTALL_DIR}#g" ${CMAKE_BINARY_DIR}/_deps/ffnvcodec-src/Makefile)
+
+        ExternalProject_Add(ffnvcodec
+            SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/ffnvcodec-src
+            CONFIGURE_COMMAND ""
+            INSTALL_COMMAND ${NVCODEC_PREFIX_MODIFICATION_CMD} && $(MAKE) install
+            UPDATE_DISCONNECTED true
+            INSTALL_DIR ${3RD_64_INSTALL_DIR}
+            BUILD_IN_SOURCE true
+            DOWNLOAD_COMMAND ""
         )
-        FetchContent_MakeAvailable(ffnvcodec)
-        if (BUILD_CUDA_FFMPEG)
-
-            set(NVCODEC_PREFIX_MODIFICATION_CMD sed -i "s#PREFIX = /usr/local#PREFIX = ${3RD_64_INSTALL_DIR}#g" ${CMAKE_BINARY_DIR}/_deps/ffnvcodec-src/Makefile)
-
-            ExternalProject_Add(ffnvcodec
-                SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/ffnvcodec-src
-                CONFIGURE_COMMAND ""
-                INSTALL_COMMAND ${NVCODEC_PREFIX_MODIFICATION_CMD} && $(MAKE) install
-                UPDATE_DISCONNECTED true
-                INSTALL_DIR ${3RD_64_INSTALL_DIR}
-                BUILD_IN_SOURCE true
-                DOWNLOAD_COMMAND ""
-            )
-            ExternalProject_Add_StepTargets(ffnvcodec install)
-            
-            set(NVCC_FLAGS "-gencode arch=compute_52,code=sm_52 -O2")
-            set(CUDA_CONFIGURE_ARGS --enable-nonfree --enable-cuda-nvcc --enable-libnpp --extra-cflags=-I/usr/local/cuda/include --extra-cflags=-I${3RD_64_INSTALL_DIR}/include --extra-ldflags=-L/usr/local/cuda/lib64 --disable-static --enable-shared --nvccflags=${NVCC_FLAGS} --enable-nvenc --enable-nvdec --enable-opencl)
-        endif()
+        ExternalProject_Add_StepTargets(ffnvcodec install)
+        
+        set(NVCC_FLAGS )#"-gencode arch=compute_52,code=sm_52 -O2")
+        set(CUDA_CONFIGURE_ARGS --enable-nonfree --enable-cuda-nvcc --enable-libnpp --extra-cflags=-I/usr/local/cuda/include --extra-cflags=-I${3RD_64_INSTALL_DIR}/include --extra-ldflags=-L/usr/local/cuda/lib64 --disable-static --enable-shared --nvccflags=${NVCC_FLAGS} --enable-nvenc --enable-nvdec --enable-opencl )
+    endif()
     # else()
     if(BUILD_CUDA_FFMPEG AND NOT CUDAToolkit_FOUND)
         message(STATUS "CUDA not found ! No GPU acceleration")
@@ -171,7 +175,8 @@ set(FFMPEG_CONFIGURE_CMD
     export OPENSSL_LIBS="-L/usr/lib64 -llibeay32 -lssleay32 -llibcrypto -luser32 -lgdi32 -lwsock32 -lws2_32" &&
     export LDSOFLAGS="-Wl,-rpath,\\\$$\\$$$$ORIGIN" && # This monstruosity is due to makefile substitions in ffmpeg configure 
     # export LDEXEFLAGS=-Wl,-rpath,\''$$ORIGIN/../lib'\' &&
-    ./configure --arch=native --enable-asm --disable-libvpx --disable-libaom --disable-static --enable-shared --enable-libx264 --enable-libkvazaar --extra-cflags=-DKVZ_STATIC_LIB --enable-gpl --enable-pic --disable-debug)
+    ./configure --arch=x86_64 --enable-asm --disable-libvpx --disable-libaom --disable-static --enable-shared --enable-libx264 --enable-libkvazaar --extra-cflags=-DKVZ_STATIC_LIB --enable-gpl --enable-pic --disable-debug ${CUDA_CONFIGURE_ARGS}
+)
 
 ExternalProject_Add(ffmpeg
     SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/ffmpeg-src
@@ -187,6 +192,9 @@ ExternalProject_Add(ffmpeg
     EXCLUDE_FROM_ALL
 )
 
+# cmake_path(RELATIVE_PATH 3RD_64_INSTALL_DIR BASE_DIRECTORY ${CMAKE_BINARY_DIR} OUTPUT_VARIABLE FFMPEG_INCLUDE_DIRS)
+# message(STATUS "3RD_64_INSTALL_DIR : ${3RD_64_INSTALL_DIR}")
+# message(STATUS "FFMPEG_INCLUDE_DIRS : ${FFMPEG_INCLUDE_DIRS}")
 set(FFMPEG_INCLUDE_DIRS ${3RD_64_INSTALL_DIR}/include CACHE INTERNAL "" FORCE)
 set(FFMPEG_LIB_DIR ${3RD_64_INSTALL_DIR}/lib CACHE INTERNAL "" FORCE)
 
