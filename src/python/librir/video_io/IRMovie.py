@@ -514,7 +514,7 @@ class IRMovie(object):
         return calibrate_image(self.handle, image, calib)
 
     @property
-    def video_file_format(self):
+    def video_file_format(self) -> FileFormat:
         return video_file_format(self.filename)
 
     def pcr2h264(self, outfile=None, overwrite=False, **kwargs):

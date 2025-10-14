@@ -163,7 +163,7 @@ def pcr_filename(images):
 
 
 def test_video_file_format(pcr_filename):
-    assert video_file_format(pcr_filename) == FileFormat.PCR.value
+    assert video_file_format(pcr_filename) == FileFormat.PCR
     with pytest.raises(RuntimeError):
         video_file_format("nothing")
 
@@ -172,7 +172,7 @@ def test_correct_PCR_file(pcr_filename, images):
     data = np.array(images, dtype=np.uint16)
     correct_PCR_file(pcr_filename, data.shape[0], data.shape[1], 50)
     with IRMovie.from_filename(pcr_filename) as mov:
-        assert mov.video_file_format == FileFormat.PCR.value
+        assert mov.video_file_format == FileFormat.PCR
 
 
 def test_pcr2h264(pcr_filename):
@@ -180,7 +180,7 @@ def test_pcr2h264(pcr_filename):
         res = mov.pcr2h264()
 
     with IRMovie.from_filename(res) as mov:
-        assert mov.video_file_format == FileFormat.H264.value
+        assert mov.video_file_format == FileFormat.H264
 
 
 @pytest.mark.parametrize("emi", [0.5])

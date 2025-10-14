@@ -115,7 +115,7 @@ def video_file_format(filename):
     res = _video_io.video_file_format(str(filename).encode())
     if res <= 0:
         raise RuntimeError("cannot open file " + filename)
-    return res
+    return FileFormat(res)
 
 
 def close_camera(camera):
