@@ -226,7 +226,7 @@ def test_close(array):
 
 
 def test_video_file_format(movie: IRMovie):
-    assert movie.video_file_format == FileFormat.H264.value
+    assert movie.video_file_format == FileFormat.H264
 
 
 def test_split_rush(movie: IRMovie):
