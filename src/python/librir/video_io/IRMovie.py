@@ -72,7 +72,7 @@ def create_pcr_header(rows, columns, frequency=50, bits=16):
 class IRMovie(object):
     _header_offset = 1024
     __tempfile__ = None
-    _file_attributes: Union[FileAttributes, None] = None
+    _file_attributes: FileAttributes
     handle = -1
     _calibration_nickname_mapper = {"DL": "Digital Level"}
     _th = None
@@ -339,7 +339,7 @@ class IRMovie(object):
         enable_bad_pixels(self.handle, self._bad_pixels_correction)
 
     @property
-    def filename(self):
+    def filename(self) -> Path | None:
         _f = get_filename(self.handle)
         return Path(_f) if _f else None  # local filename
 
