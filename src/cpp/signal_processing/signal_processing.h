@@ -72,11 +72,7 @@ extern "C"
 
 
 
-    /**
-     * Decode a 12 bits JPEG image as used in old IR video file format (from Tore Supra)
-     */
-    SIGNAL_PROCESSING_EXPORT int jpeg_decode(char *input, int64_t isize, unsigned char *output);
-
+    
     /**
      * Create a bad pixel correction object based on a first video image.
      * returns the object handle on success, 0 on error.
