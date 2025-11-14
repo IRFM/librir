@@ -15,7 +15,7 @@
 namespace rir
 {
 
-	void populate_map_with_header(rir::dict_type &mapper, HCCImageHeader &h)
+	void HCCLoader::populate_map_with_header(dict_type &mapper, const HCCImageHeader &h)
 	{
 		/* 0d000 */
 		mapper["Signature"] = toString(h.Signature);

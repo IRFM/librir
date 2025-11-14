@@ -110,6 +110,9 @@ namespace rir
 	class IO_EXPORT HCCLoader : public IRVideoLoader
 	{
 	public:
+
+		static void populate_map_with_header(dict_type& mapper, const HCCImageHeader& h);
+
 		HCCLoader();
 		virtual ~HCCLoader();
 
