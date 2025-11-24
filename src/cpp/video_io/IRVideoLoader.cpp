@@ -10,27 +10,31 @@
 namespace rir
 {
 
-	static std::vector<IRVideoLoader *> _instances;
+	static std::vector<IRVideoLoader*>& get_instances()
+	{
+		static std::vector<IRVideoLoader*> _instances;
+		return _instances; 
+	}
 	static std::recursive_mutex _mutex;
 
 	IRVideoLoader::IRVideoLoader()
 		: m_globalEmi(1)
 	{
 		_mutex.lock();
-		_instances.push_back(this);
+		get_instances().push_back(this);
 		_mutex.unlock();
 	}
 	IRVideoLoader::~IRVideoLoader()
 	{
 		_mutex.lock();
-		_instances.erase(std::find(_instances.begin(), _instances.end(), this));
+		get_instances().erase(std::find(get_instances().begin(), get_instances().end(), this));
 		_mutex.unlock();
 	}
 
 	std::vector<IRVideoLoader *> IRVideoLoader::instances()
 	{
 		_mutex.lock();
-		std::vector<IRVideoLoader *> res = _instances;
+		std::vector<IRVideoLoader *> res = get_instances();
 		_mutex.unlock();
 		return res;
 	}
@@ -38,9 +42,9 @@ namespace rir
 	void IRVideoLoader::closeAll()
 	{
 		_mutex.lock();
-		for (size_t i = 0; i < _instances.size(); ++i)
+		for (size_t i = 0; i < get_instances().size(); ++i)
 		{
-			_instances[i]->close();
+			get_instances()[i]->close();
 			/*IRVideoLoader * tmp = _instances[0];
 			tmp->close();
 			std::vector<IRVideoLoader*> ::iterator it = std::find(_instances.begin(), _instances.end(), tmp);
