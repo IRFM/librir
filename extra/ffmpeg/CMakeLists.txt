@@ -204,7 +204,7 @@ file(MAKE_DIRECTORY ${FFMPEG_LIB_DIR})
 set(FFMPEG_SHARED_LIBRARIES_VERSIONS
     61.19.101 # libavcodec
     61.3.100 # libavdevice
-    10.4.100 # libavfilter
+    10.5.100 # libavfilter
     61.7.100 # libavformat
     59.39.100 # libavutil
     5.3.100 # libswresample
