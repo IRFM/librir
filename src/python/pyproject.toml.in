@@ -17,9 +17,9 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 dependencies = [
-        "numpy<2",
+        "numpy",
         "pandas",
-        "opencv-python==4.5.5.64",
+        "opencv-python>=4.11",
         "joblib",
         "future-annotations;python_version<'3.7'",
 ]
