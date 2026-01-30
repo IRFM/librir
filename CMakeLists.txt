@@ -97,6 +97,7 @@ set(ConfigPackageLocation lib/cmake/librir)
 install(
     FILES
     "${CMAKE_CURRENT_BINARY_DIR}/librirConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/librirConfigVersion.cmake"
     DESTINATION lib/cmake/librir
 )
 
