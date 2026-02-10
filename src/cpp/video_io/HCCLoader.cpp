@@ -118,6 +118,7 @@ namespace rir
 		FileReaderPtr file;
 		bool badPixelsEnabled = false;
 		bool saturate = false;
+		bool isEAST = false;
 		double sampling_ns = 0;
 		Size imSize;
 		TimestampVector timestamps;
@@ -191,6 +192,10 @@ namespace rir
 		int frame_size = d_data->header.ImageHeaderLength + d_data->header.Width * d_data->header.Height * 2;
 		int frame_count = file_size / frame_size;
 
+		d_data->isEAST = d_data->header.Width == 640 && d_data->header.Height == 512;
+		if (d_data->isEAST)
+			d_data->attributes["Device"] = "EAST";
+
 		// Start time in milliseconds since epoch
 		std::uint64_t start_time = ((double)d_data->header.POSIXTime + d_data->header.SubSecondTime * 1e-7) * 1000;
 		// QDateTime dt = QDateTime::fromMSecsSinceEpoch(start_time);
@@ -202,6 +207,50 @@ namespace rir
 		d_data->attributes["Date"] = ss.str();
 		d_data->attributes["Size"] = toString(frame_count);
 		d_data->attributes["Type"] = "HCC";
+
+		if (d_data->isEAST)
+		{
+			// find type and unit
+			std::string type;
+			std::string unit;
+			bool K_temp = false;
+			bool correct_bad_pixels = d_data->badPixelsEnabled;
+
+			if (d_data->header.CalibrationMode == 0)
+			{
+				type = "Raw0";
+				unit = "DL";
+			}
+			else if (d_data->header.CalibrationMode == 1)
+			{
+				type = "NUC";
+				unit = "DL";
+			}
+			else if (d_data->header.CalibrationMode == 2)
+			{
+				type = "RT";
+				unit = "Radiometric Temperature (C)";
+				K_temp = true;
+			}
+			else if (d_data->header.CalibrationMode == 3)
+			{
+				type = "IBR";
+				unit = "W/(m2 sr)";
+			}
+			else if (d_data->header.CalibrationMode == 4)
+			{
+				type = "IBI";
+				unit = "W/(m2 sr)";
+			}
+			else if (d_data->header.CalibrationMode == 5)
+			{
+				type = "Raw";
+				unit = "DL";
+			}
+
+			d_data->attributes["DataType"] = type;
+			d_data->attributes["DataUnit"] = unit;
+		}
 
 		d_data->timestamps.resize(frame_count);
 		for (int i = 0; i < frame_count; i++)
@@ -275,172 +324,15 @@ namespace rir
 		if (readFile(d_data->file, d_data->image.data(), d_data->header.Height * d_data->header.Width * 2) <= 0)
 			return false;
 
-		// find type and unit
-		std::string type;
-		// std::string unit;
-		// bool convert = false;
-		// bool K_temp = false;
-		bool correct_bad_pixels = d_data->badPixelsEnabled;
-
-		if (d_data->header.CalibrationMode == 0)
-		{
-			type = "Raw0";
-			// unit = "DL";
-		}
-		else if (d_data->header.CalibrationMode == 1)
-		{
-			type = "NUC";
-			// unit = "DL";
-		}
-		else if (d_data->header.CalibrationMode == 2)
-		{
-			type = "RT";
-			// unit = "Radiometric Temperature (C)";
-			// convert = propertyAt(0)->data().value<int>();
-			// K_temp = true;
-		}
-		else if (d_data->header.CalibrationMode == 3)
-		{
-			type = "IBR";
-			// unit = "W/(m2 sr)";
-			// convert = propertyAt(0)->data().value<int>();
-		}
-		else if (d_data->header.CalibrationMode == 4)
-		{
-			type = "IBI";
-			// unit = "W/(m2 sr)";
-			// convert = propertyAt(0)->data().value<int>();
-		}
-		else if (d_data->header.CalibrationMode == 5)
-		{
-			type = "Raw";
-			// unit = "DL";
-		}
-
-		float factor = std::pow(2, d_data->header.DataExp);
-		int invalid_pixels = 0;
-
+		
 		// convert image to the right unit
 		unsigned short *pix = (unsigned short *)d_data->image.data();
-		const bool little_endian = is_little_endian();
-
-		if (correct_bad_pixels || !little_endian) {
-			size_t size = (size_t)d_data->header.Height * (size_t)d_data->header.Width;
-			unsigned short max = 0;
-			for (size_t i = 0; i < size; ++i) {
-				if (!little_endian)
-					pix[i] = swap_uint16(pix[i]);
-				if (pix[i] < 0xFFF1)
-					max = std::max(max, pix[i]);
-			}
-
-			//replace bad pixels by the maximum value
-			for (size_t i = 0; i < size; ++i) {
-				if (pix[i] >= 0xFFF1)
-					pix[i] = max;
-			}
-		}
-
-		/*if (correct_bad_pixels || !little_endian)
-		{
-
-			for (int y = 0; y < d_data->header.Height; ++y)
-				for (int x = 0; x < d_data->header.Width; ++x)
-				{
-					const int index = x + y * d_data->header.Width;
-					// raw data are stored in little endian
-					unsigned short p = pix[index];
-					if (!little_endian)
-						pix[index] = p = swap_uint16(p);
-
-					if (correct_bad_pixels && p >= 0xFFF1)
-					{
-
-						// invalid pixel, replace with closest if possible
-						++invalid_pixels;
-
-						// find a valid pixel to the left
-						int _x = x;
-						while (x > 0)
-						{
-							--_x;
-							if (pix[_x + y * d_data->header.Width] < 0xFFF1)
-							{
-								p = pix[_x + y * d_data->header.Width];
-								break;
-							}
-						}
-						if (p >= 0xFFF1)
-						{
-							// find a valid pixel to the right
-							int _x = x;
-							while (x < d_data->header.Width - 1)
-							{
-								++_x;
-								if (pix[_x + y * d_data->header.Width] < 0xFFF1)
-								{
-									p = pix[_x + y * d_data->header.Width];
-									break;
-								}
-							}
-							if (p >= 0xFFF1)
-							{
-								// find a valid pixel to the top
-								int _y = y;
-								while (_y > 0)
-								{
-									--_y;
-									if (pix[x + _y * d_data->header.Width] < 0xFFF1)
-									{
-										p = pix[x + _y * d_data->header.Width];
-										break;
-									}
-								}
-								if (p >= 0xFFF1)
-								{
-									int _y = y;
-									while (_y < d_data->header.Height - 1)
-									{
-										++_y;
-										if (pix[x + _y * d_data->header.Width] < 0xFFF1)
-										{
-											p = pix[x + _y * d_data->header.Width];
-											break;
-										}
-									}
-								}
-							}
-
-						}
-						pix[index] = p;
-					}
-				}
-		}*/
-
+		
 		memcpy(pixels, pix, d_data->header.Height * d_data->header.Width * 2);
 
 		d_data->imageAttributes.clear();
 		populate_map_with_header(d_data->imageAttributes, h);
 
-		d_data->imageAttributes["Type"] = toString(type);
-		// d_data->imageAttributes["ExposureTime (s)"] = toString(h.ExposureTime * 1e-8);
-		// d_data->imageAttributes["TriggerDelay (us)"] = toString(h.TriggerDelay);
-		// d_data->imageAttributes["AECResponseTime (ms)"] = toString(h.AECResponseTime);
-		// d_data->imageAttributes["AECImageFraction (%)"] = toString(h.AECImageFraction);
-		// d_data->imageAttributes["AECTargetWellFilling (%)"] = toString(h.AECTargetWellFilling);
-		// d_data->imageAttributes["PostProcessed"] = h.PostProcessed == 1 ? "Yes" : "No";
-		// d_data->imageAttributes["TemperatureSensor (cC)"] = toString(h.TemperatureSensor);
-		// d_data->imageAttributes["TemperatureInternalLens (cC)"] = toString(h.TemperatureInternalLens);
-		// d_data->imageAttributes["TemperatureExternalLens (cC)"] = toString(h.TemperatureExternalLens);
-		// d_data->imageAttributes["TemperatureInternalCalibrationUnit (cC)"] = toString(h.TemperatureInternalCalibrationUnit);
-		// d_data->imageAttributes["TemperatureExternalThermistor (cC)"] = toString(h.TemperatureExternalThermistor);
-		// d_data->imageAttributes["TemperatureFilterWheel (cC)"] = toString(h.TemperatureFilterWheel);
-		// d_data->imageAttributes["TemperatureCompressor (cC)"] = toString(h.TemperatureCompressor);
-		// d_data->imageAttributes["TemperatureColdFinger (cC)"] = toString(h.TemperatureColdFinger);
-		// d_data->imageAttributes["FWPosition"] = toString((int)h.FWPosition);
-		// d_data->imageAttributes["ExternalBlackBodyTemperature (cC)"] = toString(h.ExternalBlackBodyTemperature);
-
-		// d_data->imageAttributes["Header"] = std::string((char *)&h, sizeof(h));
 
 		return true;
 	}
@@ -543,7 +435,7 @@ namespace rir
 		std::string fname = loader->filename();
 		if (fname.empty())
 			return false;
-
+		
 		if (loader->isH264()) {
 
 			const FileAttributes* attrs = loader->fileAttributes();

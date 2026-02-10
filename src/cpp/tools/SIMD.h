@@ -11,13 +11,19 @@
 // AVX
 #elif (defined(_M_AMD64) || defined(_M_X64))
 // SSE2 x64
+#ifndef __SSE2__
 #define __SSE2__
+#endif
 #elif _M_IX86_FP == 2
 // SSE2 x32
+#ifndef __SSE2__
 #define __SSE2__
+#endif
 #elif _M_IX86_FP == 1
 // SSE x32
+#ifndef __SSE__
 #define __SSE__
+#endif
 #else
 // nothing
 #endif
