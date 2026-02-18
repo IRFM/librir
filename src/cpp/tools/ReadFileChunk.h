@@ -82,16 +82,24 @@ namespace rir
 			infos(other.infos),
 			read(other.read),
 			destroy(other.destroy) {
-			memset(&other, 0, sizeof(FileAccess));
-		}
+				other.opaque  = nullptr;
+				other.infos   = nullptr;
+				other.read    = nullptr;
+				other.destroy = nullptr;
+			}
 		FileAccess& operator=(const FileAccess& other) = delete;
 		FileAccess& operator=(FileAccess&& other) noexcept
 		{
-			opaque = (other.opaque);
-			infos = (other.infos);
-			read = (other.read);
-			destroy = (other.destroy);
-			memset(&other, 0, sizeof(FileAccess));
+			opaque  = other.opaque;
+			infos   = other.infos;
+			read    = other.read;
+			destroy = other.destroy;
+
+			other.opaque  = nullptr;
+			other.infos   = nullptr;
+			other.read    = nullptr;
+			other.destroy = nullptr;
+
 			return *this;
 		}
 		~FileAccess() noexcept
